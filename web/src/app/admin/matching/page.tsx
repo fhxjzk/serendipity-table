@@ -6,7 +6,7 @@ import { FAIL_REASON_TEXT } from "@/lib/matching/reasons";
 import type { FailReason } from "@/lib/matching/types";
 import { REGION_LABEL, ageOf, formatKst, todayKst } from "@/lib/format";
 import { setAutoMatch } from "./actions";
-import { ResetButton, RunNowButton } from "./buttons";
+import { EventStepButton, ResetButton, RunNowButton } from "./buttons";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   OPEN: { label: "모집 중", cls: "bg-sky-50 text-sky-800 ring-sky-200" },
@@ -98,9 +98,12 @@ export default async function MatchingPage({ searchParams }: PageProps<"/admin/m
                     ) : "-"}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex flex-wrap justify-end gap-2">
                       {r.status === "OPEN" && <RunNowButton roundId={r.id} disabled={paidCount(r.id) === 0} />}
-                      {r.status === "MATCHED" && <ResetButton roundId={r.id} />}
+                      {r.status === "MATCHED" && !r.setting_overrides?.event_started && <EventStepButton roundId={r.id} step="start" label="행사 시작(체크인 열기)" />}
+                      {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="end" label="행사 종료 처리" />}
+                      {r.status === "DONE" && <EventStepButton roundId={r.id} step="noshow" label="노쇼 확정(시연)" />}
+                      {(r.status === "MATCHED" || r.status === "DONE") && <ResetButton roundId={r.id} />}
                     </div>
                   </td>
                 </tr>

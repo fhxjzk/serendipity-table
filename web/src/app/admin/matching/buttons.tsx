@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { resetRound, runNow, type ActionState } from "./actions";
+import { eventStep, resetRound, runNow, type ActionState } from "./actions";
 
 export function RunNowButton({ roundId, disabled }: { roundId: string; disabled?: boolean }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(runNow, {});
@@ -43,4 +43,18 @@ function Result({ state }: { state: ActionState }) {
   if (state.error) return <p className="max-w-xs text-right text-xs text-red-600">{state.error}</p>;
   if (state.ok) return <p className="max-w-xs text-right text-xs text-[#4f6b3a]">{state.ok}</p>;
   return null;
+}
+
+export function EventStepButton({ roundId, step, label }: { roundId: string; step: "start" | "end" | "noshow"; label: string }) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(eventStep, {});
+  return (
+    <form action={action} className="flex flex-col items-end gap-1">
+      <input type="hidden" name="roundId" value={roundId} />
+      <input type="hidden" name="step" value={step} />
+      <button disabled={pending} className="rounded-lg border border-line bg-white px-3.5 py-2 text-[13px] text-ink hover:bg-paper disabled:opacity-40">
+        {pending ? "처리 중…" : label}
+      </button>
+      <Result state={state} />
+    </form>
+  );
 }

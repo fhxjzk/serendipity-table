@@ -32,6 +32,22 @@ export default async function HomePage() {
       .eq("profile_id", profile.id).eq("is_active", true).maybeSingle(),
   ]);
 
+  // After the event the application is closed; show the last table for feedback / no-show check.
+  let lastTable: { id: string; when: string; needsFeedback: boolean; noshowPending: boolean } | null = null;
+  if (!myApp) {
+    const { data: last } = await supabase.from("applications")
+      .select("id, application_choices(rounds(start_at, status))")
+      .eq("profile_id", profile.id).eq("match_status", "CONFIRMED").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const round = ((last?.application_choices ?? []) as unknown as { rounds: { start_at: string; status: string } | null }[]).map((c) => c.rounds).find((r) => r?.status === "DONE");
+    if (last && round) {
+      const [{ data: fb }, { data: ns }] = await Promise.all([
+        supabase.from("feedbacks").select("id").eq("application_id", last.id).maybeSingle(),
+        supabase.from("noshow_cases").select("result").eq("application_id", last.id).maybeSingle(),
+      ]);
+      lastTable = { id: last.id, when: fmt(round.start_at, { month: "long", day: "numeric", weekday: "short" }), needsFeedback: !fb, noshowPending: ns?.result === "PENDING" };
+    }
+  }
+
   const regions = ((nextRound?.round_regions ?? []) as { region_code: string }[]).map((r) => r.region_code).filter((c) => c !== "ETC");
   const daysLeft = nextRound ? Math.max(0, Math.ceil((new Date(nextRound.apply_deadline_at).getTime() - new Date(nowIso).getTime()) / 86400000)) : 0;
 
@@ -95,6 +111,21 @@ export default async function HomePage() {
           <h2 className="text-[15px] font-bold">내 신청</h2>
           {myApp ? (
             <MyApplication app={myApp as unknown as MyApp} />
+          ) : lastTable ? (
+            <div className="mt-3 rounded-2xl border border-line bg-white p-5">
+              <p className="text-[12px] font-medium text-muted">지난 식탁</p>
+              <p className="mt-1 text-[15px] font-semibold">{lastTable.when}</p>
+              <div className="mt-4 flex flex-col gap-2">
+                {lastTable.noshowPending && (
+                  <Link href={`/applications/${lastTable.id}/noshow`} className="flex h-11 items-center justify-center rounded-xl bg-ember text-[14px] font-semibold text-cream">참석 여부 확인하기</Link>
+                )}
+                {lastTable.needsFeedback ? (
+                  <Link href={`/applications/${lastTable.id}/feedback`} className="flex h-11 items-center justify-center rounded-xl bg-ink text-[14px] font-semibold text-cream">피드백 남기기</Link>
+                ) : (
+                  <p className="text-center text-[12px] text-muted">피드백을 남겨 주셔서 고마워요. 다음 식탁에 반영돼요.</p>
+                )}
+              </div>
+            </div>
           ) : (
             <div className="mt-3 rounded-2xl border border-dashed border-line px-5 py-6 text-center">
               <p className="text-[14px] text-ink/80">아직 신청한 식탁이 없어요.</p>

@@ -6,6 +6,7 @@ import { requireProfile } from "@/lib/auth";
 import { PageHeader, primaryButton } from "@/components/participant-ui";
 import { REGION_LABEL } from "@/lib/format";
 import { loadTableForMember } from "@/lib/table-view";
+import { CheckInButton } from "./checkin-button";
 
 const fmt = (iso: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", ...o }).format(new Date(iso));
 
@@ -46,6 +47,12 @@ export default async function TablePage({ params }: PageProps<"/applications/[id
             </a>
           )}
         </section>
+
+        {t.eventEnded ? (
+          <Link href={`/applications/${id}/feedback`} className={`${primaryButton} bg-ember hover:bg-ember`}>오늘 저녁 피드백 남기기</Link>
+        ) : t.checkInOpen ? (
+          <CheckInButton appId={id} done={t.myAttendance === "ATTENDED"} />
+        ) : null}
 
         {t.roomId && (
           <Link href={`/chat/${t.roomId}`} className={primaryButton}>
