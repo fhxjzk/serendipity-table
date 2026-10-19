@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "test": "vitest run",
+    "match": "tsx --env-file=.env.local scripts/match.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -26,6 +28,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

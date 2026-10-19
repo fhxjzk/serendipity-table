@@ -341,7 +341,7 @@ async function main() {
     ledger.push({ user_ticket_id: ticket.id, application_id: null, delta: USES[product], reason: "PURCHASE", created_at: paidAt.toISOString() });
     return ticket;
   }
-  function use(ticket, applicationId, at) {
+  function spend(ticket, applicationId, at) {
     ticket.remaining_uses -= 1;
     ledger.push({ user_ticket_id: ticket.id, application_id: applicationId, delta: -1, reason: "USE", created_at: at.toISOString() });
   }
@@ -392,7 +392,7 @@ async function main() {
       // Bought a 3-pack three weeks earlier and used it once before this form.
       const boughtAt = new Date(submittedAt.getTime() - 21 * 86400e3);
       ticket = buy(id, "PACK3", boughtAt, `seed:${n}:prior-pack`);
-      use(ticket, null, new Date(boughtAt.getTime() + 7 * 86400e3));
+      spend(ticket, null, new Date(boughtAt.getTime() + 7 * 86400e3));
     } else {
       ticket = buy(id, product, submittedAt, `seed:${n}:form`);
     }
@@ -403,7 +403,7 @@ async function main() {
     const active = picks.some((p) => p.round.status === "OPEN") && !REAPPLY_1022.some(([r]) => r === rowNo);
     const app = addApplication(id, product, ticket, submittedAt, picks, active);
     if (!holdsPack) payments[payments.length - 1].application_id = app.id;
-    use(ticket, app.id, submittedAt);
+    spend(ticket, app.id, submittedAt);
 
     // Demo pool: re-apply to 10/22 at 홍대, using a valid pack or paying for a new 1회권.
     if (REAPPLY_1022.some(([r]) => r === rowNo)) {
@@ -413,7 +413,7 @@ async function main() {
       const reTicket = usable ? ticket : buy(id, "SINGLE", at, `seed:${n}:reapply`);
       const reApp = addApplication(id, usable ? ticket.product_code : "SINGLE", reTicket, at, [{ round, regions: ["HONGDAE"] }], true);
       if (!usable) payments[payments.length - 1].application_id = reApp.id;
-      use(reTicket, reApp.id, at);
+      spend(reTicket, reApp.id, at);
       stats.reapply++;
     }
   }
