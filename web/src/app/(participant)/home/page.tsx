@@ -166,7 +166,11 @@ function MyApplication({ app }: { app: MyApp }) {
           </div>
         ))}
       </dl>
-      {["ALTERNATIVE_OFFERED", "EXCEPTION"].includes(app.match_status) ? (
+      {app.match_status === "CONFIRMED" ? (
+        <Link href={`/applications/${app.id}/table`} className="mt-4 flex h-11 items-center justify-center rounded-xl bg-ink text-[14px] font-semibold text-cream">
+          식탁 정보와 단체방 보기
+        </Link>
+      ) : ["ALTERNATIVE_OFFERED", "EXCEPTION"].includes(app.match_status) ? (
         <Link href={`/applications/${app.id}/resolve`} className="mt-4 flex h-11 items-center justify-center rounded-xl bg-ember text-[14px] font-semibold text-cream">
           매칭 결과 확인하고 다음 방법 고르기
         </Link>

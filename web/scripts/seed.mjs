@@ -55,8 +55,12 @@ const REAPPLY_1022 = [
 ];
 // A few demo allergies for the table summary (data definition 9.2).
 const DEMO_ALLERGIES = { 255: ["갑각류"], 277: ["견과류"], 292: ["갑각류"] };
-// 10/22 original applicant who cannot be matched; loginable for the failure-resolution demo.
-const FAIL_DEMO_ROW = 292;
+// Virtual applicants that get a real login for the demo (credentials from .env.local):
+// 255 is seated at a 10/22 table (confirmed detail + chat), 292 cannot be matched (failure resolution).
+const DEMO_LOGINS = {
+  255: ["SEED_TABLE_EMAIL", "SEED_TABLE_PASSWORD"],
+  292: ["SEED_FAIL_EMAIL", "SEED_FAIL_PASSWORD"],
+};
 
 const INTEREST_SHORT = {
   EXERCISE: "운동", FOOD_CAFE: "맛집·카페 탐방", TRAVEL: "여행", MOVIE_DRAMA: "영화·드라마", MUSIC: "음악",
@@ -369,14 +373,15 @@ async function main() {
     const a = applicants[i];
     const rowNo = i + 1;
     const n = String(rowNo).padStart(3, "0");
-    const failDemo = rowNo === FAIL_DEMO_ROW && process.env.SEED_FAIL_EMAIL && process.env.SEED_FAIL_PASSWORD;
-    if (failDemo && existing.has(`seed${n}@usangtak.test`)) {
+    const [emailKey, passwordKey] = DEMO_LOGINS[rowNo] ?? [];
+    const demo = emailKey && process.env[emailKey] && process.env[passwordKey];
+    if (demo && existing.has(`seed${n}@usangtak.test`)) {
       // Replaced by the demo login below; its rows were removed by --reset.
       await db.auth.admin.deleteUser(existing.get(`seed${n}@usangtak.test`).id);
       existing.delete(`seed${n}@usangtak.test`);
     }
-    const id = failDemo
-      ? await ensureUser(process.env.SEED_FAIL_EMAIL, process.env.SEED_FAIL_PASSWORD, existing)
+    const id = demo
+      ? await ensureUser(process.env[emailKey], process.env[passwordKey], existing)
       : await ensureUser(`seed${n}@usangtak.test`, null, existing);
     const age = Math.round(Number(a.age)) || 28;
     const name = (a.name || `참가자${n}`).slice(0, 20);

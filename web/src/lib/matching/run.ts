@@ -3,6 +3,7 @@
 // service-role client: the scheduler route, the operator's instant run, or scripts/match.ts.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ALGORITHM_VERSION, runMatching } from "./engine";
+import { finalizeRound } from "./finalize";
 import type { Candidate, MatchSettings, Relation, RelationType } from "./types";
 
 export type MatchTrigger = "SCHEDULER" | "DEMO";
@@ -30,6 +31,7 @@ export async function runRoundMatching(db: SupabaseClient, roundId: string, trig
   const runKey = `match:${roundId}`;
   if (round.status !== "OPEN") {
     const { data: prev } = await db.from("match_runs").select("id").eq("run_key", runKey).maybeSingle();
+    if (round.status === "MATCHED") await finalizeRound(db, roundId);
     return { runId: (prev?.id as string | undefined) ?? null, alreadyApplied: true, stats: null };
   }
 
@@ -143,6 +145,7 @@ export async function runRoundMatching(db: SupabaseClient, roundId: string, trig
   };
 
   const applied = must(await db.rpc("apply_match_run", { p: payload }), "apply_match_run") as { run_id: string; already_applied: boolean };
+  await finalizeRound(db, roundId);
   return { runId: applied.run_id, alreadyApplied: applied.already_applied, stats };
 }
 
