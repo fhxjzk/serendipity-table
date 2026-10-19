@@ -276,6 +276,11 @@ async function main() {
   );
   must(await db.from("notification_settings").upsert([{ profile_id: operatorId }, { profile_id: participantId }]), "notification settings");
 
+  // Scheduler endpoint for pg_cron (private.job_config).
+  if (process.env.JOB_TICK_URL && process.env.CRON_SECRET) {
+    must(await db.rpc("set_job_config", { p_url: process.env.JOB_TICK_URL, p_secret: process.env.CRON_SECRET }), "job config");
+  }
+
   const applicants = JSON.parse(readFileSync(new URL("../supabase/seed-data/applicants.json", import.meta.url), "utf8"));
   for (const [row, name] of REAPPLY_1022) {
     if (applicants[row - 1]?.name !== name) throw new Error(`re-applicant row ${row} is not ${name}`);

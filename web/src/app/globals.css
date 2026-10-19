@@ -1,26 +1,46 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import "tailwindcss";
 
+/* 우연한 식탁 — 와썹하우스의 저녁 분위기를 절제해서 옮긴다.
+   어두운 갈색은 사진·헤더에만, 화면 바탕은 따뜻한 미색, 강조는 한 가지 색(ember). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --espresso: #18120e;
+  --cocoa: #2b211a;
+  --ink: #2a211b;
+  --muted: #7a6c60;
+  --line: #e6ddd0;
+  --cream: #f6f1ea;
+  --paper: #fbf8f4;
+  --sand: #efe7dc;
+  --gold: #b8955f;
+  --ember: #9c4f2c;
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
 @theme inline {
+  --color-espresso: var(--espresso);
+  --color-cocoa: var(--cocoa);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-sand: var(--sand);
+  --color-gold: var(--gold);
+  --color-ember: var(--ember);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-serif: var(--font-display), "AppleMyungjo", "Batang", serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+  font-feature-settings: "tnum" 0;
 }
+
+.tabular { font-variant-numeric: tabular-nums; }
