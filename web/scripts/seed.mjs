@@ -55,6 +55,8 @@ const REAPPLY_1022 = [
 ];
 // A few demo allergies for the table summary (data definition 9.2).
 const DEMO_ALLERGIES = { 255: ["갑각류"], 277: ["견과류"], 292: ["갑각류"] };
+// 10/22 original applicant who cannot be matched; loginable for the failure-resolution demo.
+const FAIL_DEMO_ROW = 292;
 
 const INTEREST_SHORT = {
   EXERCISE: "운동", FOOD_CAFE: "맛집·카페 탐방", TRAVEL: "여행", MOVIE_DRAMA: "영화·드라마", MUSIC: "음악",
@@ -201,7 +203,7 @@ const all = (q, col = "created_at") => q.not(col, "is", null);
 
 // Deletes every row; PostgREST needs a filter, so use the first column the table has.
 async function wipe(table) {
-  for (const col of ["id", "created_at", "table_id", "round_id", "profile_id", "application_id"]) {
+  for (const col of ["id", "created_at", "table_id", "round_id", "profile_id", "application_id", "job_key"]) {
     const { error } = await db.from(table).delete().not(col, "is", null);
     if (!error) return;
     if (!/does not exist/.test(error.message)) throw new Error(`reset ${table}: ${error.message}`);
@@ -214,7 +216,7 @@ async function reset() {
   for (const t of [
     "chat_messages", "chat_rooms", "match_events", "alternative_offers", "match_resolutions", "feedbacks", "relations",
     "reports", "noshow_cases", "penalty_records", "sanctions", "notifications", "deliveries", "balance_answers",
-    "status_history", "waitlist_offers", "refunds", "ticket_ledger", "exceptions", "inquiries",
+    "status_history", "waitlist_offers", "refunds", "ticket_ledger", "exceptions", "inquiries", "match_resolutions", "job_runs",
   ]) await wipe(t);
   await wipe("table_contents");
   await wipe("table_members");
@@ -299,6 +301,8 @@ async function main() {
     match_run_at: kst(addDays(date, -3), "18:00").toISOString(),
     reminder_at: kst(date, "10:00").toISOString(),
     status: date < today ? "DONE" : "OPEN",
+    // Paused until the applications are in, so the scheduler cannot match a half-seeded round.
+    setting_overrides: { auto_match: false },
     created_by: operatorId,
   }));
   const roundByDate = new Map(rounds.map((r) => [r.event_date, r]));
@@ -365,7 +369,15 @@ async function main() {
     const a = applicants[i];
     const rowNo = i + 1;
     const n = String(rowNo).padStart(3, "0");
-    const id = await ensureUser(`seed${n}@usangtak.test`, null, existing);
+    const failDemo = rowNo === FAIL_DEMO_ROW && process.env.SEED_FAIL_EMAIL && process.env.SEED_FAIL_PASSWORD;
+    if (failDemo && existing.has(`seed${n}@usangtak.test`)) {
+      // Replaced by the demo login below; its rows were removed by --reset.
+      await db.auth.admin.deleteUser(existing.get(`seed${n}@usangtak.test`).id);
+      existing.delete(`seed${n}@usangtak.test`);
+    }
+    const id = failDemo
+      ? await ensureUser(process.env.SEED_FAIL_EMAIL, process.env.SEED_FAIL_PASSWORD, existing)
+      : await ensureUser(`seed${n}@usangtak.test`, null, existing);
     const age = Math.round(Number(a.age)) || 28;
     const name = (a.name || `참가자${n}`).slice(0, 20);
     const regions = mapRegions(a.regions);
@@ -442,6 +454,9 @@ async function main() {
   for (const a of apps) must(await db.from("applications").update({ user_ticket_id: a.user_ticket_id }).eq("id", a.id), "link ticket");
   await insertAll("application_choices", choices);
   await insertAll("ticket_ledger", ledger);
+
+  // Applications are in: let the scheduler match due rounds again.
+  must(await db.from("rounds").update({ setting_overrides: {} }).in("id", rounds.map((r) => r.id)), "resume auto match");
 
   const open1022 = apps.filter((a) => a.is_active && choices.some((c) => c.application_id === a.id && c.round_id === roundByDate.get(`${YEAR}-10-22`).id));
   console.log(JSON.stringify({

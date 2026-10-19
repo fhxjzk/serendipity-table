@@ -11,7 +11,7 @@ const fmt = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTime
 
 const MATCH_LABEL: Record<string, string> = {
   WAITING: "매칭 대기", MATCHING: "매칭 중", REALLOCATING: "자리 조정 중", CONFIRMED: "식탁 확정",
-  ALTERNATIVE_OFFERED: "다른 일정 제안", TRANSFERRED: "일정 이동", NO_MATCH: "매칭 안 됨", EXCEPTION: "확인 중",
+  ALTERNATIVE_OFFERED: "매칭 실패", TRANSFERRED: "일정 이동", NO_MATCH: "매칭 안 됨", EXCEPTION: "확인 중",
 };
 
 const STEPS = [
@@ -166,7 +166,11 @@ function MyApplication({ app }: { app: MyApp }) {
           </div>
         ))}
       </dl>
-      {app.payment_status === "PENDING" ? (
+      {["ALTERNATIVE_OFFERED", "EXCEPTION"].includes(app.match_status) ? (
+        <Link href={`/applications/${app.id}/resolve`} className="mt-4 flex h-11 items-center justify-center rounded-xl bg-ember text-[14px] font-semibold text-cream">
+          매칭 결과 확인하고 다음 방법 고르기
+        </Link>
+      ) : app.payment_status === "PENDING" ? (
         <Link href={`/apply/payment?app=${app.id}`} className="mt-4 flex h-11 items-center justify-center rounded-xl bg-ember text-[14px] font-semibold text-cream">
           {app.payment_due_at ? `${fmt(app.payment_due_at, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })}까지 결제하기` : "결제하기"}
         </Link>
