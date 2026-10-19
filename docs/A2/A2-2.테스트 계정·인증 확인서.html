@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2-2. 테스트 계정·인증 확인서</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root { --ink: #1f2328; --weak: #59636e; --line: #d0d7de; --soft: #f6f8fa; --brand: #6b4423; --brand-soft: #f5efe6; --ok: #1a7f37; --warn: #9a6700; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; color: var(--ink); background: #fff; font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; font-size: 10pt; line-height: 1.55; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 19pt; margin: 0 0 4px; color: var(--brand); }
+  .subtitle { color: var(--weak); margin: 0 0 18px; }
+  h2 { font-size: 13pt; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--brand); page-break-after: avoid; }
+  p { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: var(--soft); font-weight: 700; white-space: nowrap; }
+  code { font-family: Consolas, monospace; font-size: 8.6pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  .meta th { width: 14%; }
+  .nw { white-space: nowrap; }
+  .note { color: var(--weak); font-size: 8.8pt; }
+  .pass { color: var(--ok); font-weight: 700; white-space: nowrap; }
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0; page-break-inside: avoid; }
+  figure { margin: 0 0 8px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #fff; page-break-inside: avoid; }
+  figure img { display: block; width: 100%; height: 300px; object-fit: cover; object-position: top; }
+  figure.wide img { height: 170px; }
+  figcaption { font-size: 8.6pt; padding: 4px 8px; background: var(--soft); border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<main>
+<h1>A2-2. 테스트 계정·인증 확인서</h1>
+<p class="subtitle">우연한 식탁 MVP — 참가자·운영자 테스트 계정, 이메일 로그인, 역할별 화면 분기와 DB 접근 권한(RLS) 확인 결과</p>
+
+<table class="meta">
+  <tr><th>문서 버전</th><td>v1.1</td><th>작성일</th><td>2026-10-19</td></tr>
+  <tr><th>작성자</th><td>정승환</td><th>상태</th><td>로컬 환경 확인 완료 (배포 환경은 첫 배포 후 같은 항목 재확인)</td></tr>
+  <tr><th>관련 워크</th><td colspan="3">A2. 기반·데이터 › 테스트 계정 2종 인증·기본 화면 틀 구성</td></tr>
+  <tr><th>관련 태스크</th><td colspan="3">테스트 계정 2종 생성·로그인·역할별 화면 분기 구현</td></tr>
+  <tr><th>기준 문서</th><td colspan="3">02. 기능 명세서 v1.1 (회원·인증, 운영자 권한) · 03. 데이터 정의서 v1.0 (T-01 프로필 <code>role</code>, 테이블별 접근 권한) · ADR-001 (Supabase Auth)</td></tr>
+  <tr><th>확인 환경</th><td colspan="3">Next.js 16.4 프로덕션 빌드(<code>next start</code>) + 로컬 Supabase(Docker) · Microsoft Edge 자동 실행(Playwright)으로 화면 캡처와 판정을 함께 기록</td></tr>
+</table>
+
+<h2>1. 테스트 계정</h2>
+<table>
+  <tr><th>구분</th><th>아이디</th><th><code>role</code></th><th>로그인 후 첫 화면</th><th>볼 수 있는 데이터</th></tr>
+  <tr><td class="nw">운영자</td><td><code>admin@usangtak.test</code></td><td><code>OPERATOR</code></td><td><code>/admin</code> 운영자 어드민</td><td>모든 테이블 조회·수정</td></tr>
+  <tr><td class="nw">참가자</td><td><code>user@usangtak.test</code></td><td><code>PARTICIPANT</code></td><td><code>/home</code> 참가자 홈</td><td>본인 프로필·신청·알림, 공개 기준정보(회차·코드값 등), 본인 테이블 단체방</td></tr>
+</table>
+<p class="note">비밀번호는 문서에 적지 않는다. 시드 스크립트(<code>npm run seed</code>)가 환경 변수 값으로 계정을 만들고, 제출 시 Blaybus Output 탭에만 기재한다. 가상데이터 응답자 294명도 <code>seedNNN@usangtak.test</code> 계정이 있으나 무작위 비밀번호라 로그인용이 아니다.</p>
+
+<h2>2. 구현 내용</h2>
+<table>
+  <tr><th class="nw">구분</th><th>내용</th><th>파일</th></tr>
+  <tr><td class="nw">로그인</td><td>이메일·비밀번호 로그인(Supabase Auth). 실패 시 계정 존재 여부를 드러내지 않는 같은 문구 표시</td><td><code>src/app/login/</code></td></tr>
+  <tr><td class="nw">세션 유지</td><td>모든 요청에서 인증 쿠키를 갱신하고, 로그인하지 않은 사용자는 <code>/login?next=원래경로</code>로 보냄</td><td><code>src/proxy.ts</code></td></tr>
+  <tr><td class="nw">역할 분기</td><td>프로필의 <code>role</code>을 서버에서 확인해 운영자는 <code>/admin</code>, 참가자는 <code>/home</code>으로. 다른 역할의 화면에 들어오면 자기 화면으로 돌려보냄</td><td><code>src/lib/auth.ts</code></td></tr>
+  <tr><td class="nw">DB 권한</td><td>44개 테이블 모두 RLS 사용, 정책 70개. 운영자 판별 함수 <code>is_operator()</code>, 단체방 구성원 판별 <code>is_room_member()</code>. 참가자는 본인 행만, 결제·매칭·상태 변경은 서버에서만 처리</td><td><code>supabase/migrations/…_rls_policies.sql</code></td></tr>
+</table>
+
+<h2>3. 확인 결과</h2>
+<table>
+  <tr><th class="nw">#</th><th>확인 항목</th><th>기대</th><th>실제</th><th class="nw">판정</th></tr>
+  <tr><td>1</td><td>로그인 없이 <code>/home</code> 접속</td><td>로그인 화면으로 이동</td><td><code>/login?next=%2Fhome</code></td><td class="pass">통과</td></tr>
+  <tr><td>2</td><td>틀린 비밀번호로 로그인</td><td>오류 문구, 로그인 안 됨</td><td>“이메일 또는 비밀번호가 맞지 않아요.”</td><td class="pass">통과</td></tr>
+  <tr><td>3</td><td>참가자 계정 로그인</td><td><code>/home</code></td><td><code>/home</code></td><td class="pass">통과</td></tr>
+  <tr><td>4</td><td>참가자가 <code>/admin</code> 직접 입력</td><td>참가자 홈으로 돌려보냄</td><td><code>/home</code></td><td class="pass">통과</td></tr>
+  <tr><td>5</td><td>운영자 계정 로그인</td><td><code>/admin</code></td><td><code>/admin</code></td><td class="pass">통과</td></tr>
+  <tr><td>6</td><td>운영자가 <code>/home</code> 직접 입력</td><td>어드민으로 돌려보냄</td><td><code>/admin</code></td><td class="pass">통과</td></tr>
+  <tr><td>7</td><td>참가자 세션으로 DB 조회 — 프로필 / 신청</td><td>본인 1건 / 본인 것만(0건)</td><td>1건 / 0건</td><td class="pass">통과</td></tr>
+  <tr><td>8</td><td>참가자 세션으로 DB 조회 — 회차 / 코드값</td><td>공개 기준정보는 조회 가능</td><td>25건 / 33건</td><td class="pass">통과</td></tr>
+  <tr><td>9</td><td>운영자 세션으로 DB 조회 — 프로필 / 신청</td><td>전체 조회</td><td>296건 / 302건</td><td class="pass">통과</td></tr>
+  <tr><td>10</td><td>로그인 없이(anon) 프로필 조회</td><td>0건</td><td>0건</td><td class="pass">통과</td></tr>
+  <tr><td>11</td><td>참가자가 자기 <code>role</code>을 <code>OPERATOR</code>로 변경 시도</td><td>거부</td><td>RLS 정책 위반으로 거부</td><td class="pass">통과</td></tr>
+</table>
+
+<h2>4. 화면 캡처</h2>
+<div class="shots">
+  <figure><img src="img/01_login.png" alt="로그인 화면"><figcaption>① 로그인 화면 (모바일 390px)</figcaption></figure>
+  <figure><img src="img/02_login_error.png" alt="로그인 실패"><figcaption>② 틀린 비밀번호 — 오류 문구</figcaption></figure>
+  <figure><img src="img/03_participant_home.png" alt="참가자 홈"><figcaption>③ 참가자 로그인 → <code>/home</code></figcaption></figure>
+</div>
+<figure class="wide"><img src="img/04_operator_admin.png" alt="운영자 어드민"><figcaption>④ 운영자 로그인 → <code>/admin</code> (데스크톱 1100px)</figcaption></figure>
+<p class="note">③·④는 역할 분기 확인용 최소 화면이다. 하단 탭·어드민 메뉴 등 화면 골격은 같은 워크의 다음 태스크에서 만든다.</p>
+
+<h2>5. 남은 일</h2>
+<table>
+  <tr><th class="nw">구분</th><th>내용</th><th class="nw">워크</th></tr>
+  <tr><td class="nw">회원가입</td><td>이메일 가입 → 프로필 입력(신청서 문항) → 약관 동의</td><td class="nw">A2 테스트 계정·기본 화면 틀</td></tr>
+  <tr><td class="nw">화면 골격</td><td>참가자 하단 탭(홈·신청·내 일정·알림·마이), 어드민 사이드 메뉴(대시보드·회차·매칭·예외·회원)</td><td class="nw">A2 테스트 계정·기본 화면 틀</td></tr>
+  <tr><td class="nw">배포 확인</td><td>배포 링크에서 3장 11개 항목 재확인 후 테스트 계정 제출</td><td class="nw">A2 빈 앱 첫 배포 · A6</td></tr>
+</table>
+</main>
+</body>
+</html>

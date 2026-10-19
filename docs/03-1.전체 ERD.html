@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>03-1. 전체 ERD</title>
+<style>
+  body { margin: 0; font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; color: #1f2328; background: #fff; }
+  header { padding: 16px 24px 8px; border-bottom: 2px solid #6b4423; }
+  h1 { margin: 0; font-size: 22px; color: #6b4423; }
+  .sub { color: #59636e; font-size: 13px; margin-top: 4px; }
+  .legend { font-size: 11px; color: #59636e; line-height: 1.6; padding: 8px 24px; }
+  #erd { padding: 8px 24px 24px; }
+  #erd img { display: block; width: 5336px; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+</style>
+</head><body>
+<header><h1>03-1. 전체 ERD — 우연한 식탁 MVP</h1>
+<div class="sub">테이블 44개 · 컬럼 379개 · FK 87개 · eXERD 2.5에서 <code>sql/schema_mysql_for_exerd.sql</code>을 역공학해 자동 배치한 원본(<code>erd/usangtak_erd.exerd</code>). 상자 제목·컬럼명은 한글 논리명, 선은 FK 관계(까마귀발 쪽이 FK를 가진 N 쪽).</div></header>
+<div class="legend"><b>회원·설정</b> T-01 profiles(프로필) · T-02 notification_settings(알림 설정) · T-03 push_subscriptions(웹 푸시 구독) · T-04 code_values(코드값) · T-05 app_settings(설정값)<br><b>회차·식당</b> T-06 rounds(회차) · T-07 round_regions(회차별 지역) · T-08 venues(파트너 식당) · T-09 venue_availability(식당 재고)<br><b>신청·결제·이용권</b> T-10 applications(신청) · T-11 application_choices(신청 선택지) · T-12 ticket_products(이용권 상품) · T-13 user_tickets(보유 이용권) · T-14 ticket_ledger(이용권 증감 이력) · T-15 payments(결제(모의)) · T-16 refunds(환불(모의)) · T-17 coupons(보상 쿠폰)<br><b>매칭</b> T-18 match_runs(매칭 실행) · T-19 dining_tables(식사 테이블) · T-20 table_members(테이블 구성원) · T-21 match_events(매칭 처리 이력) · T-22 alternative_offers(대체 일정 추천) · T-23 match_resolutions(미매칭 해결)<br><b>안내·소통</b> T-24 chat_rooms(단체방) · T-25 chat_messages(단체방 메시지) · T-26 notifications(앱 내 알림) · T-27 deliveries(발송 이력) · T-28 message_templates(메시지 템플릿) · T-29 content_items(대화 콘텐츠) · T-30 table_contents(테이블 게시 콘텐츠)<br><b>참석·피드백·안전</b> T-31 feedbacks(피드백) · T-32 relations(사람 간 관계) · T-33 reports(신고) · T-34 noshow_cases(노쇼 처리) · T-35 penalty_records(패널티 기록) · T-36 sanctions(경고·제한)<br><b>운영·추적</b> T-37 exceptions(예외) · T-38 status_history(상태 변경 이력) · T-39 audit_logs(운영자 변경 이력) · T-40 job_runs(자동 작업 실행)<br><b>추가 기능</b> T-41 waitlist_offers(대기자 참가 제안) · T-42 faq_items(FAQ) · T-43 inquiries(1:1 문의) · T-44 balance_answers(밸런스 질문 답)</div>
+<div id="erd"><img src="erd/usangtak_erd.png" alt="전체 ERD"></div>
+<script>
+  // Size the single PDF page to the image so the whole ERD stays on one page.
+  const img = document.querySelector('#erd img');
+  const fit = () => {
+    const st = document.createElement('style');
+    st.textContent = '@page { size: ' + (img.width + 48) + 'px ' + (document.body.scrollHeight + 10) + 'px; margin: 0; }';
+    document.head.appendChild(st);
+  };
+  img.complete ? fit() : img.addEventListener('load', fit);
+</script>
+</body></html>

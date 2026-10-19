@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2-1. 가상데이터 정제·적재 결과서</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root { --ink: #1f2328; --weak: #59636e; --line: #d0d7de; --soft: #f6f8fa; --brand: #6b4423; --brand-soft: #f5efe6; --ok: #1a7f37; --warn: #9a6700; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; color: var(--ink); background: #fff; font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; font-size: 10pt; line-height: 1.55; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 19pt; margin: 0 0 4px; color: var(--brand); }
+  .subtitle { color: var(--weak); margin: 0 0 18px; }
+  h2 { font-size: 13pt; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--brand); page-break-after: avoid; }
+  p { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: var(--soft); font-weight: 700; white-space: nowrap; }
+  code { font-family: Consolas, monospace; font-size: 8.6pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  .meta th { width: 14%; }
+  .num { text-align: right; white-space: nowrap; }
+  .nw { white-space: nowrap; }
+  .note { color: var(--weak); font-size: 8.8pt; }
+  .ok { color: var(--ok); font-weight: 700; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0; }
+  .stat { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: var(--brand-soft); }
+  .stat b { display: block; font-size: 15pt; color: var(--brand); }
+  .stat span { font-size: 8.8pt; color: var(--weak); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+<main>
+<h1>A2-1. 가상데이터 정제·적재 결과서</h1>
+<p class="subtitle">우연한 식탁 MVP — 신청서 응답 294건을 데이터 정의서 9장 규칙대로 DB에 넣은 방법과 결과, 10/22 시연 매칭 풀 구성</p>
+
+<table class="meta">
+  <tr><th>문서 버전</th><td>v1.1</td><th>작성일</th><td>2026-10-19</td></tr>
+  <tr><th>작성자</th><td>정승환</td><th>상태</th><td>로컬 DB 적재 완료 (배포 DB는 같은 스크립트로 재적재)</td></tr>
+  <tr><th>관련 워크</th><td colspan="3">A2. 기반·데이터 › 가상데이터 294건 정제 후 DB 적재</td></tr>
+  <tr><th>관련 태스크</th><td colspan="3">가상데이터 294건 정제·DB 적재 시드 스크립트 작성</td></tr>
+  <tr><th>기준 문서</th><td colspan="3">03. 데이터 정의서 v1.1 — 9.1 원본 열 정제 · 9.2 원본에 없는 항목 채우기 · 10장 시연 데이터(회차)<br>가상데이터 — 신청서 응답 294건 (xlsx)</td></tr>
+  <tr><th>만든 파일</th><td colspan="3"><code>web/scripts/seed.mjs</code> 정제·적재 스크립트 (<code>npm run seed -- --reset</code>로 언제든 같은 결과 재생성, 고정 난수 사용)<br><code>web/supabase/seed-data/applicants.json</code> 원본을 옮긴 JSON<br><code>web/supabase/migrations/</code> 스키마(테이블 44개)·RLS 정책(70개) 마이그레이션</td></tr>
+</table>
+
+<h2>1. 결과 요약</h2>
+<div class="stats">
+  <div class="stat"><b>294명</b><span>프로필 적재 (원본 전부)</span></div>
+  <div class="stat"><b>25회차</b><span>지난 22 · 모집 중 3</span></div>
+  <div class="stat"><b>302 · 299건</b><span>신청 · 모의 결제</span></div>
+  <div class="stat"><b>10명</b><span>10/22 시연 매칭 풀</span></div>
+</div>
+<p>원본의 연락처·Instagram·직업·타임스탬프 열은 비어 있어 개인정보는 들어오지 않았다. 원본에 없는 값(연락처·직업·신청 시각 등)은 9.2 규칙대로 가상 값으로 채웠다. 이용권 299장 모두 잔여 횟수와 증감 이력 합계가 일치한다.</p>
+
+<h2>2. 처리 순서</h2>
+<table>
+  <tr><th class="nw">단계</th><th>내용</th></tr>
+  <tr><td class="nw">① 회차</td><td>원본에 나온 목요일 24일 + 새 회차 10/29를 만든다. 오늘(10/19) 이전 22회는 <code>DONE</code>, 10/22·10/29·11/5는 <code>OPEN</code>. 지역은 표준 4곳(정원 60) + <code>ETC</code>(정원 0)</td></tr>
+  <tr><td class="nw">② 프로필</td><td>응답자마다 Auth 사용자 <code>seedNNN@usangtak.test</code>와 프로필 생성 (<code>origin = SEED</code>, 이메일 알림 없음)</td></tr>
+  <tr><td class="nw">③ 신청</td><td>응답 1건 = 신청 1건. 고른 날짜 × 고른 지역을 신청 선택지로 저장. 모집 중 회차가 들어 있는 신청만 활성(<code>is_active</code>)</td></tr>
+  <tr><td class="nw">④ 결제·이용권</td><td>참가권 규칙대로 모의 결제 → 이용권 발급 → 신청에 1회 차감, 모든 증감을 원장(<code>ticket_ledger</code>)에 기록. 유효기간(60일)이 지난 잔여 횟수는 소멸 처리</td></tr>
+  <tr><td class="nw">⑤ 시연 풀</td><td>10/22 시연 매칭용으로 지난 신청자 8명의 재신청을 추가 (5장)</td></tr>
+</table>
+
+<h2>3. 정제 규칙 (9.1 원본 열)</h2>
+<table>
+  <tr><th>원본 문항</th><th>저장 위치</th><th>규칙</th><th class="num">결과</th></tr>
+  <tr><td>이름(가명)</td><td><code>name</code>, <code>display_name</code></td><td>그대로 저장. 표시 이름도 성 포함 전체 이름 (v1.1 변경)</td><td class="num">294명</td></tr>
+  <tr><td>나이</td><td><code>birth_year</code></td><td>2026 − 나이</td><td class="num">20~43세, 평균 29.7</td></tr>
+  <tr><td>성별</td><td><code>gender</code></td><td>남 → <code>M</code>, 여 → <code>F</code></td><td class="num">여 199 · 남 95</td></tr>
+  <tr><td>MBTI (자유 입력)</td><td><code>mbti</code></td><td>대문자로 바꿔 16종에 맞으면 저장. 명백한 오타 3건(<code>wNTJ</code>→ENTJ, <code>lstp</code>→ISTP, <code>Wsfp</code>→ESFP)과 본인이 유형을 밝힌 1건(“ISTP인데 반반”)은 보정. 두 유형을 적은 답(<code>INFJ / INTJ</code> 등)은 <code>UNKNOWN</code>(모름, 궁합 점수 중립)</td><td class="num">보정 4<br>UNKNOWN 11</td></tr>
+  <tr><td>참석 가능 지역</td><td>신청 선택지 <code>region_code</code></td><td>홍대·합정 / 강남·신논현 / 을지로·종로 / 잠실을 표준 코드로. “상관없음·무방·모두”는 4곳 전부. 표준 지역이 하나도 없으면 <code>ETC</code>(매칭 대상 아님)</td><td class="num">ETC 3명</td></tr>
+  <tr><td>관심사 · 나는 어떤 사람 · 만나고 싶은 사람</td><td><code>interests</code> · <code>self_traits</code> · <code>wanted_traits</code></td><td>괄호 안 쉼표는 나누지 않고 선택지 단위로 분리해 코드값 라벨과 대조</td><td class="num ok">1,140 · 856 · 963<br>(전부 변환)</td></tr>
+  <tr><td>식사 금액</td><td><code>price_ranges</code></td><td>“10,000~20,000원” 안의 쉼표를 다시 합쳐 <code>P10_20</code> · <code>P20_30</code> · <code>P30_PLUS</code></td><td class="num">82 · 164 · 174</td></tr>
+  <tr><td>참가 가능한 날짜</td><td>회차 · 신청 선택지 <code>round_id</code></td><td>“8/20(목)” 같은 표기 변형을 날짜로 통일. “9/10 (홍대, 강남만 가능!)”처럼 괄호 안 지역 제한은 그 날짜 선택지에만 적용</td><td class="num">26종 → 24일<br>선택지 490</td></tr>
+  <tr><td>참가권 선택</td><td>결제 · 이용권 · 원장</td><td>1회권 → 8,000원 결제 후 1회 사용. 3·4회권 → 15,000·18,000원 구독 구매 후 1회 차감. “3회권 사용” → 3주 전에 산 3회권(이전 1회 사용)에서 차감</td><td class="num">1회권 251 · 3회권 32<br>4회권 5 · 3회권 사용 6</td></tr>
+  <tr><td>못 먹는 음식</td><td><code>food_avoid</code></td><td>“없음·없습니다·X·아니요” 류는 빈 배열, 나머지는 괄호 밖 쉼표로 나눠 저장. 알레르기와 구분할 수 없어 <code>allergies</code>는 비움</td><td class="num">67명 · 87항목</td></tr>
+  <tr><td>Instagram · 단톡방 동의</td><td>—</td><td>PRD 범위 밖이라 저장 안 함</td><td class="num">—</td></tr>
+</table>
+
+<h2>4. 원본에 없는 항목 채우기 (9.2)</h2>
+<table>
+  <tr><th>항목</th><th>채운 방법</th><th class="num">결과</th></tr>
+  <tr><td>연락처</td><td><code>010-9NNN-NNNN</code> 형식 가상 번호, 겹치지 않음</td><td class="num">294</td></tr>
+  <tr><td>직업</td><td>가상 직업 20종(마케터·개발자·간호사·교사 등)에서 고정 난수로 배정</td><td class="num">294</td></tr>
+  <tr><td>신청·동의 시각</td><td>첫 희망 날짜 14일 전 ~ 4일 전 사이 임의 시각. 개인정보·정책 동의 시각도 같은 값</td><td class="num">294</td></tr>
+  <tr><td>한 줄 소개</td><td>절반에게 관심사·성향으로 만든 문장 (예: “맛집·카페 탐방 좋아하고 잔잔한 편이에요”)</td><td class="num">147명</td></tr>
+  <tr><td>알레르기</td><td>10/22 시연 참가자 일부에만 갑각류·견과류 (테이블 단위 익명 요약 시연용)</td><td class="num">3명</td></tr>
+  <tr><td>알림 이메일·수신 설정</td><td>가상 참가자는 비움(메일 안 보냄). 테스트 계정 2개만 이메일과 수신 설정</td><td class="num">2</td></tr>
+  <tr><td>웹 푸시 · 음주 선호 · 밸런스 질문</td><td>넣지 않음. 시연 기기에서 생기거나, 추가 기능(R-47) 구현 때 채움</td><td class="num">—</td></tr>
+</table>
+
+<h2>5. 10/22 시연 매칭 풀</h2>
+<p>원본에서 10/22를 고른 사람은 2명뿐이라 자동 매칭을 보여 줄 수 없다. 그래서 10/1~10/15에 신청했던 8명이 10/22에 다시 신청한 것으로 시연 풀 10명을 만들었다. 재신청은 시연용 데이터이며, 원래 신청 기록은 지난 회차에 그대로 남아 있다(비활성).</p>
+<table>
+  <tr><th>구분</th><th>참가자 (성별·나이)</th><th>지역</th><th>이용권</th><th>예상 결과</th></tr>
+  <tr><td class="nw">재신청 8명</td><td>윤현우 남25 · 박상현 남27 · 정현진 남30 · 정건희 남31<br>정혜진 여25 · 조유리 여26 · 김정은 여29 · 윤주연 여30</td><td class="nw">홍대</td><td>3회권 보유 3명은 남은 횟수 차감, 5명은 1회권 새로 결제</td><td>나이 차 6살 이내, 남녀 4명씩 → 4인 테이블 2개로 매칭</td></tr>
+  <tr><td class="nw">원본 2명</td><td>한혁준 남39 (3회권 사용) · 성혜민 여35 (1회권)</td><td class="nw">홍대·을지로 / 을지로</td><td>각자 원본 참가권</td><td>을지로는 2명뿐이고, 홍대에서는 나이 차 8살 안의 3명을 채울 수 없음 → 매칭 실패 → 환불·보상 쿠폰</td></tr>
+</table>
+<p class="note">알레르기 시연값은 정혜진(갑각류)·김정은(견과류)·성혜민(갑각류)에게 넣었다. 실제 테이블 구성은 A3 매칭 엔진의 결과로 확인한다.</p>
+
+<h2>6. 적재 결과 (로컬 Supabase)</h2>
+<div class="two">
+<table>
+  <tr><th>테이블</th><th class="num">행 수</th></tr>
+  <tr><td><code>profiles</code></td><td class="num">296 (응답자 294 + 테스트 2)</td></tr>
+  <tr><td><code>rounds</code> · <code>round_regions</code></td><td class="num">25 · 125</td></tr>
+  <tr><td><code>venues</code> · <code>venue_availability</code></td><td class="num">8 · 24 (모집 중 회차만)</td></tr>
+  <tr><td><code>applications</code></td><td class="num">302 (활성 11)</td></tr>
+  <tr><td><code>application_choices</code></td><td class="num">490 (ETC 5)</td></tr>
+  <tr><td><code>payments</code></td><td class="num">299 · 합계 2,708,000원</td></tr>
+  <tr><td><code>user_tickets</code></td><td class="num">299</td></tr>
+  <tr><td><code>ticket_ledger</code></td><td class="num">635</td></tr>
+  <tr><td><code>notification_settings</code></td><td class="num">2</td></tr>
+</table>
+<table>
+  <tr><th>이용권 상태</th><th class="num">장수</th></tr>
+  <tr><td>1회권 사용 완료</td><td class="num">256</td></tr>
+  <tr><td>3회권 사용 중 (잔여 있음)</td><td class="num">14</td></tr>
+  <tr><td>3회권 사용 완료</td><td class="num">1</td></tr>
+  <tr><td>3·4회권 기간 만료</td><td class="num">23 · 5</td></tr>
+  <tr><th>원장 사유</th><th class="num">건수</th></tr>
+  <tr><td>구매 · 사용 · 소멸</td><td class="num">299 · 308 · 28</td></tr>
+</table>
+</div>
+
+<h2>7. 남은 일</h2>
+<table>
+  <tr><th class="nw">구분</th><th>내용</th><th class="nw">워크</th></tr>
+  <tr><td class="nw">배포 DB 적재</td><td>클라우드 Supabase에 마이그레이션 적용 후 같은 스크립트로 적재</td><td class="nw">A2 빈 앱 첫 배포</td></tr>
+  <tr><td class="nw">지난 회차 결과</td><td>지난 회차 일부에 테이블·참석·피드백·공개 후기, 차단·신고, 식당 12곳(한 지역 재고 부족)</td><td class="nw">A2 시연 데이터 생성</td></tr>
+  <tr><td class="nw">매칭·환불</td><td>10/22 풀로 테이블 2개 생성, 원본 2명 매칭 실패 → 환불·보상 쿠폰 발급 확인</td><td class="nw">A3 매칭 엔진 · A4</td></tr>
+</table>
+
+<h2>8. 변경 이력</h2>
+<table>
+  <tr><th class="nw">버전</th><th class="nw">일자</th><th>내용</th></tr>
+  <tr><td>v1.1</td><td class="nw">2026-10-19</td><td>데이터 정의서 9장 규칙에 맞춰 재적재 — 원본 날짜로 지난 회차 22개 생성, 결제·이용권·원장 기록, ETC 지역 유지, MBTI 오타 4건 보정·나머지 11건 모름 처리, 못 먹는 음식 항목 분리, 직업·한 줄 소개·알레르기·신청 시각 채움. 10/22 시연 매칭 풀(재신청 8명 + 원본 2명) 추가. 표시 이름은 성 포함 전체 이름</td></tr>
+  <tr><td>v1.0</td><td class="nw">2026-10-19</td><td>최초 작성 — 원본 문항 코드 변환, 전원을 10/22 회차에 적재</td></tr>
+</table>
+</main>
+</body>
+</html>

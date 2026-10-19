@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03. 데이터 정의서</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root { --ink: #1f2328; --weak: #59636e; --line: #d0d7de; --soft: #f6f8fa; --brand: #6b4423; --brand-soft: #f5efe6; --ok: #1a7f37; --warn: #9a6700; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; color: var(--ink); background: #fff; font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; font-size: 10pt; line-height: 1.55; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 19pt; margin: 0 0 4px; color: var(--brand); }
+  .subtitle { color: var(--weak); margin: 0 0 18px; }
+  h2 { font-size: 13pt; margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--brand); page-break-after: avoid; }
+  h3 { font-size: 11pt; margin: 16px 0 6px; page-break-after: avoid; }
+  h4 { font-size: 10pt; margin: 12px 0 3px; page-break-after: avoid; }
+  p { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: var(--soft); font-weight: 700; white-space: nowrap; }
+  code { font-family: Consolas, monospace; font-size: 8.6pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  .meta th { width: 14%; }
+  .kv td:first-child { white-space: nowrap; }
+  .note, .ref { color: var(--weak); font-size: 8.8pt; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 9px; font-size: 8.5pt; font-weight: 700; }
+  .opt { background: #fff8c5; color: var(--warn); }
+  .must { background: #dafbe1; color: var(--ok); }
+  .phase { font-weight: 400; font-size: 8.5pt; color: var(--weak); border: 1px solid var(--line); border-radius: 9px; padding: 0 6px; }
+  .tdef { page-break-inside: auto; margin-bottom: 10px; }
+  .tdesc { margin: 2px 0 4px; font-size: 9.2pt; }
+  .tnote { margin: 1px 0; font-size: 8.6pt; color: var(--weak); }
+  .cols td, .cols th { font-size: 8.6pt; padding: 3px 5px; }
+  .cols td:first-child { white-space: nowrap; width: 22%; }
+  .cols td.ty { white-space: nowrap; width: 10%; }
+  .cols td.nn { text-align: center; width: 4%; }
+  .cols td.ck { width: 30%; color: #3a434c; }
+  .list td, .list th { font-size: 9pt; }
+  .list td:nth-child(-n+2), .list td:nth-child(5) { white-space: nowrap; }
+  .codes { width: auto; min-width: 60%; }
+  .codes td, .codes th { font-size: 9pt; }
+  figure.erd { margin: 10px 0 14px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; page-break-inside: avoid; }
+  .ebox { fill: #fff; stroke: #8c959f; stroke-width: 1; }
+  .ehead { fill: #f5efe6; stroke: none; }
+  .ename { font-family: Consolas, monospace; font-size: 10.5px; font-weight: 700; fill: #6b4423; }
+  .eko { font-family: "Malgun Gothic", sans-serif; font-size: 9.5px; fill: #59636e; }
+  .ecol { font-family: Consolas, monospace; font-size: 9.5px; fill: #1f2328; }
+  .etag { font-weight: 700; fill: #9a6700; font-size: 8px; }
+  .eln { stroke: #8c959f; stroke-width: 1; }
+  .card { font-family: Consolas, monospace; font-size: 9px; fill: #cf222e; font-weight: 700; }
+  .log td:nth-child(-n+2) { white-space: nowrap; }
+</style>
+</head>
+<body>
+<main>
+<h1>03. 데이터 정의서</h1>
+<p class="subtitle">우연한 식탁 MVP — 기능 명세서의 기능을 Supabase(Postgres) 테이블·컬럼·관계·제약으로 옮긴 데이터 기준 문서</p>
+
+<table class="meta">
+  <tr><th>문서 버전</th><td>v1.1</td><th>작성일</th><td>2026-10-16 (수정 2026-10-19)</td></tr>
+  <tr><th>작성자</th><td>정승환</td><th>상태</th><td>초안 (DB 적재·구현하며 보완)</td></tr>
+  <tr><th>관련 워크</th><td colspan="3">A1. 기획·설계 › 데이터 정의서 작성(ERD·테이블 정의 포함)</td></tr>
+  <tr><th>관련 태스크</th><td colspan="3">우연한 식탁 MVP 데이터 정의서 작성</td></tr>
+  <tr><th>기준 문서</th><td colspan="3">01. 프로젝트 주제 및 요구 분석서 v1.1<br>02. 기능 명세서 v1.1 (F-01~F-86, 상태값·설정값·상세 규칙)<br>ADR-001 기술 스택·아키텍처 결정 기록 v1.1<br>가상데이터 — 신청서 응답 294건</td></tr>
+</table>
+
+<h2>1. 문서 개요</h2>
+<table class="kv">
+  <tr><th>항목</th><th>내용</th></tr>
+  <tr><td>목적</td><td>기능 86건이 읽고 쓰는 데이터를 테이블 44개(필수 40, 추가 4)·컬럼 379개로 정의하고, 관계(ERD)·제약·권한·가상데이터 적재 규칙을 정해 DB를 바로 만들 수 있게 한다.</td></tr>
+  <tr><td>정한다</td><td>테이블과 컬럼, 자료형, NULL 여부, 기본값, 값 제약, PK·FK·UNIQUE, 멱등 규칙, 코드값, 테이블별 접근 권한, 가상데이터 정제·적재 규칙, 시연 데이터 구성</td></tr>
+  <tr><td>정하지 않는다</td><td>RLS 정책의 SQL 문장, DB 함수 본문, 매칭 알고리즘의 점수 계산 방식(A3 매칭 엔진에서 확정)</td></tr>
+  <tr><td>이름 규칙</td><td>테이블·컬럼은 소문자 snake_case. 테이블은 복수형으로 쓰되 이력·원장 성격은 단수형(<code>ticket_ledger</code>·<code>status_history</code>). PK는 <code>id</code>(uuid), FK는 <code>대상_id</code>, 코드값은 대문자 영문(<code>MATCH_CONFIRMED</code>). SQL 예약어와 겹치는 "table"은 <code>dining_tables</code>로 부른다.</td></tr>
+  <tr><td>함께 만든 파일</td><td>같은 정의에서 생성한다 — <code>03-1.전체 ERD</code>(44개 테이블 통합 ERD, eXERD 역공학 원본 그림), <code>erd/usangtak_erd.exerd</code>(eXERD 모델 원본)·<code>erd/usangtak_erd.png</code>(그림),<code>sql/schema_draft.sql</code>(Supabase용 DDL·한글 주석·코드 시드, 프로젝트 생성 후 실행해 검증), <code>sql/schema_mysql_for_exerd.sql</code>(eXERD 역공학용 MySQL DDL, 한글 주석이 논리명이 된다)</td></tr>
+</table>
+
+<h2>2. 설계 원칙</h2>
+<table class="kv">
+  <tr><th>원칙</th><th>내용</th></tr>
+  <tr><td>상태 4종 분리</td><td>applications에 application·payment·match·attendance 상태를 따로 두고, 바뀔 때마다 status_history에 시각·주체·원인·이전 값을 남긴다.</td></tr>
+<tr><td>멱등 키</td><td>자동 작업은 job_runs.job_key·match_runs.run_key, 결제는 idempotency_key, 알림·예외·시스템 메시지는 dedupe_key에 UNIQUE를 걸어 다시 실행해도 결과가 늘지 않는다.</td></tr>
+<tr><td>중복 배치 금지</td><td>table_members에 (회차, 참가자) 부분 UNIQUE를 걸어 같은 회차의 두 테이블에 동시에 앉을 수 없다.</td></tr>
+<tr><td>쓰기는 서버 함수로</td><td>참가자는 상태 컬럼을 직접 바꾸지 못한다. 신청·결제·취소·매칭·환불은 DB 함수(트랜잭션)나 서버 API가 처리하고, RLS는 읽기 범위를 막는다.</td></tr>
+<tr><td>선택값은 코드</td><td>관심사·성향·지역·가격대는 code_values의 코드로 저장한다. 화면 선택지와 가상데이터 정제가 같은 코드를 쓴다.</td></tr>
+<tr><td>신청과 회차</td><td>신청 한 건이 날짜 × 지역 조합(application_choices)을 여러 개 가진다. 각 회차의 매칭은 그 회차를 고른, 아직 배치되지 않은 신청만 후보로 삼고, 고른 마지막 회차까지 배치되지 않으면 ALTERNATIVE_OFFERED가 된다.</td></tr>
+<tr><td>기록은 지우지 않음</td><td>취소·이동·재배치는 행을 지우지 않고 상태나 left_at으로 남긴다. 처리 사유와 지표를 다시 계산할 수 있어야 한다.</td></tr>
+<tr><td>시각과 금액</td><td>시각은 timestamptz(저장 UTC, 화면 KST), 날짜는 date, 금액은 원 단위 정수.</td></tr>
+</table>
+
+<h2>3. ERD</h2>
+<p><b>원본은 44개 테이블과 모든 FK를 한 장에 담은 「03-1. 전체 ERD」다.</b> 03-1은 이 문서의 DDL을 eXERD로 역공학해 만든 그림이며, 모델 파일(<code>erd/usangtak_erd.exerd</code>)을 eXERD에서 열어 확대·편집할 수 있다. 이 장은 읽기 쉽게 영역별로 잘라 낸 보기이며, 전체 44개 테이블을 세 장으로 나눠 그렸다. 상자에는 PK·FK 컬럼만 보이고, 선은 FK 관계다(<b style="color:#cf222e">N</b> 쪽이 FK를 가진 테이블, <b style="color:#cf222e">1</b> 쪽이 참조되는 테이블). 같은 테이블이 여러 장에 나오며, 상자를 가로지르는 일부 선과 운영자 기록용 FK(created_by·decided_by 등)는 생략했다. 전체 관계는 5장의 FK 표기로 확인한다.</p>
+<figure class="erd"><figcaption><b>ERD-1. 회원·회차·신청·결제</b></figcaption><svg viewBox="0 0 750 535.5" width="100%" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="354.0" y1="110.7" x2="428.1" y2="157.5" class="eln"/><text x="357.9" y="124.5" class="card" text-anchor="middle">N</text><text x="416.7" y="161.6" class="card" text-anchor="middle">1</text><line x1="278.0" y1="117.5" x2="278.0" y2="157.5" class="eln"/><text x="271.0" y="129.5" class="card" text-anchor="middle">N</text><text x="271.0" y="151.5" class="card" text-anchor="middle">1</text><line x1="202.0" y1="52.2" x2="160.0" y2="46.3" class="eln"/><text x="194.1" y="47.0" class="card" text-anchor="middle">N</text><text x="169.9" y="43.6" class="card" text-anchor="middle">1</text><line x1="354.0" y1="57.5" x2="396.0" y2="54.5" class="eln"/><text x="363.5" y="66.8" class="card" text-anchor="middle">N</text><text x="387.5" y="65.1" class="card" text-anchor="middle">1</text><line x1="472.0" y1="90.5" x2="472.0" y2="157.5" class="eln"/><text x="465.0" y="102.5" class="card" text-anchor="middle">N</text><text x="465.0" y="151.5" class="card" text-anchor="middle">1</text><line x1="630.0" y1="63.5" x2="508.0" y2="157.5" class="eln"/><text x="618.6" y="66.4" class="card" text-anchor="middle">N</text><text x="510.9" y="149.5" class="card" text-anchor="middle">1</text><line x1="84.0" y1="157.5" x2="84.0" y2="63.5" class="eln"/><text x="91.0" y="151.5" class="card" text-anchor="middle">N</text><text x="91.0" y="75.5" class="card" text-anchor="middle">1</text><line x1="149.2" y1="157.5" x2="203.6" y2="117.5" class="eln"/><text x="160.6" y="160.8" class="card" text-anchor="middle">N</text><text x="200.5" y="131.5" class="card" text-anchor="middle">1</text><line x1="354.0" y1="205.8" x2="396.0" y2="198.5" class="eln"/><text x="364.1" y="214.1" class="card" text-anchor="middle">N</text><text x="388.3" y="209.9" class="card" text-anchor="middle">1</text><line x1="212.9" y1="157.5" x2="113.4" y2="63.5" class="eln"/><text x="211.2" y="149.2" class="card" text-anchor="middle">N</text><text x="124.7" y="67.6" class="card" text-anchor="middle">1</text><line x1="202.0" y1="213.7" x2="160.0" y2="210.8" class="eln"/><text x="193.5" y="209.1" class="card" text-anchor="middle">N</text><text x="169.5" y="207.4" class="card" text-anchor="middle">1</text><line x1="590.0" y1="189.4" x2="548.0" y2="187.9" class="eln"/><text x="581.2" y="185.0" class="card" text-anchor="middle">N</text><text x="557.2" y="184.2" class="card" text-anchor="middle">1</text><line x1="84.0" y1="320.5" x2="84.0" y2="253.5" class="eln"/><text x="91.0" y="314.5" class="card" text-anchor="middle">N</text><text x="91.0" y="265.5" class="card" text-anchor="middle">1</text><line x1="140.1" y1="320.5" x2="202.0" y2="274.9" class="eln"/><text x="151.5" y="323.8" class="card" text-anchor="middle">N</text><text x="198.9" y="288.9" class="card" text-anchor="middle">1</text><line x1="278.0" y1="320.5" x2="278.0" y2="280.5" class="eln"/><text x="285.0" y="314.5" class="card" text-anchor="middle">N</text><text x="285.0" y="292.5" class="card" text-anchor="middle">1</text><line x1="351.4" y1="403.0" x2="422.6" y2="443.0" class="eln"/><text x="355.8" y="416.5" class="card" text-anchor="middle">N</text><text x="411.3" y="447.7" class="card" text-anchor="middle">1</text><line x1="415.9" y1="320.5" x2="354.0" y2="274.9" class="eln"/><text x="412.8" y="312.5" class="card" text-anchor="middle">N</text><text x="365.4" y="277.6" class="card" text-anchor="middle">1</text><line x1="202.0" y1="479.0" x2="160.0" y2="476.0" class="eln"/><text x="193.5" y="474.4" class="card" text-anchor="middle">N</text><text x="169.5" y="472.7" class="card" text-anchor="middle">1</text><line x1="354.0" y1="479.0" x2="396.0" y2="476.0" class="eln"/><text x="363.5" y="488.3" class="card" text-anchor="middle">N</text><text x="387.5" y="486.6" class="card" text-anchor="middle">1</text><line x1="590.0" y1="474.9" x2="548.0" y2="473.4" class="eln"/><text x="581.2" y="470.5" class="card" text-anchor="middle">N</text><text x="557.2" y="469.7" class="card" text-anchor="middle">1</text>
+<g><rect x="8" y="8" width="152" height="55.5" rx="5" class="ebox"/><rect x="8" y="8" width="152" height="28" rx="5" class="ehead"/><text x="16" y="21" class="ename">ticket_products</text><text x="16" y="33" class="eko">T-12 이용권 상품</text><text x="16" y="52" class="ecol"><tspan class="etag">PK</tspan> code</text></g>
+<g><rect x="202" y="8" width="152" height="109.5" rx="5" class="ebox"/><rect x="202" y="8" width="152" height="28" rx="5" class="ehead"/><text x="210" y="21" class="ename">payments</text><text x="210" y="33" class="eko">T-15 결제(모의)</text><text x="210" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="65.5" class="ecol"><tspan class="etag">FK</tspan> profile_id</text><text x="210" y="79" class="ecol"><tspan class="etag">FK</tspan> application_id</text><text x="210" y="92.5" class="ecol"><tspan class="etag">FK</tspan> product_code</text><text x="210" y="106" class="ecol"><tspan class="etag">FK</tspan> coupon_id</text></g>
+<g><rect x="396" y="8" width="152" height="82.5" rx="5" class="ebox"/><rect x="396" y="8" width="152" height="28" rx="5" class="ehead"/><text x="404" y="21" class="ename">coupons</text><text x="404" y="33" class="eko">T-17 보상 쿠폰</text><text x="404" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="404" y="65.5" class="ecol"><tspan class="etag">FK</tspan> profile_id</text><text x="404" y="79" class="ecol"><tspan class="etag">FK</tspan> source_table_id</text></g>
+<g><rect x="590" y="8" width="152" height="55.5" rx="5" class="ebox"/><rect x="590" y="8" width="152" height="28" rx="5" class="ehead"/><text x="598" y="21" class="ename">notification_settings</text><text x="598" y="33" class="eko">T-02 알림 설정</text><text x="598" y="52" class="ecol"><tspan class="etag">PK,FK</tspan> profile_id</text></g>
+<g><rect x="8" y="157.5" width="152" height="96" rx="5" class="ebox"/><rect x="8" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="16" y="170.5" class="ename">user_tickets</text><text x="16" y="182.5" class="eko">T-13 보유 이용권</text><text x="16" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="16" y="215" class="ecol"><tspan class="etag">FK</tspan> profile_id</text><text x="16" y="228.5" class="ecol"><tspan class="etag">FK</tspan> product_code</text><text x="16" y="242" class="ecol"><tspan class="etag">FK</tspan> payment_id</text></g>
+<g><rect x="202" y="157.5" width="152" height="123" rx="5" class="ebox"/><rect x="202" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="210" y="170.5" class="ename">applications</text><text x="210" y="182.5" class="eko">T-10 신청</text><text x="210" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="215" class="ecol"><tspan class="etag">FK</tspan> profile_id</text><text x="210" y="228.5" class="ecol"><tspan class="etag">FK</tspan> ticket_product_code</text><text x="210" y="242" class="ecol"><tspan class="etag">FK</tspan> user_ticket_id</text><text x="210" y="255.5" class="ecol"><tspan class="etag">FK</tspan> table_id</text><text x="210" y="269" class="ecol"><tspan class="etag">FK</tspan> transferred_from</text></g>
+<g><rect x="396" y="157.5" width="152" height="55.5" rx="5" class="ebox"/><rect x="396" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="404" y="170.5" class="ename">profiles</text><text x="404" y="182.5" class="eko">T-01 프로필</text><text x="404" y="201.5" class="ecol"><tspan class="etag">PK,FK</tspan> id</text></g>
+<g><rect x="590" y="157.5" width="152" height="69" rx="5" class="ebox"/><rect x="590" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="598" y="170.5" class="ename">push_subscriptions</text><text x="598" y="182.5" class="eko">T-03 웹 푸시 구독</text><text x="598" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="598" y="215" class="ecol"><tspan class="etag">FK</tspan> profile_id</text></g>
+<g><rect x="8" y="320.5" width="152" height="82.5" rx="5" class="ebox"/><rect x="8" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="16" y="333.5" class="ename">ticket_ledger</text><text x="16" y="345.5" class="eko">T-14 이용권 증감 이력</text><text x="16" y="364.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="16" y="378" class="ecol"><tspan class="etag">FK</tspan> user_ticket_id</text><text x="16" y="391.5" class="ecol"><tspan class="etag">FK</tspan> application_id</text></g>
+<g><rect x="202" y="320.5" width="152" height="82.5" rx="5" class="ebox"/><rect x="202" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="210" y="333.5" class="ename">application_choices</text><text x="210" y="345.5" class="eko">T-11 신청 선택지</text><text x="210" y="364.5" class="ecol"><tspan class="etag">PK,FK</tspan> application_id</text><text x="210" y="378" class="ecol"><tspan class="etag">PK,FK</tspan> round_id</text><text x="210" y="391.5" class="ecol"><tspan class="etag">PK</tspan> region_code</text></g>
+<g><rect x="396" y="320.5" width="152" height="82.5" rx="5" class="ebox"/><rect x="396" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="404" y="333.5" class="ename">refunds</text><text x="404" y="345.5" class="eko">T-16 환불(모의)</text><text x="404" y="364.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="404" y="378" class="ecol"><tspan class="etag">FK</tspan> payment_id</text><text x="404" y="391.5" class="ecol"><tspan class="etag">FK</tspan> application_id</text></g>
+<g><rect x="8" y="443" width="152" height="55.5" rx="5" class="ebox"/><rect x="8" y="443" width="152" height="28" rx="5" class="ehead"/><text x="16" y="456" class="ename">venues</text><text x="16" y="468" class="eko">T-08 파트너 식당</text><text x="16" y="487" class="ecol"><tspan class="etag">PK</tspan> id</text></g>
+<g><rect x="202" y="443" width="152" height="82.5" rx="5" class="ebox"/><rect x="202" y="443" width="152" height="28" rx="5" class="ehead"/><text x="210" y="456" class="ename">venue_availability</text><text x="210" y="468" class="eko">T-09 식당 재고</text><text x="210" y="487" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="500.5" class="ecol"><tspan class="etag">FK</tspan> venue_id</text><text x="210" y="514" class="ecol"><tspan class="etag">FK</tspan> round_id</text></g>
+<g><rect x="396" y="443" width="152" height="55.5" rx="5" class="ebox"/><rect x="396" y="443" width="152" height="28" rx="5" class="ehead"/><text x="404" y="456" class="ename">rounds</text><text x="404" y="468" class="eko">T-06 회차</text><text x="404" y="487" class="ecol"><tspan class="etag">PK</tspan> id</text></g>
+<g><rect x="590" y="443" width="152" height="69" rx="5" class="ebox"/><rect x="590" y="443" width="152" height="28" rx="5" class="ehead"/><text x="598" y="456" class="ename">round_regions</text><text x="598" y="468" class="eko">T-07 회차별 지역</text><text x="598" y="487" class="ecol"><tspan class="etag">PK,FK</tspan> round_id</text><text x="598" y="500.5" class="ecol"><tspan class="etag">PK</tspan> region_code</text></g></svg></figure>
+<figure class="erd"><figcaption><b>ERD-2. 매칭·안내·소통</b></figcaption><svg viewBox="0 0 750 562.5" width="100%" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="202.0" y1="39.9" x2="160.0" y2="38.4" class="eln"/><text x="193.2" y="35.5" class="card" text-anchor="middle">N</text><text x="169.2" y="34.7" class="card" text-anchor="middle">1</text><line x1="396.0" y1="54.8" x2="354.0" y2="50.4" class="eln"/><text x="387.8" y="49.9" class="card" text-anchor="middle">N</text><text x="363.7" y="47.4" class="card" text-anchor="middle">1</text><line x1="472.0" y1="117.5" x2="472.0" y2="157.5" class="eln"/><text x="465.0" y="129.5" class="card" text-anchor="middle">N</text><text x="465.0" y="151.5" class="card" text-anchor="middle">1</text><line x1="397.6" y1="117.5" x2="343.2" y2="157.5" class="eln"/><text x="386.2" y="120.2" class="card" text-anchor="middle">N</text><text x="346.3" y="149.5" class="card" text-anchor="middle">1</text><line x1="618.9" y1="90.5" x2="542.3" y2="157.5" class="eln"/><text x="607.5" y="94.2" class="card" text-anchor="middle">N</text><text x="544.4" y="149.3" class="card" text-anchor="middle">1</text><line x1="223.1" y1="157.5" x2="115.7" y2="63.5" class="eln"/><text x="221.0" y="149.3" class="card" text-anchor="middle">N</text><text x="127.1" y="67.2" class="card" text-anchor="middle">1</text><line x1="278.0" y1="157.5" x2="278.0" y2="77.0" class="eln"/><text x="285.0" y="151.5" class="card" text-anchor="middle">N</text><text x="285.0" y="89.0" class="card" text-anchor="middle">1</text><line x1="202.0" y1="197.6" x2="160.0" y2="193.2" class="eln"/><text x="193.8" y="192.7" class="card" text-anchor="middle">N</text><text x="169.7" y="190.2" class="card" text-anchor="middle">1</text><line x1="472.0" y1="280.5" x2="472.0" y2="320.5" class="eln"/><text x="465.0" y="292.5" class="card" text-anchor="middle">N</text><text x="465.0" y="314.5" class="card" text-anchor="middle">1</text><line x1="396.0" y1="213.7" x2="354.0" y2="210.8" class="eln"/><text x="387.5" y="209.1" class="card" text-anchor="middle">N</text><text x="363.5" y="207.4" class="card" text-anchor="middle">1</text><line x1="590.0" y1="214.9" x2="548.0" y2="216.4" class="eln"/><text x="580.8" y="211.2" class="card" text-anchor="middle">N</text><text x="556.8" y="212.0" class="card" text-anchor="middle">1</text><line x1="128.8" y1="320.5" x2="215.7" y2="253.5" class="eln"/><text x="140.2" y="323.6" class="card" text-anchor="middle">N</text><text x="212.9" y="267.5" class="card" text-anchor="middle">1</text><line x1="278.0" y1="320.5" x2="278.0" y2="253.5" class="eln"/><text x="285.0" y="314.5" class="card" text-anchor="middle">N</text><text x="285.0" y="265.5" class="card" text-anchor="middle">1</text><line x1="346.0" y1="320.5" x2="396.0" y2="280.2" class="eln"/><text x="357.4" y="323.3" class="card" text-anchor="middle">N</text><text x="393.4" y="294.3" class="card" text-anchor="middle">1</text><line x1="354.0" y1="364.7" x2="396.0" y2="358.8" class="eln"/><text x="363.9" y="373.4" class="card" text-anchor="middle">N</text><text x="388.1" y="370.0" class="card" text-anchor="middle">1</text><line x1="590.0" y1="352.4" x2="548.0" y2="350.9" class="eln"/><text x="581.2" y="348.0" class="card" text-anchor="middle">N</text><text x="557.2" y="347.2" class="card" text-anchor="middle">1</text><line x1="84.0" y1="470.0" x2="84.0" y2="389.5" class="eln"/><text x="91.0" y="464.0" class="card" text-anchor="middle">N</text><text x="91.0" y="401.5" class="card" text-anchor="middle">1</text><line x1="354.0" y1="506.0" x2="396.0" y2="503.0" class="eln"/><text x="363.5" y="515.3" class="card" text-anchor="middle">N</text><text x="387.5" y="513.6" class="card" text-anchor="middle">1</text><line x1="202.0" y1="511.3" x2="160.0" y2="511.3" class="eln"/><text x="193.0" y="507.3" class="card" text-anchor="middle">N</text><text x="169.0" y="507.3" class="card" text-anchor="middle">1</text><line x1="666.0" y1="470.0" x2="666.0" y2="389.5" class="eln"/><text x="673.0" y="464.0" class="card" text-anchor="middle">N</text><text x="673.0" y="401.5" class="card" text-anchor="middle">1</text>
+<g><rect x="8" y="8" width="152" height="55.5" rx="5" class="ebox"/><rect x="8" y="8" width="152" height="28" rx="5" class="ehead"/><text x="16" y="21" class="ename">rounds</text><text x="16" y="33" class="eko">T-06 회차</text><text x="16" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text></g>
+<g><rect x="202" y="8" width="152" height="69" rx="5" class="ebox"/><rect x="202" y="8" width="152" height="28" rx="5" class="ehead"/><text x="210" y="21" class="ename">match_runs</text><text x="210" y="33" class="eko">T-18 매칭 실행</text><text x="210" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="65.5" class="ecol"><tspan class="etag">FK</tspan> round_id</text></g>
+<g><rect x="396" y="8" width="152" height="109.5" rx="5" class="ebox"/><rect x="396" y="8" width="152" height="28" rx="5" class="ehead"/><text x="404" y="21" class="ename">match_events</text><text x="404" y="33" class="eko">T-21 매칭 처리 이력</text><text x="404" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="404" y="65.5" class="ecol"><tspan class="etag">FK</tspan> match_run_id</text><text x="404" y="79" class="ecol"><tspan class="etag">FK</tspan> application_id</text><text x="404" y="92.5" class="ecol"><tspan class="etag">FK</tspan> from_table_id</text><text x="404" y="106" class="ecol"><tspan class="etag">FK</tspan> to_table_id</text></g>
+<g><rect x="590" y="8" width="152" height="82.5" rx="5" class="ebox"/><rect x="590" y="8" width="152" height="28" rx="5" class="ehead"/><text x="598" y="21" class="ename">alternative_offers</text><text x="598" y="33" class="eko">T-22 대체 일정 추천</text><text x="598" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="598" y="65.5" class="ecol"><tspan class="etag">FK</tspan> application_id</text><text x="598" y="79" class="ecol"><tspan class="etag">FK</tspan> round_id</text></g>
+<g><rect x="8" y="157.5" width="152" height="55.5" rx="5" class="ebox"/><rect x="8" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="16" y="170.5" class="ename">venues</text><text x="16" y="182.5" class="eko">T-08 파트너 식당</text><text x="16" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text></g>
+<g><rect x="202" y="157.5" width="152" height="96" rx="5" class="ebox"/><rect x="202" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="210" y="170.5" class="ename">dining_tables</text><text x="210" y="182.5" class="eko">T-19 식사 테이블</text><text x="210" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="215" class="ecol"><tspan class="etag">FK</tspan> round_id</text><text x="210" y="228.5" class="ecol"><tspan class="etag">FK</tspan> match_run_id</text><text x="210" y="242" class="ecol"><tspan class="etag">FK</tspan> venue_id</text></g>
+<g><rect x="396" y="157.5" width="152" height="123" rx="5" class="ebox"/><rect x="396" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="404" y="170.5" class="ename">applications</text><text x="404" y="182.5" class="eko">T-10 신청</text><text x="404" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="404" y="215" class="ecol"><tspan class="etag">FK</tspan> profile_id</text><text x="404" y="228.5" class="ecol"><tspan class="etag">FK</tspan> ticket_product_code</text><text x="404" y="242" class="ecol"><tspan class="etag">FK</tspan> user_ticket_id</text><text x="404" y="255.5" class="ecol"><tspan class="etag">FK</tspan> table_id</text><text x="404" y="269" class="ecol"><tspan class="etag">FK</tspan> transferred_from</text></g>
+<g><rect x="590" y="157.5" width="152" height="109.5" rx="5" class="ebox"/><rect x="590" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="598" y="170.5" class="ename">match_resolutions</text><text x="598" y="182.5" class="eko">T-23 미매칭 해결</text><text x="598" y="201.5" class="ecol"><tspan class="etag">PK,FK</tspan> application_id</text><text x="598" y="215" class="ecol"><tspan class="etag">FK</tspan> target_round_id</text><text x="598" y="228.5" class="ecol"><tspan class="etag">FK</tspan> new_application_id</text><text x="598" y="242" class="ecol"><tspan class="etag">FK</tspan> user_ticket_id</text><text x="598" y="255.5" class="ecol"><tspan class="etag">FK</tspan> refund_id</text></g>
+<g><rect x="8" y="320.5" width="152" height="69" rx="5" class="ebox"/><rect x="8" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="16" y="333.5" class="ename">chat_rooms</text><text x="16" y="345.5" class="eko">T-24 단체방</text><text x="16" y="364.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="16" y="378" class="ecol"><tspan class="etag">FK</tspan> table_id</text></g>
+<g><rect x="202" y="320.5" width="152" height="109.5" rx="5" class="ebox"/><rect x="202" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="210" y="333.5" class="ename">table_members</text><text x="210" y="345.5" class="eko">T-20 테이블 구성원</text><text x="210" y="364.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="378" class="ecol"><tspan class="etag">FK</tspan> table_id</text><text x="210" y="391.5" class="ecol"><tspan class="etag">FK</tspan> round_id</text><text x="210" y="405" class="ecol"><tspan class="etag">FK</tspan> application_id</text><text x="210" y="418.5" class="ecol"><tspan class="etag">FK</tspan> profile_id</text></g>
+<g><rect x="396" y="320.5" width="152" height="55.5" rx="5" class="ebox"/><rect x="396" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="404" y="333.5" class="ename">profiles</text><text x="404" y="345.5" class="eko">T-01 프로필</text><text x="404" y="364.5" class="ecol"><tspan class="etag">PK,FK</tspan> id</text></g>
+<g><rect x="590" y="320.5" width="152" height="69" rx="5" class="ebox"/><rect x="590" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="598" y="333.5" class="ename">notifications</text><text x="598" y="345.5" class="eko">T-26 앱 내 알림</text><text x="598" y="364.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="598" y="378" class="ecol"><tspan class="etag">FK</tspan> profile_id</text></g>
+<g><rect x="8" y="470" width="152" height="82.5" rx="5" class="ebox"/><rect x="8" y="470" width="152" height="28" rx="5" class="ehead"/><text x="16" y="483" class="ename">chat_messages</text><text x="16" y="495" class="eko">T-25 단체방 메시지</text><text x="16" y="514" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="16" y="527.5" class="ecol"><tspan class="etag">FK</tspan> room_id</text><text x="16" y="541" class="ecol"><tspan class="etag">FK</tspan> sender_id</text></g>
+<g><rect x="202" y="470" width="152" height="82.5" rx="5" class="ebox"/><rect x="202" y="470" width="152" height="28" rx="5" class="ehead"/><text x="210" y="483" class="ename">table_contents</text><text x="210" y="495" class="eko">T-30 테이블 게시 콘텐츠</text><text x="210" y="514" class="ecol"><tspan class="etag">PK,FK</tspan> table_id</text><text x="210" y="527.5" class="ecol"><tspan class="etag">PK,FK</tspan> content_item_id</text><text x="210" y="541" class="ecol"><tspan class="etag">FK</tspan> posted_message_id</text></g>
+<g><rect x="396" y="470" width="152" height="55.5" rx="5" class="ebox"/><rect x="396" y="470" width="152" height="28" rx="5" class="ehead"/><text x="404" y="483" class="ename">content_items</text><text x="404" y="495" class="eko">T-29 대화 콘텐츠</text><text x="404" y="514" class="ecol"><tspan class="etag">PK</tspan> id</text></g>
+<g><rect x="590" y="470" width="152" height="82.5" rx="5" class="ebox"/><rect x="590" y="470" width="152" height="28" rx="5" class="ehead"/><text x="598" y="483" class="ename">deliveries</text><text x="598" y="495" class="eko">T-27 발송 이력</text><text x="598" y="514" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="598" y="527.5" class="ecol"><tspan class="etag">FK</tspan> notification_id</text><text x="598" y="541" class="ecol"><tspan class="etag">FK</tspan> chat_message_id</text></g></svg></figure>
+<figure class="erd"><figcaption><b>ERD-3. 참석·피드백·안전·운영</b></figcaption><svg viewBox="0 0 750 562.5" width="100%" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="160.0" y1="39.9" x2="202.0" y2="38.4" class="eln"/><text x="169.2" y="49.5" class="card" text-anchor="middle">N</text><text x="193.2" y="48.7" class="card" text-anchor="middle">1</text><line x1="396.0" y1="52.2" x2="354.0" y2="46.3" class="eln"/><text x="388.1" y="47.0" class="card" text-anchor="middle">N</text><text x="363.9" y="43.6" class="card" text-anchor="middle">1</text><line x1="397.6" y1="117.5" x2="343.2" y2="157.5" class="eln"/><text x="386.2" y="120.2" class="card" text-anchor="middle">N</text><text x="346.3" y="149.5" class="card" text-anchor="middle">1</text><line x1="472.0" y1="117.5" x2="472.0" y2="157.5" class="eln"/><text x="465.0" y="129.5" class="card" text-anchor="middle">N</text><text x="465.0" y="151.5" class="card" text-anchor="middle">1</text><line x1="628.1" y1="77.0" x2="539.6" y2="157.5" class="eln"/><text x="616.7" y="80.9" class="card" text-anchor="middle">N</text><text x="541.5" y="149.3" class="card" text-anchor="middle">1</text><line x1="160.0" y1="197.3" x2="202.0" y2="200.2" class="eln"/><text x="168.5" y="207.9" class="card" text-anchor="middle">N</text><text x="192.5" y="209.6" class="card" text-anchor="middle">1</text><line x1="278.0" y1="157.5" x2="278.0" y2="63.5" class="eln"/><text x="285.0" y="151.5" class="card" text-anchor="middle">N</text><text x="285.0" y="75.5" class="card" text-anchor="middle">1</text><line x1="472.0" y1="280.5" x2="472.0" y2="320.5" class="eln"/><text x="465.0" y="292.5" class="card" text-anchor="middle">N</text><text x="465.0" y="314.5" class="card" text-anchor="middle">1</text><line x1="396.0" y1="213.7" x2="354.0" y2="210.8" class="eln"/><text x="387.5" y="209.1" class="card" text-anchor="middle">N</text><text x="363.5" y="207.4" class="card" text-anchor="middle">1</text><line x1="160.0" y1="339.2" x2="396.0" y2="248.3" class="eln"/><text x="170.9" y="345.5" class="card" text-anchor="middle">N</text><text x="390.1" y="261.1" class="card" text-anchor="middle">1</text><line x1="141.1" y1="320.5" x2="220.9" y2="253.5" class="eln"/><text x="152.5" y="323.1" class="card" text-anchor="middle">N</text><text x="218.5" y="267.6" class="card" text-anchor="middle">1</text><line x1="354.0" y1="360.6" x2="396.0" y2="356.2" class="eln"/><text x="363.7" y="369.6" class="card" text-anchor="middle">N</text><text x="387.8" y="367.1" class="card" text-anchor="middle">1</text><line x1="278.0" y1="320.5" x2="278.0" y2="253.5" class="eln"/><text x="285.0" y="314.5" class="card" text-anchor="middle">N</text><text x="285.0" y="265.5" class="card" text-anchor="middle">1</text><line x1="590.0" y1="356.5" x2="548.0" y2="353.5" class="eln"/><text x="581.5" y="351.9" class="card" text-anchor="middle">N</text><text x="557.5" y="350.2" class="card" text-anchor="middle">1</text><line x1="609.9" y1="320.5" x2="548.0" y2="274.9" class="eln"/><text x="606.8" y="312.5" class="card" text-anchor="middle">N</text><text x="559.4" y="277.6" class="card" text-anchor="middle">1</text><line x1="337.6" y1="456.5" x2="437.5" y2="376.0" class="eln"/><text x="349.0" y="459.3" class="card" text-anchor="middle">N</text><text x="434.9" y="390.1" class="card" text-anchor="middle">1</text><line x1="472.0" y1="456.5" x2="472.0" y2="376.0" class="eln"/><text x="479.0" y="450.5" class="card" text-anchor="middle">N</text><text x="479.0" y="388.0" class="card" text-anchor="middle">1</text><line x1="396.0" y1="500.4" x2="354.0" y2="501.9" class="eln"/><text x="386.8" y="496.7" class="card" text-anchor="middle">N</text><text x="362.8" y="497.5" class="card" text-anchor="middle">1</text>
+<g><rect x="8" y="8" width="152" height="69" rx="5" class="ebox"/><rect x="8" y="8" width="152" height="28" rx="5" class="ehead"/><text x="16" y="21" class="ename">job_runs</text><text x="16" y="33" class="eko">T-40 자동 작업 실행</text><text x="16" y="52" class="ecol"><tspan class="etag">PK</tspan> job_key</text><text x="16" y="65.5" class="ecol"><tspan class="etag">FK</tspan> round_id</text></g>
+<g><rect x="202" y="8" width="152" height="55.5" rx="5" class="ebox"/><rect x="202" y="8" width="152" height="28" rx="5" class="ehead"/><text x="210" y="21" class="ename">rounds</text><text x="210" y="33" class="eko">T-06 회차</text><text x="210" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text></g>
+<g><rect x="396" y="8" width="152" height="109.5" rx="5" class="ebox"/><rect x="396" y="8" width="152" height="28" rx="5" class="ehead"/><text x="404" y="21" class="ename">exceptions</text><text x="404" y="33" class="eko">T-37 예외</text><text x="404" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="404" y="65.5" class="ecol"><tspan class="etag">FK</tspan> round_id</text><text x="404" y="79" class="ecol"><tspan class="etag">FK</tspan> table_id</text><text x="404" y="92.5" class="ecol"><tspan class="etag">FK</tspan> application_id</text><text x="404" y="106" class="ecol"><tspan class="etag">FK</tspan> inquiry_id</text></g>
+<g><rect x="590" y="8" width="152" height="69" rx="5" class="ebox"/><rect x="590" y="8" width="152" height="28" rx="5" class="ehead"/><text x="598" y="21" class="ename">status_history</text><text x="598" y="33" class="eko">T-38 상태 변경 이력</text><text x="598" y="52" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="598" y="65.5" class="ecol"><tspan class="etag">FK</tspan> application_id</text></g>
+<g><rect x="8" y="157.5" width="152" height="69" rx="5" class="ebox"/><rect x="8" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="16" y="170.5" class="ename">noshow_cases</text><text x="16" y="182.5" class="eko">T-34 노쇼 처리</text><text x="16" y="201.5" class="ecol"><tspan class="etag">PK,FK</tspan> application_id</text><text x="16" y="215" class="ecol"><tspan class="etag">FK</tspan> table_id</text></g>
+<g><rect x="202" y="157.5" width="152" height="96" rx="5" class="ebox"/><rect x="202" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="210" y="170.5" class="ename">dining_tables</text><text x="210" y="182.5" class="eko">T-19 식사 테이블</text><text x="210" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="215" class="ecol"><tspan class="etag">FK</tspan> round_id</text><text x="210" y="228.5" class="ecol"><tspan class="etag">FK</tspan> match_run_id</text><text x="210" y="242" class="ecol"><tspan class="etag">FK</tspan> venue_id</text></g>
+<g><rect x="396" y="157.5" width="152" height="123" rx="5" class="ebox"/><rect x="396" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="404" y="170.5" class="ename">applications</text><text x="404" y="182.5" class="eko">T-10 신청</text><text x="404" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="404" y="215" class="ecol"><tspan class="etag">FK</tspan> profile_id</text><text x="404" y="228.5" class="ecol"><tspan class="etag">FK</tspan> ticket_product_code</text><text x="404" y="242" class="ecol"><tspan class="etag">FK</tspan> user_ticket_id</text><text x="404" y="255.5" class="ecol"><tspan class="etag">FK</tspan> table_id</text><text x="404" y="269" class="ecol"><tspan class="etag">FK</tspan> transferred_from</text></g>
+<g><rect x="590" y="157.5" width="152" height="55.5" rx="5" class="ebox"/><rect x="590" y="157.5" width="152" height="28" rx="5" class="ehead"/><text x="598" y="170.5" class="ename">audit_logs</text><text x="598" y="182.5" class="eko">T-39 운영자 변경 이력</text><text x="598" y="201.5" class="ecol"><tspan class="etag">PK</tspan> id</text></g>
+<g><rect x="8" y="320.5" width="152" height="96" rx="5" class="ebox"/><rect x="8" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="16" y="333.5" class="ename">feedbacks</text><text x="16" y="345.5" class="eko">T-31 피드백</text><text x="16" y="364.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="16" y="378" class="ecol"><tspan class="etag">FK</tspan> application_id</text><text x="16" y="391.5" class="ecol"><tspan class="etag">FK</tspan> table_id</text><text x="16" y="405" class="ecol"><tspan class="etag">FK</tspan> profile_id</text></g>
+<g><rect x="202" y="320.5" width="152" height="96" rx="5" class="ebox"/><rect x="202" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="210" y="333.5" class="ename">relations</text><text x="210" y="345.5" class="eko">T-32 사람 간 관계</text><text x="210" y="364.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="378" class="ecol"><tspan class="etag">FK</tspan> from_profile_id</text><text x="210" y="391.5" class="ecol"><tspan class="etag">FK</tspan> to_profile_id</text><text x="210" y="405" class="ecol"><tspan class="etag">FK</tspan> source_table_id</text></g>
+<g><rect x="396" y="320.5" width="152" height="55.5" rx="5" class="ebox"/><rect x="396" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="404" y="333.5" class="ename">profiles</text><text x="404" y="345.5" class="eko">T-01 프로필</text><text x="404" y="364.5" class="ecol"><tspan class="etag">PK,FK</tspan> id</text></g>
+<g><rect x="590" y="320.5" width="152" height="82.5" rx="5" class="ebox"/><rect x="590" y="320.5" width="152" height="28" rx="5" class="ehead"/><text x="598" y="333.5" class="ename">penalty_records</text><text x="598" y="345.5" class="eko">T-35 패널티 기록</text><text x="598" y="364.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="598" y="378" class="ecol"><tspan class="etag">FK</tspan> profile_id</text><text x="598" y="391.5" class="ecol"><tspan class="etag">FK</tspan> application_id</text></g>
+<g><rect x="202" y="456.5" width="152" height="96" rx="5" class="ebox"/><rect x="202" y="456.5" width="152" height="28" rx="5" class="ehead"/><text x="210" y="469.5" class="ename">reports</text><text x="210" y="481.5" class="eko">T-33 신고</text><text x="210" y="500.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="210" y="514" class="ecol"><tspan class="etag">FK</tspan> reporter_id</text><text x="210" y="527.5" class="ecol"><tspan class="etag">FK</tspan> reported_id</text><text x="210" y="541" class="ecol"><tspan class="etag">FK</tspan> table_id</text></g>
+<g><rect x="396" y="456.5" width="152" height="82.5" rx="5" class="ebox"/><rect x="396" y="456.5" width="152" height="28" rx="5" class="ehead"/><text x="404" y="469.5" class="ename">sanctions</text><text x="404" y="481.5" class="eko">T-36 경고·제한</text><text x="404" y="500.5" class="ecol"><tspan class="etag">PK</tspan> id</text><text x="404" y="514" class="ecol"><tspan class="etag">FK</tspan> profile_id</text><text x="404" y="527.5" class="ecol"><tspan class="etag">FK</tspan> report_id</text></g></svg></figure>
+
+<h2>4. 테이블 목록</h2>
+<table class="list">
+  <tr><th>번호</th><th>테이블</th><th>이름</th><th>영역</th><th>차수</th><th>관련 기능</th></tr>
+  <tr><td>T-01</td><td><code>profiles</code></td><td>프로필</td><td>회원·설정</td><td>1차</td><td>F-01, F-02, F-03, F-04, F-05, F-25, F-57, F-60, F-77, F-78</td></tr>
+<tr><td>T-02</td><td><code>notification_settings</code></td><td>알림 설정</td><td>회원·설정</td><td>2차</td><td>F-06</td></tr>
+<tr><td>T-03</td><td><code>push_subscriptions</code></td><td>웹 푸시 구독</td><td>회원·설정</td><td>2차</td><td>F-40</td></tr>
+<tr><td>T-04</td><td><code>code_values</code></td><td>코드값</td><td>회원·설정</td><td>1차</td><td>F-03, F-08, F-74</td></tr>
+<tr><td>T-05</td><td><code>app_settings</code></td><td>설정값</td><td>회원·설정</td><td>1차</td><td>F-12, F-14, F-26, F-56, F-62, F-81</td></tr>
+<tr><td>T-06</td><td><code>rounds</code></td><td>회차</td><td>회차·식당</td><td>1차</td><td>F-07, F-12, F-22, F-52, F-58</td></tr>
+<tr><td>T-07</td><td><code>round_regions</code></td><td>회차별 지역</td><td>회차·식당</td><td>1차</td><td>F-07, F-58</td></tr>
+<tr><td>T-08</td><td><code>venues</code></td><td>파트너 식당</td><td>회차·식당</td><td>1차</td><td>F-35, F-59</td></tr>
+<tr><td>T-09</td><td><code>venue_availability</code></td><td>식당 재고</td><td>회차·식당</td><td>1차</td><td>F-35, F-59</td></tr>
+<tr><td>T-10</td><td><code>applications</code></td><td>신청</td><td>신청·결제·이용권</td><td>1차</td><td>F-09, F-13, F-15, F-16, F-17, F-19, F-23, F-46, F-51, F-60, F-72, F-73</td></tr>
+<tr><td>T-11</td><td><code>application_choices</code></td><td>신청 선택지</td><td>신청·결제·이용권</td><td>1차</td><td>F-08, F-23, F-25, F-28, F-52, F-62</td></tr>
+<tr><td>T-12</td><td><code>ticket_products</code></td><td>이용권 상품</td><td>신청·결제·이용권</td><td>1차</td><td>F-10</td></tr>
+<tr><td>T-13</td><td><code>user_tickets</code></td><td>보유 이용권</td><td>신청·결제·이용권</td><td>2차</td><td>F-11, F-20, F-83</td></tr>
+<tr><td>T-14</td><td><code>ticket_ledger</code></td><td>이용권 증감 이력</td><td>신청·결제·이용권</td><td>2차</td><td>F-11</td></tr>
+<tr><td>T-15</td><td><code>payments</code></td><td>결제(모의)</td><td>신청·결제·이용권</td><td>1차</td><td>F-13, F-61</td></tr>
+<tr><td>T-16</td><td><code>refunds</code></td><td>환불(모의)</td><td>신청·결제·이용권</td><td>2차</td><td>F-21, F-61</td></tr>
+<tr><td>T-17</td><td><code>coupons</code></td><td>보상 쿠폰</td><td>신청·결제·이용권</td><td>3차</td><td>F-13, F-34</td></tr>
+<tr><td>T-18</td><td><code>match_runs</code></td><td>매칭 실행</td><td>매칭</td><td>2차</td><td>F-22, F-32, F-63, F-76</td></tr>
+<tr><td>T-19</td><td><code>dining_tables</code></td><td>식사 테이블</td><td>매칭</td><td>2차</td><td>F-27, F-29, F-33, F-35, F-64</td></tr>
+<tr><td>T-20</td><td><code>table_members</code></td><td>테이블 구성원</td><td>매칭</td><td>2차</td><td>F-27, F-28, F-32, F-33, F-51, F-73</td></tr>
+<tr><td>T-21</td><td><code>match_events</code></td><td>매칭 처리 이력</td><td>매칭</td><td>2차</td><td>F-28, F-31, F-63</td></tr>
+<tr><td>T-22</td><td><code>alternative_offers</code></td><td>대체 일정 추천</td><td>매칭</td><td>2차</td><td>F-18, F-30</td></tr>
+<tr><td>T-23</td><td><code>match_resolutions</code></td><td>미매칭 해결</td><td>매칭</td><td>2차</td><td>F-19, F-20, F-21</td></tr>
+<tr><td>T-24</td><td><code>chat_rooms</code></td><td>단체방</td><td>안내·소통</td><td>2차</td><td>F-37</td></tr>
+<tr><td>T-25</td><td><code>chat_messages</code></td><td>단체방 메시지</td><td>안내·소통</td><td>2차</td><td>F-16, F-38, F-42, F-43, F-44</td></tr>
+<tr><td>T-26</td><td><code>notifications</code></td><td>앱 내 알림</td><td>안내·소통</td><td>2차</td><td>F-34, F-36, F-39, F-50, F-55</td></tr>
+<tr><td>T-27</td><td><code>deliveries</code></td><td>발송 이력</td><td>안내·소통</td><td>2차</td><td>F-40, F-41, F-45, F-71</td></tr>
+<tr><td>T-28</td><td><code>message_templates</code></td><td>메시지 템플릿</td><td>안내·소통</td><td>3차</td><td>F-70</td></tr>
+<tr><td>T-29</td><td><code>content_items</code></td><td>대화 콘텐츠</td><td>안내·소통</td><td>3차</td><td>F-44, F-82</td></tr>
+<tr><td>T-30</td><td><code>table_contents</code></td><td>테이블 게시 콘텐츠</td><td>안내·소통</td><td>3차</td><td>F-44</td></tr>
+<tr><td>T-31</td><td><code>feedbacks</code></td><td>피드백</td><td>참석·피드백·안전</td><td>3차</td><td>F-47, F-69, F-86</td></tr>
+<tr><td>T-32</td><td><code>relations</code></td><td>사람 간 관계</td><td>참석·피드백·안전</td><td>2차</td><td>F-24, F-25, F-48, F-49, F-54</td></tr>
+<tr><td>T-33</td><td><code>reports</code></td><td>신고</td><td>참석·피드백·안전</td><td>3차</td><td>F-49, F-68</td></tr>
+<tr><td>T-34</td><td><code>noshow_cases</code></td><td>노쇼 처리</td><td>참석·피드백·안전</td><td>3차</td><td>F-53, F-54, F-55</td></tr>
+<tr><td>T-35</td><td><code>penalty_records</code></td><td>패널티 기록</td><td>참석·피드백·안전</td><td>3차</td><td>F-56, F-67</td></tr>
+<tr><td>T-36</td><td><code>sanctions</code></td><td>경고·제한</td><td>참석·피드백·안전</td><td>3차</td><td>F-56, F-68</td></tr>
+<tr><td>T-37</td><td><code>exceptions</code></td><td>예외</td><td>운영·추적</td><td>2차</td><td>F-30, F-45, F-55, F-65, F-66</td></tr>
+<tr><td>T-38</td><td><code>status_history</code></td><td>상태 변경 이력</td><td>운영·추적</td><td>1차</td><td>F-64, F-72, F-75</td></tr>
+<tr><td>T-39</td><td><code>audit_logs</code></td><td>운영자 변경 이력</td><td>운영·추적</td><td>1차</td><td>F-57, F-80</td></tr>
+<tr><td>T-40</td><td><code>job_runs</code></td><td>자동 작업 실행</td><td>운영·추적</td><td>2차</td><td>F-22, F-43, F-44, F-50, F-53, F-76</td></tr>
+<tr><td>T-41</td><td><code>waitlist_offers</code></td><td>대기자 참가 제안</td><td>추가 기능</td><td>추가</td><td>F-79</td></tr>
+<tr><td>T-42</td><td><code>faq_items</code></td><td>FAQ</td><td>추가 기능</td><td>추가</td><td>F-85</td></tr>
+<tr><td>T-43</td><td><code>inquiries</code></td><td>1:1 문의</td><td>추가 기능</td><td>추가</td><td>F-85</td></tr>
+<tr><td>T-44</td><td><code>balance_answers</code></td><td>밸런스 질문 답</td><td>추가 기능</td><td>추가</td><td>F-84</td></tr>
+</table>
+<p class="note">차수는 기능 명세서의 구현 순서를 따른다. 추가 기능 테이블은 해당 기능을 구현할 때 만든다.</p>
+
+<h2>5. 테이블 정의</h2>
+<p class="note">NULL 열: N = 값이 반드시 있어야 함, Y = 비어도 됨. 기본값의 <code>now()</code>는 저장 시각, <code>gen_random_uuid()</code>는 새 ID다.</p>
+<h3>5.1 회원·설정</h3>
+<div class="tdef">
+<h4>T-01 <code>profiles</code> — 프로필 <span class="phase">1차</span></h4>
+<p class="tdesc">참가자·운영자 한 명당 한 행. Supabase Auth 사용자와 같은 ID를 쓴다. 매칭에 쓰는 선택값은 코드 배열로 둔다. <span class="ref">관련 기능 F-01, F-02, F-03, F-04, F-05, F-25, F-57, F-60, F-77, F-78</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → auth.users.id</td><td>Auth 사용자 ID</td></tr>
+<tr><td><code>role</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 PARTICIPANT<br>값: PARTICIPANT · OPERATOR</td><td>역할</td></tr>
+<tr><td><code>name</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">최대 20자</td><td>이름</td></tr>
+<tr><td><code>display_name</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">최대 20자</td><td>표시 이름(같은 테이블에 공개)</td></tr>
+<tr><td><code>phone</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">형식 <code>^010-[0-9]{3,4}-[0-9]{4}$</code></td><td>연락처</td></tr>
+<tr><td><code>birth_year</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 1940~2010</td><td>출생연도</td></tr>
+<tr><td><code>gender</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: M · F</td><td>성별</td></tr>
+<tr><td><code>job</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">최대 30자</td><td>직업</td></tr>
+<tr><td><code>mbti</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 UNKNOWN<br>형식 <code>^([EI][NS][TF][JP]|UNKNOWN)$</code></td><td>MBTI 16종 또는 UNKNOWN</td></tr>
+<tr><td><code>interests</code></td><td class="ty">text[]</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>관심사 코드(INTEREST)</td></tr>
+<tr><td><code>self_traits</code></td><td class="ty">text[]</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>본인 성향 코드(SELF_TRAIT)</td></tr>
+<tr><td><code>wanted_traits</code></td><td class="ty">text[]</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>만나고 싶은 사람 코드(WANTED_TRAIT)</td></tr>
+<tr><td><code>price_ranges</code></td><td class="ty">text[]</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>희망 식사 가격대 코드(PRICE_RANGE, 복수)</td></tr>
+<tr><td><code>food_avoid</code></td><td class="ty">text[]</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>못 먹는 음식</td></tr>
+<tr><td><code>allergies</code></td><td class="ty">text[]</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>알레르기</td></tr>
+<tr><td><code>one_liner</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">최대 30자</td><td>한 줄 소개(선택)</td></tr>
+<tr><td><code>drink_pref</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">값: NONE · LIGHT · LIKE</td><td>음주 선호(추가 R-47)</td></tr>
+<tr><td><code>privacy_agreed_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>개인정보 수집·이용 동의 시각</td></tr>
+<tr><td><code>policy_agreed_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>운영 정책 동의 시각</td></tr>
+<tr><td><code>notify_email</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>알림 받을 이메일(선택)</td></tr>
+<tr><td><code>restriction</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 NONE<br>값: NONE · RESTRICTED · BANNED</td><td>참가 제한 상태</td></tr>
+<tr><td><code>restricted_until</code></td><td class="ty">date</td><td class="nn">Y</td><td class="ck"></td><td>참가 제한 종료일</td></tr>
+<tr><td><code>origin</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 APP<br>값: SEED · APP · BULK</td><td>생성 경로. SEED·BULK는 이메일을 보내지 않는다</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+<tr><td><code>updated_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>수정 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-02 <code>notification_settings</code> — 알림 설정 <span class="phase">2차</span></h4>
+<p class="tdesc">이메일 5종의 수신 여부와 웹 푸시 사용 여부. 프로필당 한 행. <span class="ref">관련 기능 F-06</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → profiles.id</td><td>프로필</td></tr>
+<tr><td><code>email_payment_done</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>결제 완료 메일</td></tr>
+<tr><td><code>email_match_confirmed</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>매칭 확정 메일</td></tr>
+<tr><td><code>email_match_failed</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>매칭 실패 메일</td></tr>
+<tr><td><code>email_reminder</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>행사 1일 전 메일</td></tr>
+<tr><td><code>email_refund_done</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>환불 완료 메일</td></tr>
+<tr><td><code>push_enabled</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 false</td><td>웹 푸시 사용</td></tr>
+<tr><td><code>updated_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>수정 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-03 <code>push_subscriptions</code> — 웹 푸시 구독 <span class="phase">2차</span></h4>
+<p class="tdesc">브라우저별 웹 푸시 구독 정보. 한 사람이 여러 기기를 쓸 수 있다. <span class="ref">관련 기능 F-40</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>프로필</td></tr>
+<tr><td><code>endpoint</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">UQ</td><td>푸시 서비스 주소</td></tr>
+<tr><td><code>p256dh</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>암호화 공개키</td></tr>
+<tr><td><code>auth_key</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>인증 키</td></tr>
+<tr><td><code>user_agent</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>기기 정보</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+<tr><td><code>revoked_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>해지 시각(발송 실패 410 등)</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-04 <code>code_values</code> — 코드값 <span class="phase">1차</span></h4>
+<p class="tdesc">관심사·성향·지역·가격대 같은 선택지. 화면 선택지와 정제 기준이 같은 표를 본다. <span class="ref">관련 기능 F-03, F-08, F-74</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>code_group</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>코드 그룹(6장)</td></tr>
+<tr><td><code>code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>코드</td></tr>
+<tr><td><code>label</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>화면 표시 이름</td></tr>
+<tr><td><code>sort_order</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">기본값 0</td><td>표시 순서</td></tr>
+<tr><td><code>active</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>사용 여부</td></tr>
+</table>
+<p class="tnote">· 복합 PK (code_group, code)</p>
+</div>
+<div class="tdef">
+<h4>T-05 <code>app_settings</code> — 설정값 <span class="phase">1차</span></h4>
+<p class="tdesc">기능 명세서 2.4의 설정값(가중치·최소 점수·결제 기한·패널티 기준 등). 회차별 값은 rounds.setting_overrides가 덮어쓴다. <span class="ref">관련 기능 F-12, F-14, F-26, F-56, F-62, F-81</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>key</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>설정 키</td></tr>
+<tr><td><code>value</code></td><td class="ty">jsonb</td><td class="nn">N</td><td class="ck"></td><td>설정 값</td></tr>
+<tr><td><code>description</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>설명</td></tr>
+<tr><td><code>updated_by</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>수정한 운영자</td></tr>
+<tr><td><code>updated_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>수정 시각</td></tr>
+</table>
+
+</div>
+<h3>5.2 회차·식당</h3>
+<div class="tdef">
+<h4>T-06 <code>rounds</code> — 회차 <span class="phase">1차</span></h4>
+<p class="tdesc">날짜·시간 단위의 모집 회차. 지역별 정원은 round_regions에 둔다. <span class="ref">관련 기능 F-07, F-12, F-22, F-52, F-58</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>title</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>예: 10/22(목) 저녁</td></tr>
+<tr><td><code>event_date</code></td><td class="ty">date</td><td class="nn">N</td><td class="ck"></td><td>행사일</td></tr>
+<tr><td><code>start_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck"></td><td>행사 시작 시각</td></tr>
+<tr><td><code>end_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck"></td><td>행사 종료 시각</td></tr>
+<tr><td><code>apply_deadline_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck"></td><td>신청·결제 마감</td></tr>
+<tr><td><code>match_run_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck"></td><td>자동 매칭 실행 시각</td></tr>
+<tr><td><code>reminder_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck"></td><td>1일 전 리마인드 시각</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 DRAFT<br>값: DRAFT · OPEN · CLOSED · MATCHED · DONE · CANCELED</td><td>회차 상태</td></tr>
+<tr><td><code>setting_overrides</code></td><td class="ty">jsonb</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>회차별 설정 덮어쓰기</td></tr>
+<tr><td><code>created_by</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>만든 운영자</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· CHECK (end_at &gt; start_at)</p><p class="tnote">· CHECK (match_run_at &lt;= start_at)</p>
+</div>
+<div class="tdef">
+<h4>T-07 <code>round_regions</code> — 회차별 지역 <span class="phase">1차</span></h4>
+<p class="tdesc">한 회차에서 모집하는 지역과 정원. <span class="ref">관련 기능 F-07, F-58</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → rounds.id</td><td>회차</td></tr>
+<tr><td><code>region_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>지역 코드(REGION)</td></tr>
+<tr><td><code>capacity</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 0~1000</td><td>정원</td></tr>
+</table>
+<p class="tnote">· 복합 PK (round_id, region_code)</p>
+</div>
+<div class="tdef">
+<h4>T-08 <code>venues</code> — 파트너 식당 <span class="phase">1차</span></h4>
+<p class="tdesc">식당 기본 정보. <span class="ref">관련 기능 F-35, F-59</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>name</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>식당명</td></tr>
+<tr><td><code>region_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>지역 코드</td></tr>
+<tr><td><code>address</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>주소</td></tr>
+<tr><td><code>map_url</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>지도 링크</td></tr>
+<tr><td><code>price_range</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>가격대 코드(PRICE_RANGE)</td></tr>
+<tr><td><code>active</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>사용 여부</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-09 <code>venue_availability</code> — 식당 재고 <span class="phase">1차</span></h4>
+<p class="tdesc">회차별로 식당이 받을 수 있는 테이블 수. 자동 배정 때 booked_slots를 한 트랜잭션에서 늘린다. <span class="ref">관련 기능 F-35, F-59</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>venue_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → venues.id</td><td>식당</td></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → rounds.id</td><td>회차</td></tr>
+<tr><td><code>table_slots</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 0~50</td><td>받을 수 있는 테이블 수</td></tr>
+<tr><td><code>max_seats</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">기본값 6<br>범위 4~12</td><td>테이블당 최대 인원</td></tr>
+<tr><td><code>booked_slots</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">기본값 0</td><td>배정된 테이블 수</td></tr>
+</table>
+<p class="tnote">· UNIQUE (venue_id, round_id)</p><p class="tnote">· CHECK (booked_slots &lt;= table_slots)</p>
+</div>
+<h3>5.3 신청·결제·이용권</h3>
+<div class="tdef">
+<h4>T-10 <code>applications</code> — 신청 <span class="phase">1차</span></h4>
+<p class="tdesc">참가자의 신청 한 건. 상태 4종을 따로 저장하고, 바뀔 때마다 status_history에 남긴다. 프로필당 진행 중 신청은 1건이다. <span class="ref">관련 기능 F-09, F-13, F-15, F-16, F-17, F-19, F-23, F-46, F-51, F-60, F-72, F-73</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>신청자</td></tr>
+<tr><td><code>application_status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 DRAFT<br>값: DRAFT · SUBMITTED · CANCELED</td><td>신청 상태</td></tr>
+<tr><td><code>payment_status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 PENDING<br>값: PENDING · PAID · FAILED · REFUND_AVAILABLE · REFUND_REQUESTED · REFUND_PROCESSING · REFUNDED · REFUND_FAILED</td><td>결제 상태</td></tr>
+<tr><td><code>match_status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 WAITING<br>값: WAITING · MATCHING · REALLOCATING · CONFIRMED · ALTERNATIVE_OFFERED · TRANSFERRED · NO_MATCH · EXCEPTION</td><td>매칭 상태</td></tr>
+<tr><td><code>attendance_status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 SCHEDULED<br>값: SCHEDULED · ATTENDED · CANCELED_EARLY · CANCELED_LATE · NO_SHOW</td><td>참석 상태</td></tr>
+<tr><td><code>ticket_product_code</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">FK → ticket_products.code</td><td>고른 이용권 상품</td></tr>
+<tr><td><code>user_ticket_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → user_tickets.id</td><td>차감한 보유 이용권(구독)</td></tr>
+<tr><td><code>payment_due_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>결제 기한</td></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → dining_tables.id</td><td>현재 배정 테이블</td></tr>
+<tr><td><code>transferred_from</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → applications.id</td><td>대체 일정 이동 전 신청</td></tr>
+<tr><td><code>reason_code</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>최근 처리 사유 코드(참가자 문구로 변환)</td></tr>
+<tr><td><code>submitted_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>제출 시각</td></tr>
+<tr><td><code>canceled_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>취소·불참 알림 시각</td></tr>
+<tr><td><code>checked_in_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>체크인 시각</td></tr>
+<tr><td><code>is_active</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>진행 중 여부(종료·취소·이동 시 false)</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+<tr><td><code>updated_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>수정 시각</td></tr>
+</table>
+<p class="tnote">· 부분 UNIQUE applications (profile_id) where is_active</p>
+</div>
+<div class="tdef">
+<h4>T-11 <code>application_choices</code> — 신청 선택지 <span class="phase">1차</span></h4>
+<p class="tdesc">참가 가능한 날짜 × 희망 지역의 조합. 재배치 탐색 범위가 된다. "이 날짜는 홍대·강남만" 같은 제한도 그대로 담는다. <span class="ref">관련 기능 F-08, F-23, F-25, F-28, F-52, F-62</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → applications.id</td><td>신청</td></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → rounds.id</td><td>회차(날짜)</td></tr>
+<tr><td><code>region_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>지역 코드</td></tr>
+</table>
+<p class="tnote">· 복합 PK (application_id, round_id, region_code)</p><p class="tnote">· INDEX application_choices (round_id, region_code)</p>
+</div>
+<div class="tdef">
+<h4>T-12 <code>ticket_products</code> — 이용권 상품 <span class="phase">1차</span></h4>
+<p class="tdesc">판매하는 이용권. 가상데이터 기준 1회권·3회권·4회권(구독)이며 금액은 대표님 확인 후 확정한다. <span class="ref">관련 기능 F-10</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>SINGLE · PACK3 · PACK4</td></tr>
+<tr><td><code>name</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>상품명</td></tr>
+<tr><td><code>kind</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: SINGLE · SUBSCRIPTION</td><td>1회권·구독</td></tr>
+<tr><td><code>price</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 0~1000000</td><td>가격(원)</td></tr>
+<tr><td><code>uses</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 1~20</td><td>사용 횟수</td></tr>
+<tr><td><code>valid_days</code></td><td class="ty">int</td><td class="nn">Y</td><td class="ck"></td><td>유효기간(일), 1회권은 없음</td></tr>
+<tr><td><code>active</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>판매 여부</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-13 <code>user_tickets</code> — 보유 이용권 <span class="phase">2차</span></h4>
+<p class="tdesc">구독 구매·이용권 보관으로 생긴 잔여 횟수. <span class="ref">관련 기능 F-11, F-20, F-83</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>보유자</td></tr>
+<tr><td><code>product_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">FK → ticket_products.code</td><td>상품</td></tr>
+<tr><td><code>source</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PURCHASE · KEPT</td><td>구매·보관</td></tr>
+<tr><td><code>total_uses</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck"></td><td>전체 횟수</td></tr>
+<tr><td><code>remaining_uses</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck"></td><td>남은 횟수</td></tr>
+<tr><td><code>valid_until</code></td><td class="ty">date</td><td class="nn">Y</td><td class="ck"></td><td>유효기간</td></tr>
+<tr><td><code>payment_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → payments.id</td><td>구매 결제</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 ACTIVE<br>값: ACTIVE · USED_UP · EXPIRED</td><td>상태</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· CHECK (remaining_uses between 0 and total_uses)</p>
+</div>
+<div class="tdef">
+<h4>T-14 <code>ticket_ledger</code> — 이용권 증감 이력 <span class="phase">2차</span></h4>
+<p class="tdesc">차감·복원·보관 한 번마다 한 행. 같은 신청에 같은 사유가 두 번 생기지 않게 막는다. <span class="ref">관련 기능 F-11</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>user_ticket_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → user_tickets.id</td><td>보유 이용권</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → applications.id</td><td>관련 신청</td></tr>
+<tr><td><code>delta</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck"></td><td>증감(−1 차감, +1 복원)</td></tr>
+<tr><td><code>reason</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PURCHASE · USE · RESTORE · KEEP · EXPIRE</td><td>사유</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· UNIQUE (user_ticket_id, application_id, reason)</p><p class="tnote">· CHECK (delta &lt;&gt; 0)</p>
+</div>
+<div class="tdef">
+<h4>T-15 <code>payments</code> — 결제(모의) <span class="phase">1차</span></h4>
+<p class="tdesc">PG 없이 상태만 바꾸는 모의 결제. 같은 요청이 두 번 와도 idempotency_key로 한 번만 처리한다. <span class="ref">관련 기능 F-13, F-61</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>결제자</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → applications.id</td><td>신청(구독 구매만 하면 없음)</td></tr>
+<tr><td><code>product_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">FK → ticket_products.code</td><td>상품</td></tr>
+<tr><td><code>amount</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 0~1000000</td><td>결제 금액(할인 후)</td></tr>
+<tr><td><code>discount_amount</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">기본값 0</td><td>쿠폰 할인액</td></tr>
+<tr><td><code>coupon_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → coupons.id<br>UQ</td><td>사용한 쿠폰(쿠폰 1장은 결제 1건에만)</td></tr>
+<tr><td><code>method</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 MOCK<br>값: MOCK</td><td>결제 수단</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 PENDING<br>값: PENDING · PAID · FAILED</td><td>결제 결과</td></tr>
+<tr><td><code>idempotency_key</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">UQ</td><td>중복 결제 방지 키</td></tr>
+<tr><td><code>paid_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>결제 시각</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-16 <code>refunds</code> — 환불(모의) <span class="phase">2차</span></h4>
+<p class="tdesc">신청당 환불은 1건만 만든다. 인원 감소로 인한 환불은 policy_exception=true. <span class="ref">관련 기능 F-21, F-61</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>payment_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → payments.id</td><td>원결제</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → applications.id<br>UQ</td><td>신청(1건만)</td></tr>
+<tr><td><code>amount</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 0~1000000</td><td>환불 금액</td></tr>
+<tr><td><code>reason</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: EARLY_CANCEL · MATCH_FAILED · REALLOC_FAILED · TABLE_CANCELED</td><td>사유</td></tr>
+<tr><td><code>policy_exception</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 false</td><td>환불 제한 기간 예외</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 REQUESTED<br>값: REQUESTED · PROCESSING · REFUNDED · FAILED</td><td>처리 상태</td></tr>
+<tr><td><code>failure_reason</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>실패 사유</td></tr>
+<tr><td><code>requested_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>요청 시각</td></tr>
+<tr><td><code>completed_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>완료 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-17 <code>coupons</code> — 보상 쿠폰 <span class="phase">3차</span></h4>
+<p class="tdesc">인원 감소로 영향을 받은 참가자에게 테이블당 1장만 발급한다. 어느 결제에 썼는지는 payments.coupon_id로 찾는다. <span class="ref">관련 기능 F-13, F-34</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>받은 사람</td></tr>
+<tr><td><code>reason</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: REALLOC_FAILED · RUN_WITH_THREE · TABLE_CANCELED</td><td>발급 사유</td></tr>
+<tr><td><code>source_table_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → dining_tables.id</td><td>원인이 된 테이블</td></tr>
+<tr><td><code>discount_rate</code></td><td class="ty">int</td><td class="nn">Y</td><td class="ck">범위 1~100</td><td>할인율(%) — 설정값 보류</td></tr>
+<tr><td><code>valid_until</code></td><td class="ty">date</td><td class="nn">Y</td><td class="ck"></td><td>유효기간</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 ISSUED<br>값: ISSUED · USED · EXPIRED</td><td>상태</td></tr>
+<tr><td><code>issued_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>발급 시각</td></tr>
+</table>
+<p class="tnote">· UNIQUE (profile_id, source_table_id)</p>
+</div>
+<h3>5.4 매칭</h3>
+<div class="tdef">
+<h4>T-18 <code>match_runs</code> — 매칭 실행 <span class="phase">2차</span></h4>
+<p class="tdesc">회차별 자동 매칭 1회. run_key가 같으면 다시 실행하지 않는다. <span class="ref">관련 기능 F-22, F-32, F-63, F-76</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → rounds.id</td><td>회차</td></tr>
+<tr><td><code>run_key</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">UQ</td><td>멱등 키(MATCH:회차ID)</td></tr>
+<tr><td><code>trigger</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: SCHEDULER · DEMO</td><td>실행 경로</td></tr>
+<tr><td><code>algorithm_version</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>알고리즘 버전</td></tr>
+<tr><td><code>settings_snapshot</code></td><td class="ty">jsonb</td><td class="nn">N</td><td class="ck"></td><td>실행 당시 가중치·최소 점수</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 RUNNING<br>값: RUNNING · DONE · FAILED</td><td>실행 상태</td></tr>
+<tr><td><code>stats</code></td><td class="ty">jsonb</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>후보·테이블·확정·재배치·실패 수</td></tr>
+<tr><td><code>error</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>실패 사유</td></tr>
+<tr><td><code>started_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>시작</td></tr>
+<tr><td><code>finished_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>종료</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-19 <code>dining_tables</code> — 식사 테이블 <span class="phase">2차</span></h4>
+<p class="tdesc">한 회차·한 지역의 4~6인 테이블. 점수 상세는 운영자만 본다. (SQL 예약어와 겹치지 않게 dining_tables로 이름 붙임) <span class="ref">관련 기능 F-27, F-29, F-33, F-35, F-64</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → rounds.id</td><td>회차</td></tr>
+<tr><td><code>region_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>지역 코드</td></tr>
+<tr><td><code>match_run_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → match_runs.id</td><td>만든 매칭 실행</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 FORMING<br>값: FORMING · CONFIRMED · CANCELED · DONE</td><td>테이블 상태</td></tr>
+<tr><td><code>score</code></td><td class="ty">numeric(5,1)</td><td class="nn">Y</td><td class="ck"></td><td>선호 점수(운영자만)</td></tr>
+<tr><td><code>score_detail</code></td><td class="ty">jsonb</td><td class="nn">Y</td><td class="ck"></td><td>항목별 점수(운영자만)</td></tr>
+<tr><td><code>venue_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → venues.id</td><td>배정 식당</td></tr>
+<tr><td><code>reservation_name</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>예약명</td></tr>
+<tr><td><code>curation</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>테이블 조합 큐레이션 문구</td></tr>
+<tr><td><code>food_summary</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>이름 없는 식사 조건 요약</td></tr>
+<tr><td><code>confirmed_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>확정 시각</td></tr>
+<tr><td><code>canceled_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>취소 시각</td></tr>
+<tr><td><code>cancel_reason</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>취소 사유</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-20 <code>table_members</code> — 테이블 구성원 <span class="phase">2차</span></h4>
+<p class="tdesc">테이블에 앉는 참가자. 같은 회차에서 한 사람은 한 테이블에만 속한다(빠진 행은 left_at으로 남김). <span class="ref">관련 기능 F-27, F-28, F-32, F-33, F-51, F-73</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → dining_tables.id</td><td>테이블</td></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → rounds.id</td><td>회차(중복 배치 방지용)</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → applications.id</td><td>신청</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>참가자</td></tr>
+<tr><td><code>joined_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>배치 시각</td></tr>
+<tr><td><code>left_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>빠진 시각</td></tr>
+<tr><td><code>left_reason</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">값: CANCELED · REALLOCATED · TABLE_CANCELED</td><td>빠진 사유</td></tr>
+</table>
+<p class="tnote">· 부분 UNIQUE table_members (round_id, profile_id) where left_at is null</p><p class="tnote">· 부분 UNIQUE table_members (application_id) where left_at is null</p>
+</div>
+<div class="tdef">
+<h4>T-21 <code>match_events</code> — 매칭 처리 이력 <span class="phase">2차</span></h4>
+<p class="tdesc">배치·해제·재배치·분리·병합·확정·실패를 한 행씩 남긴다. 처리 설명과 매칭 모니터의 근거. <span class="ref">관련 기능 F-28, F-31, F-63</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>match_run_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → match_runs.id</td><td>매칭 실행(인원 감소 처리는 없음)</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → applications.id</td><td>신청</td></tr>
+<tr><td><code>event_type</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PLACED · RELEASED · REALLOCATED · SPLIT · MERGED · CONFIRMED · FAILED · SHRINK</td><td>처리 종류</td></tr>
+<tr><td><code>from_table_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → dining_tables.id</td><td>이전 테이블</td></tr>
+<tr><td><code>to_table_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → dining_tables.id</td><td>새 테이블</td></tr>
+<tr><td><code>reason_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>사유 코드</td></tr>
+<tr><td><code>detail</code></td><td class="ty">jsonb</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>상세</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-22 <code>alternative_offers</code> — 대체 일정 추천 <span class="phase">2차</span></h4>
+<p class="tdesc">매칭 실패자에게 보여 줄 대체 회차·지역 목록. <span class="ref">관련 기능 F-18, F-30</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → applications.id</td><td>신청</td></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → rounds.id</td><td>추천 회차</td></tr>
+<tr><td><code>region_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>추천 지역</td></tr>
+<tr><td><code>rank</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck"></td><td>추천 순위</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· UNIQUE (application_id, round_id, region_code)</p>
+</div>
+<div class="tdef">
+<h4>T-23 <code>match_resolutions</code> — 미매칭 해결 <span class="phase">2차</span></h4>
+<p class="tdesc">매칭 실패 후 참가자가 고른 해결 방법. 신청당 1건. <span class="ref">관련 기능 F-19, F-20, F-21</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → applications.id</td><td>실패한 신청</td></tr>
+<tr><td><code>choice</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: MOVE · KEEP · REFUND</td><td>일정 이동·보관·환불</td></tr>
+<tr><td><code>target_round_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → rounds.id</td><td>이동한 회차</td></tr>
+<tr><td><code>target_region_code</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>이동한 지역</td></tr>
+<tr><td><code>new_application_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → applications.id</td><td>이동으로 생긴 신청</td></tr>
+<tr><td><code>user_ticket_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → user_tickets.id</td><td>보관된 이용권</td></tr>
+<tr><td><code>refund_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → refunds.id</td><td>환불</td></tr>
+<tr><td><code>resolved_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>선택 시각</td></tr>
+</table>
+
+</div>
+<h3>5.5 안내·소통</h3>
+<div class="tdef">
+<h4>T-24 <code>chat_rooms</code> — 단체방 <span class="phase">2차</span></h4>
+<p class="tdesc">테이블당 하나. 참여자는 table_members에서 계산한다. <span class="ref">관련 기능 F-37</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → dining_tables.id<br>UQ</td><td>테이블(1:1)</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+<tr><td><code>closed_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>종료 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-25 <code>chat_messages</code> — 단체방 메시지 <span class="phase">2차</span></h4>
+<p class="tdesc">Supabase Realtime으로 구독하는 표. 시스템 메시지는 dedupe_key로 중복 게시를 막는다. <span class="ref">관련 기능 F-16, F-38, F-42, F-43, F-44</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>room_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → chat_rooms.id</td><td>단체방</td></tr>
+<tr><td><code>sender_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>보낸 사람(없으면 시스템)</td></tr>
+<tr><td><code>kind</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: USER · SYSTEM · NOTICE · CURATION · REMINDER · TOPIC · ICEBREAKER · ABSENCE</td><td>메시지 종류</td></tr>
+<tr><td><code>body</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">최대 1000자</td><td>내용</td></tr>
+<tr><td><code>dedupe_key</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">UQ</td><td>시스템 메시지 중복 방지 키</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· INDEX chat_messages (room_id, created_at)</p>
+</div>
+<div class="tdef">
+<h4>T-26 <code>notifications</code> — 앱 내 알림 <span class="phase">2차</span></h4>
+<p class="tdesc">모든 알림의 원장. 웹 푸시·이메일은 이 행을 보고 deliveries에서 보낸다. <span class="ref">관련 기능 F-34, F-36, F-39, F-50, F-55</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>받는 사람</td></tr>
+<tr><td><code>type</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>알림 유형 코드(NOTICE_TYPE)</td></tr>
+<tr><td><code>title</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>제목</td></tr>
+<tr><td><code>body</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>내용</td></tr>
+<tr><td><code>link</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>이동할 화면</td></tr>
+<tr><td><code>dedupe_key</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">UQ</td><td>같은 알림 중복 방지 키(유형:대상ID)</td></tr>
+<tr><td><code>read_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>읽은 시각</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· INDEX notifications (profile_id, created_at desc)</p>
+</div>
+<div class="tdef">
+<h4>T-27 <code>deliveries</code> — 발송 이력 <span class="phase">2차</span></h4>
+<p class="tdesc">웹 푸시·이메일·단체방 발송 시도. 실패하면 next_retry_at에 다시 시도하고 3회 넘게 실패하면 예외로 넘긴다. <span class="ref">관련 기능 F-40, F-41, F-45, F-71</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>notification_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → notifications.id</td><td>알림</td></tr>
+<tr><td><code>chat_message_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → chat_messages.id</td><td>단체방 메시지</td></tr>
+<tr><td><code>channel</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PUSH · EMAIL · CHAT</td><td>채널</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 PENDING<br>값: PENDING · SENT · FAILED · SKIPPED</td><td>결과</td></tr>
+<tr><td><code>attempts</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">기본값 0<br>범위 0~10</td><td>시도 횟수</td></tr>
+<tr><td><code>last_error</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>마지막 오류</td></tr>
+<tr><td><code>next_retry_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>다음 재시도</td></tr>
+<tr><td><code>sent_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>발송 성공 시각</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· UNIQUE (notification_id, channel)</p>
+</div>
+<div class="tdef">
+<h4>T-28 <code>message_templates</code> — 메시지 템플릿 <span class="phase">3차</span></h4>
+<p class="tdesc">큐레이션·리마인드·대체 일정 안내 등. 본문의 {식당명} 같은 변수를 발송 때 바꾼다. <span class="ref">관련 기능 F-70</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>템플릿 코드</td></tr>
+<tr><td><code>channel</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: IN_APP · EMAIL · CHAT</td><td>채널</td></tr>
+<tr><td><code>title</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>제목</td></tr>
+<tr><td><code>body</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>본문(변수 포함)</td></tr>
+<tr><td><code>updated_by</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>수정한 운영자</td></tr>
+<tr><td><code>updated_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>수정 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-29 <code>content_items</code> — 대화 콘텐츠 <span class="phase">3차</span></h4>
+<p class="tdesc">대화 주제·아이스브레이킹 원본. 관심사·성향 코드로 테이블에 맞는 것을 고른다. 필수 범위는 시드로 넣고, 관리 화면은 추가 기능. <span class="ref">관련 기능 F-44, F-82</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>kind</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: TOPIC · ICEBREAKER</td><td>종류</td></tr>
+<tr><td><code>text</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>내용</td></tr>
+<tr><td><code>interest_code</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>관련 관심사(없으면 공통)</td></tr>
+<tr><td><code>trait_code</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>관련 대화 성향</td></tr>
+<tr><td><code>active</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>사용 여부</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-30 <code>table_contents</code> — 테이블 게시 콘텐츠 <span class="phase">3차</span></h4>
+<p class="tdesc">테이블에 게시한 콘텐츠. 같은 콘텐츠를 두 번 올리지 않는다. <span class="ref">관련 기능 F-44</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → dining_tables.id</td><td>테이블</td></tr>
+<tr><td><code>content_item_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → content_items.id</td><td>콘텐츠</td></tr>
+<tr><td><code>posted_message_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → chat_messages.id</td><td>게시 메시지</td></tr>
+</table>
+<p class="tnote">· 복합 PK (table_id, content_item_id)</p>
+</div>
+<h3>5.6 참석·피드백·안전</h3>
+<div class="tdef">
+<h4>T-31 <code>feedbacks</code> — 피드백 <span class="phase">3차</span></h4>
+<p class="tdesc">신청당 1건. 공개 후기는 review_public=true이고 운영자가 숨기지 않은 것만 공개한다. <span class="ref">관련 기능 F-47, F-69, F-86</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → applications.id<br>UQ</td><td>신청</td></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → dining_tables.id</td><td>테이블</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>작성자</td></tr>
+<tr><td><code>mood_score</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 1~5</td><td>테이블 분위기</td></tr>
+<tr><td><code>talk_score</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 1~5</td><td>대화</td></tr>
+<tr><td><code>venue_score</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 1~5</td><td>식당</td></tr>
+<tr><td><code>rejoin_intent</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 1~5</td><td>재참여 의향</td></tr>
+<tr><td><code>recommend_intent</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">범위 1~5</td><td>추천 의향</td></tr>
+<tr><td><code>review_rating</code></td><td class="ty">int</td><td class="nn">Y</td><td class="ck">범위 1~5</td><td>공개 후기 별점</td></tr>
+<tr><td><code>review_text</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">최대 100자</td><td>공개 후기</td></tr>
+<tr><td><code>review_public</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 false</td><td>공개 여부</td></tr>
+<tr><td><code>review_hidden</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 false</td><td>운영자 숨김(추가)</td></tr>
+<tr><td><code>submitted_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>제출 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-32 <code>relations</code> — 사람 간 관계 <span class="phase">2차</span></h4>
+<p class="tdesc">만남·선호·비선호·차단·신고 관계. 매칭의 제외 조건과 새로운 사람 점수의 입력. 만남(MET)은 양방향 두 행으로 저장한다. <span class="ref">관련 기능 F-24, F-25, F-48, F-49, F-54</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>from_profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>관계를 낸 사람</td></tr>
+<tr><td><code>to_profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>대상</td></tr>
+<tr><td><code>type</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: MET · LIKE · DISLIKE · BLOCK · REPORT</td><td>관계 종류</td></tr>
+<tr><td><code>source_table_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → dining_tables.id</td><td>계기가 된 테이블</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· UNIQUE NULLS NOT DISTINCT (from_profile_id, to_profile_id, type, source_table_id)</p><p class="tnote">· CHECK (from_profile_id &lt;&gt; to_profile_id)</p><p class="tnote">· INDEX relations (from_profile_id, type)</p>
+</div>
+<div class="tdef">
+<h4>T-33 <code>reports</code> — 신고 <span class="phase">3차</span></h4>
+<p class="tdesc">신고 내용과 운영자 조치. 신고하면 relations에 REPORT·BLOCK도 같이 만든다. <span class="ref">관련 기능 F-49, F-68</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>reporter_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>신고자</td></tr>
+<tr><td><code>reported_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>피신고자</td></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → dining_tables.id</td><td>테이블</td></tr>
+<tr><td><code>reason_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>사유 코드</td></tr>
+<tr><td><code>detail</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">최대 1000자</td><td>상세</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 OPEN<br>값: OPEN · REVIEWING · RESOLVED</td><td>처리 상태</td></tr>
+<tr><td><code>action</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">값: NONE · WARNING · RESTRICTED · BANNED</td><td>운영자 조치</td></tr>
+<tr><td><code>handled_by</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>처리한 운영자</td></tr>
+<tr><td><code>handled_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>처리 시각</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-34 <code>noshow_cases</code> — 노쇼 처리 <span class="phase">3차</span></h4>
+<p class="tdesc">미체크인 후보 → 보정 → 이의 대기 → 확정의 진행 상황. 신청당 1건. <span class="ref">관련 기능 F-53, F-54, F-55</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → applications.id</td><td>신청</td></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → dining_tables.id</td><td>테이블</td></tr>
+<tr><td><code>candidate_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>후보 기록 시각</td></tr>
+<tr><td><code>adjusted_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>동석자 피드백으로 보정한 시각</td></tr>
+<tr><td><code>notice_sent_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>확인 알림 발송</td></tr>
+<tr><td><code>objection_deadline_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>이의 마감(알림 후 24시간)</td></tr>
+<tr><td><code>objection_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>이의 제기 시각</td></tr>
+<tr><td><code>objection_text</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck">최대 500자</td><td>이의 내용</td></tr>
+<tr><td><code>result</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 PENDING<br>값: PENDING · ATTENDED · NO_SHOW · ESCALATED</td><td>결과</td></tr>
+<tr><td><code>decided_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>확정 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-35 <code>penalty_records</code> — 패널티 기록 <span class="phase">3차</span></h4>
+<p class="tdesc">늦은 취소·당일 불참 알림·노쇼 발생 기록. 누적 기준(4.3)은 이 표를 센다. <span class="ref">관련 기능 F-56, F-67</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>참가자</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → applications.id</td><td>신청</td></tr>
+<tr><td><code>kind</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: LATE_CANCEL · SAME_DAY_CANCEL · NO_SHOW</td><td>종류</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· UNIQUE (application_id, kind)</p>
+</div>
+<div class="tdef">
+<h4>T-36 <code>sanctions</code> — 경고·제한 <span class="phase">3차</span></h4>
+<p class="tdesc">경고는 시스템이 CONFIRMED로 만들고, 참가 제한·영구 제한은 PROPOSED로 올린 뒤 운영자가 확정한다. <span class="ref">관련 기능 F-56, F-68</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>대상</td></tr>
+<tr><td><code>level</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: WARNING · RESTRICTION · BAN</td><td>수준</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 PROPOSED<br>값: PROPOSED · CONFIRMED · REJECTED</td><td>확정 상태</td></tr>
+<tr><td><code>source</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PENALTY · REPORT</td><td>근거</td></tr>
+<tr><td><code>report_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → reports.id</td><td>근거 신고</td></tr>
+<tr><td><code>reason</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>사유</td></tr>
+<tr><td><code>until_date</code></td><td class="ty">date</td><td class="nn">Y</td><td class="ck"></td><td>제한 종료일</td></tr>
+<tr><td><code>decided_by</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>확정한 운영자</td></tr>
+<tr><td><code>decided_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>확정 시각</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<h3>5.7 운영·추적</h3>
+<div class="tdef">
+<h4>T-37 <code>exceptions</code> — 예외 <span class="phase">2차</span></h4>
+<p class="tdesc">자동으로 해결하지 못한 건만 쌓인다. dedupe_key로 같은 예외를 두 번 올리지 않는다. <span class="ref">관련 기능 F-30, F-45, F-55, F-65, F-66</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>type</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PAYMENT_ERROR · DATA_MISSING · VENUE_SHORTAGE · CONDITION_CONFLICT · MATCH_FAILED_ALL · DELIVERY_FAILED · REFUND_FAILED · NOSHOW_OBJECTION · INQUIRY</td><td>예외 유형</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 OPEN<br>값: OPEN · IN_PROGRESS · RESOLVED</td><td>처리 상태</td></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → rounds.id</td><td>회차</td></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → dining_tables.id</td><td>테이블</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → applications.id</td><td>신청</td></tr>
+<tr><td><code>inquiry_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → inquiries.id</td><td>문의(INQUIRY 유형)</td></tr>
+<tr><td><code>reason</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>사유</td></tr>
+<tr><td><code>detail</code></td><td class="ty">jsonb</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>상세</td></tr>
+<tr><td><code>dedupe_key</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">UQ</td><td>중복 방지 키</td></tr>
+<tr><td><code>resolved_by</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>처리한 운영자</td></tr>
+<tr><td><code>resolved_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>처리 시각</td></tr>
+<tr><td><code>resolution_note</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>처리 내용</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· INDEX exceptions (status, created_at)</p>
+</div>
+<div class="tdef">
+<h4>T-38 <code>status_history</code> — 상태 변경 이력 <span class="phase">1차</span></h4>
+<p class="tdesc">상태 4종이 바뀔 때마다 한 행. 시각·주체·원인·이전 값을 남긴다. <span class="ref">관련 기능 F-64, F-72, F-75</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → applications.id</td><td>신청</td></tr>
+<tr><td><code>field</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: APPLICATION · PAYMENT · MATCH · ATTENDANCE</td><td>바뀐 상태</td></tr>
+<tr><td><code>from_value</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>이전 값</td></tr>
+<tr><td><code>to_value</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>새 값</td></tr>
+<tr><td><code>actor_type</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PARTICIPANT · OPERATOR · SYSTEM</td><td>주체</td></tr>
+<tr><td><code>actor_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>주체 ID(시스템이면 없음)</td></tr>
+<tr><td><code>reason</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>원인</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+<p class="tnote">· INDEX status_history (application_id, created_at)</p>
+</div>
+<div class="tdef">
+<h4>T-39 <code>audit_logs</code> — 운영자 변경 이력 <span class="phase">1차</span></h4>
+<p class="tdesc">운영자가 바꾼 데이터의 이전·이후 값. <span class="ref">관련 기능 F-57, F-80</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>actor_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>운영자</td></tr>
+<tr><td><code>action</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>동작</td></tr>
+<tr><td><code>target_table</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>대상 표</td></tr>
+<tr><td><code>target_id</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>대상 ID</td></tr>
+<tr><td><code>before</code></td><td class="ty">jsonb</td><td class="nn">Y</td><td class="ck"></td><td>이전 값</td></tr>
+<tr><td><code>after</code></td><td class="ty">jsonb</td><td class="nn">Y</td><td class="ck"></td><td>이후 값</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-40 <code>job_runs</code> — 자동 작업 실행 <span class="phase">2차</span></h4>
+<p class="tdesc">리마인드·행사 시작·행사 종료·노쇼 확정 같은 시점 작업의 멱등 기록. 시연 패널 즉시 실행도 같은 키를 쓴다. <span class="ref">관련 기능 F-22, F-43, F-44, F-50, F-53, F-76</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>job_key</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>멱등 키(작업:회차ID)</td></tr>
+<tr><td><code>job_type</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: MATCH · REMINDER · EVENT_START · EVENT_END · NOSHOW_CONFIRM · FEEDBACK_REMIND · RETRY</td><td>작업 종류</td></tr>
+<tr><td><code>round_id</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → rounds.id</td><td>회차</td></tr>
+<tr><td><code>trigger</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: SCHEDULER · DEMO</td><td>실행 경로</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 RUNNING<br>값: RUNNING · DONE · FAILED</td><td>상태</td></tr>
+<tr><td><code>result</code></td><td class="ty">jsonb</td><td class="nn">N</td><td class="ck">기본값 {}</td><td>결과 요약</td></tr>
+<tr><td><code>started_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>시작</td></tr>
+<tr><td><code>finished_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>종료</td></tr>
+</table>
+
+</div>
+<h3>5.8 추가 기능</h3>
+<div class="tdef">
+<h4>T-41 <code>waitlist_offers</code> — 대기자 참가 제안 <span class="phase">추가</span></h4>
+<p class="tdesc">취소석이 생긴 테이블에 대기자를 차례로 제안한다(구독 보유자 먼저). <span class="ref">관련 기능 F-79</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>table_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → dining_tables.id</td><td>테이블</td></tr>
+<tr><td><code>application_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → applications.id</td><td>대기자 신청</td></tr>
+<tr><td><code>offered_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>제안 시각</td></tr>
+<tr><td><code>deadline_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck"></td><td>응답 기한</td></tr>
+<tr><td><code>response</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 PENDING<br>값: PENDING · ACCEPTED · DECLINED · EXPIRED</td><td>응답</td></tr>
+<tr><td><code>responded_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>응답 시각</td></tr>
+</table>
+<p class="tnote">· UNIQUE (table_id, application_id)</p>
+</div>
+<div class="tdef">
+<h4>T-42 <code>faq_items</code> — FAQ <span class="phase">추가</span></h4>
+<p class="tdesc">문의 유형별 자주 묻는 질문. <span class="ref">관련 기능 F-85</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>category</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PAYMENT_REFUND · MATCHING · SCHEDULE · CANCEL · ETC</td><td>유형</td></tr>
+<tr><td><code>question</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>질문</td></tr>
+<tr><td><code>answer</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"></td><td>답변</td></tr>
+<tr><td><code>sort_order</code></td><td class="ty">int</td><td class="nn">N</td><td class="ck">기본값 0</td><td>순서</td></tr>
+<tr><td><code>active</code></td><td class="ty">boolean</td><td class="nn">N</td><td class="ck">기본값 true</td><td>사용 여부</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-43 <code>inquiries</code> — 1:1 문의 <span class="phase">추가</span></h4>
+<p class="tdesc">자동 답변으로 끝나면 AUTO_RESOLVED, 운영자에게 보내면 ESCALATED가 되고 exceptions에 INQUIRY로 올라간다. <span class="ref">관련 기능 F-85</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>기본값 gen_random_uuid()</td><td>식별자</td></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck">FK → profiles.id</td><td>문의자</td></tr>
+<tr><td><code>category</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: PAYMENT_REFUND · MATCHING · SCHEDULE · CANCEL · ETC</td><td>유형</td></tr>
+<tr><td><code>body</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">최대 1000자</td><td>내용</td></tr>
+<tr><td><code>auto_answer_code</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>보여 준 자동 답변</td></tr>
+<tr><td><code>status</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">기본값 OPEN<br>값: OPEN · AUTO_RESOLVED · ESCALATED · ANSWERED</td><td>상태</td></tr>
+<tr><td><code>answer</code></td><td class="ty">text</td><td class="nn">Y</td><td class="ck"></td><td>운영자 답변</td></tr>
+<tr><td><code>answered_by</code></td><td class="ty">uuid</td><td class="nn">Y</td><td class="ck">FK → profiles.id</td><td>답변한 운영자</td></tr>
+<tr><td><code>answered_at</code></td><td class="ty">timestamptz</td><td class="nn">Y</td><td class="ck"></td><td>답변 시각</td></tr>
+<tr><td><code>created_at</code></td><td class="ty">timestamptz</td><td class="nn">N</td><td class="ck">기본값 now()</td><td>생성 시각</td></tr>
+</table>
+
+</div>
+<div class="tdef">
+<h4>T-44 <code>balance_answers</code> — 밸런스 질문 답 <span class="phase">추가</span></h4>
+<p class="tdesc">밸런스 질문(code_values의 BALANCE_Q) 답. 아이스브레이킹 소재로 쓴다. <span class="ref">관련 기능 F-84</span></p>
+<table class="cols">
+<tr><th>컬럼</th><th>타입</th><th>NULL</th><th>키·제약</th><th>설명</th></tr>
+<tr><td><code>profile_id</code></td><td class="ty">uuid</td><td class="nn">N</td><td class="ck"><b>PK</b><br>FK → profiles.id</td><td>참가자</td></tr>
+<tr><td><code>question_code</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck"><b>PK</b></td><td>질문 코드</td></tr>
+<tr><td><code>answer</code></td><td class="ty">text</td><td class="nn">N</td><td class="ck">값: A · B</td><td>고른 답</td></tr>
+</table>
+<p class="tnote">· 복합 PK (profile_id, question_code)</p>
+</div>
+
+<h2>6. 코드 정의</h2>
+<h3>6.1 상태값</h3>
+<table class="kv"><tr><th>상태</th><th>값과 뜻</th></tr><tr><td><code>application_status</code></td><td>DRAFT 작성 중 · SUBMITTED 제출 · CANCELED 취소(이동·보관·환불 포함)</td></tr>
+<tr><td><code>payment_status</code></td><td>PENDING 결제 대기 · PAID 결제 완료 · FAILED 결제 실패 · REFUND_AVAILABLE 환불 선택 가능 · REFUND_REQUESTED 환불 요청 · REFUND_PROCESSING 처리 중 · REFUNDED 환불 완료 · REFUND_FAILED 환불 실패</td></tr>
+<tr><td><code>match_status</code></td><td>WAITING 매칭 대기 · MATCHING 매칭 중 · REALLOCATING 재배치 중 · CONFIRMED 확정 · ALTERNATIVE_OFFERED 대체 일정 안내 · TRANSFERRED 다른 회차로 이동 · NO_MATCH 매칭 안 됨(해결 끝) · EXCEPTION 운영자 예외</td></tr>
+<tr><td><code>attendance_status</code></td><td>SCHEDULED 참석 예정 · ATTENDED 참석 · CANCELED_EARLY 사전 취소 · CANCELED_LATE 늦은 취소·당일 불참 · NO_SHOW 노쇼</td></tr></table>
+<h3>6.2 선택지 코드 (code_values)</h3>
+<p>라벨은 가상데이터 신청서 문구를 그대로 썼다. 밸런스 질문(BALANCE_Q)은 추가 기능을 구현할 때 넣는다.</p>
+<h4><code>INTEREST</code> 관심사</h4>
+<table class="codes"><tr><th>코드</th><th>표시 이름</th></tr><tr><td><code>EXERCISE</code></td><td>운동(헬스·러닝·클라이밍 등)</td></tr>
+<tr><td><code>FOOD_CAFE</code></td><td>맛집·카페 탐방</td></tr>
+<tr><td><code>TRAVEL</code></td><td>여행</td></tr>
+<tr><td><code>MOVIE_DRAMA</code></td><td>영화·드라마</td></tr>
+<tr><td><code>MUSIC</code></td><td>음악</td></tr>
+<tr><td><code>READING</code></td><td>독서·글쓰기</td></tr>
+<tr><td><code>SELF_DEV</code></td><td>자기계발·공부</td></tr>
+<tr><td><code>ART</code></td><td>전시·공연·아트</td></tr>
+<tr><td><code>FASHION_BEAUTY</code></td><td>패션·뷰티</td></tr>
+<tr><td><code>PHOTO_VIDEO</code></td><td>사진·영상</td></tr></table>
+<h4><code>SELF_TRAIT</code> 본인 성향</h4>
+<table class="codes"><tr><th>코드</th><th>표시 이름</th></tr><tr><td><code>LISTENER</code></td><td>경청을 잘 함</td></tr>
+<tr><td><code>DEEP_TALK</code></td><td>깊은 대화를 좋아함</td></tr>
+<tr><td><code>HUMOR_TALK</code></td><td>가볍고 유머 있는 대화를 좋아함</td></tr>
+<tr><td><code>CALM</code></td><td>잔잔하고 조용한 편</td></tr>
+<tr><td><code>ENERGETIC</code></td><td>활기차고 에너지 있는 편</td></tr>
+<tr><td><code>LEADER</code></td><td>이야기를 이끄는 편</td></tr></table>
+<h4><code>WANTED_TRAIT</code> 만나고 싶은 사람</h4>
+<table class="codes"><tr><th>코드</th><th>표시 이름</th></tr><tr><td><code>EASY_HUMOR</code></td><td>편하고 유머 있는 사람</td></tr>
+<tr><td><code>CALM_STABLE</code></td><td>잔잔하고 안정적인 사람</td></tr>
+<tr><td><code>DEEP_TALK</code></td><td>깊은 대화가 되는 사람</td></tr>
+<tr><td><code>SIMILAR</code></td><td>나와 비슷한 사람</td></tr>
+<tr><td><code>DIFFERENT</code></td><td>나와 다른 자극을 주는 사람</td></tr>
+<tr><td><code>PASSIONATE</code></td><td>열정 있는 사람</td></tr></table>
+<h4><code>REGION</code> 지역</h4>
+<table class="codes"><tr><th>코드</th><th>표시 이름</th></tr><tr><td><code>HONGDAE</code></td><td>홍대/합정</td></tr>
+<tr><td><code>GANGNAM</code></td><td>강남/신논현</td></tr>
+<tr><td><code>EULJIRO</code></td><td>을지로/종로</td></tr>
+<tr><td><code>JAMSIL</code></td><td>잠실</td></tr>
+<tr><td><code>ETC</code></td><td>기타(매칭 대상 아님)</td></tr></table>
+<h4><code>PRICE_RANGE</code> 식사 가격대</h4>
+<table class="codes"><tr><th>코드</th><th>표시 이름</th></tr><tr><td><code>P10_20</code></td><td>10,000~20,000원</td></tr>
+<tr><td><code>P20_30</code></td><td>20,000~30,000원</td></tr>
+<tr><td><code>P30_PLUS</code></td><td>30,000원 이상(상관 없음)</td></tr></table>
+<h4><code>DRINK_PREF</code> 음주 선호 (추가)</h4>
+<table class="codes"><tr><th>코드</th><th>표시 이름</th></tr><tr><td><code>NONE</code></td><td>안 마심</td></tr>
+<tr><td><code>LIGHT</code></td><td>가볍게</td></tr>
+<tr><td><code>LIKE</code></td><td>좋아함</td></tr></table>
+<h3>6.3 지역 매핑 규칙</h3>
+<p>신청서의 지역 칸은 자유 입력이 섞여 있어 아래 순서로 표준 지역에 맞춘다. 한 응답에서 여러 지역이 나오면 모두 담는다.</p>
+<table class="kv"><tr><th>원문 조건</th><th>저장 코드</th></tr><tr><td>"홍대", "합정"이 들어 있음</td><td>HONGDAE</td></tr>
+<tr><td>"강남", "신논현"이 들어 있음</td><td>GANGNAM</td></tr>
+<tr><td>"을지로", "종로", "동대문"이 들어 있음</td><td>EULJIRO</td></tr>
+<tr><td>"잠실"이 들어 있음</td><td>JAMSIL</td></tr>
+<tr><td>"상관없", "무방", "모두"가 들어 있음</td><td>표준 4곳 전부</td></tr>
+<tr><td>위에 해당 없음 (분당·판교·수원·인천·안양·마곡·사당 등)</td><td>ETC — 매칭 대상에서 빠지고 정제 결과에 따로 집계</td></tr></table>
+<h3>6.4 이용권 상품 (ticket_products)</h3>
+<p>가상데이터의 참가권 선택지를 기초값으로 쓴다. 3회권·4회권을 기능 명세서의 "구독 이용권"으로 보며, 금액은 대표님 확인 후 확정한다.</p>
+<table><tr><th>코드</th><th>이름</th><th>종류</th><th>가격</th><th>횟수</th><th>유효기간</th></tr><tr><td>SINGLE</td><td>1회권</td><td>SINGLE</td><td>8,000원</td><td>1</td><td>-</td></tr>
+<tr><td>PACK3</td><td>3회권</td><td>SUBSCRIPTION</td><td>15,000원 (회당 5,000원)</td><td>3</td><td>60일</td></tr>
+<tr><td>PACK4</td><td>4회권</td><td>SUBSCRIPTION</td><td>18,000원 (회당 4,500원)</td><td>4</td><td>60일</td></tr></table>
+<h3>6.5 알림 유형 (notifications.type)</h3>
+<p>기능 명세서 4.6의 발송 시점과 1:1로 대응한다. ● 표시는 이메일도 보내는 5종이다.</p>
+<table><tr><th>코드</th><th>시점</th><th>이메일</th></tr><tr><td><code>APPLY_DONE</code></td><td>신청 완료</td><td></td></tr>
+<tr><td><code>PAYMENT_PENDING</code></td><td>결제 대기</td><td></td></tr>
+<tr><td><code>PAYMENT_DONE</code></td><td>결제 완료</td><td>●</td></tr>
+<tr><td><code>REALLOCATING</code></td><td>재배치 중</td><td></td></tr>
+<tr><td><code>MATCH_CONFIRMED</code></td><td>매칭 확정</td><td>●</td></tr>
+<tr><td><code>MATCH_FAILED</code></td><td>매칭 실패</td><td>●</td></tr>
+<tr><td><code>TRANSFER_DONE</code></td><td>일정 이동 완료</td><td></td></tr>
+<tr><td><code>REFUND_REQUESTED</code></td><td>환불 요청</td><td></td></tr>
+<tr><td><code>REFUND_DONE</code></td><td>환불 완료</td><td>●</td></tr>
+<tr><td><code>EVENT_REMINDER</code></td><td>행사 1일 전</td><td>●</td></tr>
+<tr><td><code>EVENT_ENDED</code></td><td>행사 종료 후 피드백 요청</td><td></td></tr>
+<tr><td><code>NEXT_ROUND_OPEN</code></td><td>다음 모집 시작</td><td></td></tr>
+<tr><td><code>TABLE_SHRINK</code></td><td>인원 감소 안내</td><td></td></tr>
+<tr><td><code>COUPON_ISSUED</code></td><td>보상 쿠폰 발급</td><td></td></tr>
+<tr><td><code>NOSHOW_CHECK</code></td><td>노쇼 후보 확인</td><td></td></tr>
+<tr><td><code>PENALTY_RECORDED</code></td><td>패널티 기록</td><td></td></tr>
+<tr><td><code>FEEDBACK_REMIND</code></td><td>피드백 리마인드</td><td></td></tr></table>
+
+<h2>7. 무결성·멱등 규칙</h2>
+<p>요구사항 R-23(같은 작업을 여러 번 실행해도 중복이 생기지 않음)을 DB 제약으로 보장하는 목록이다.</p>
+<table><tr><th>규칙</th><th>구현</th><th>막는 문제</th></tr><tr><td>프로필당 진행 중 신청 1건</td><td>applications(profile_id) WHERE is_active 부분 UNIQUE</td><td>같은 회차 중복 신청</td></tr>
+<tr><td>같은 회차 두 테이블 금지</td><td>table_members(round_id, profile_id) WHERE left_at IS NULL</td><td>한 사람을 두 테이블에 배치</td></tr>
+<tr><td>매칭 1회 실행</td><td>match_runs.run_key UNIQUE</td><td>마감 실행·시연 버튼 중복 실행</td></tr>
+<tr><td>시점 작업 1회 실행</td><td>job_runs.job_key PK</td><td>리마인드·대화 주제 중복 게시</td></tr>
+<tr><td>중복 결제 방지</td><td>payments.idempotency_key UNIQUE</td><td>버튼 두 번 누름·재시도</td></tr>
+<tr><td>신청당 환불 1건</td><td>refunds.application_id UNIQUE</td><td>중복 환불</td></tr>
+<tr><td>이용권 차감·복원 1회</td><td>ticket_ledger(user_ticket_id, application_id, reason) UNIQUE</td><td>이동 중 이중 차감·복원</td></tr>
+<tr><td>테이블당 단체방 1개</td><td>chat_rooms.table_id UNIQUE</td><td>중복 단체방</td></tr>
+<tr><td>시스템 메시지·알림 1회</td><td>chat_messages.dedupe_key · notifications.dedupe_key UNIQUE</td><td>재시도 때 같은 안내가 여러 번</td></tr>
+<tr><td>예외 1건</td><td>exceptions.dedupe_key UNIQUE</td><td>같은 실패가 예외 처리함에 반복 등록</td></tr>
+<tr><td>보상 쿠폰 1장</td><td>coupons(profile_id, source_table_id) UNIQUE</td><td>같은 테이블 일로 쿠폰 중복</td></tr>
+<tr><td>식당 재고 초과 금지</td><td>venue_availability CHECK (booked_slots &lt;= table_slots)</td><td>수용 인원보다 많은 테이블 배정</td></tr></table>
+
+<h2>8. 권한(RLS) 요약</h2>
+<p>모든 테이블에 행 수준 보안을 켠다. 운영자는 profiles.role = OPERATOR로 판별하고, 시스템 작업(스케줄러·서버 API)은 서비스 키로 RLS를 우회한다. 정책 SQL은 기반 구축(A2)에서 작성하고, 다른 계정으로 접근 시험을 테스트 체크리스트에 넣는다.</p>
+<table><tr><th>테이블</th><th>참가자</th><th>운영자</th></tr><tr><td>profiles</td><td>본인 행 읽기·수정(역할·제한 상태 제외). 같은 테이블 참가자는 공개 뷰로 표시 이름·연령대·MBTI·관심사·한 줄 소개만</td><td>전체</td></tr>
+<tr><td>notification_settings · push_subscriptions · balance_answers</td><td>본인 행만</td><td>읽기</td></tr>
+<tr><td>code_values · ticket_products · faq_items</td><td>읽기</td><td>전체</td></tr>
+<tr><td>rounds · round_regions</td><td>모집 중(OPEN) 이후 회차 읽기</td><td>전체</td></tr>
+<tr><td>venues · venue_availability</td><td>배정된 식당만 확정 상세로 읽기</td><td>전체</td></tr>
+<tr><td>applications · application_choices · payments · refunds · user_tickets · ticket_ledger · coupons</td><td>본인 것 읽기. 생성·상태 변경은 서버 함수로만</td><td>전체</td></tr>
+<tr><td>dining_tables</td><td>본인 테이블의 식당·큐레이션·식사 조건 요약만(score·score_detail 제외)</td><td>전체</td></tr>
+<tr><td>table_members</td><td>본인 테이블 구성원 수만</td><td>전체</td></tr>
+<tr><td>chat_rooms · chat_messages</td><td>본인 테이블 단체방 읽기, USER 메시지 작성</td><td>전체</td></tr>
+<tr><td>notifications</td><td>본인 알림 읽기, read_at 수정</td><td>전체</td></tr>
+<tr><td>feedbacks</td><td>본인 피드백 작성·읽기. 공개 후기는 공개 뷰로 모두 읽기</td><td>전체(숨김 처리)</td></tr>
+<tr><td>relations · reports</td><td>본인이 만든 행 작성·읽기</td><td>전체</td></tr>
+<tr><td>noshow_cases · penalty_records · sanctions</td><td>본인 것 읽기, 이의 제기만 작성</td><td>전체</td></tr>
+<tr><td>inquiries</td><td>본인 문의 작성·읽기</td><td>전체</td></tr>
+<tr><td>app_settings · match_runs · match_events · alternative_offers(본인 것 제외) · deliveries · message_templates · content_items · exceptions · status_history · audit_logs · job_runs</td><td>접근 불가(대체 일정은 본인 것만 읽기)</td><td>전체</td></tr></table>
+
+<h2>9. 가상데이터 정제·적재</h2>
+<p>신청서 응답 294건을 profiles(origin=SEED)와 지난 회차의 신청·선택지·결제로 적재한다. 정제 결과(지역 ETC 인원, MBTI UNKNOWN 수 등)는 적재 스크립트가 집계해 기록한다.</p>
+<h3>9.1 원본 열 정제</h3>
+<table class="kv"><tr><th>원본 열</th><th>현재 상태</th><th>저장 위치</th><th>정제 규칙</th></tr><tr><td>타임스탬프</td><td>(비어 있음)</td><td>applications.submitted_at</td><td>비어 있어 해당 회차 모집 기간 안의 임의 시각으로 채운다</td></tr>
+<tr><td>이름(가명)</td><td>가명 258종, 동명 있음</td><td>profiles.name, display_name</td><td>그대로 쓰고 표시 이름도 성을 포함한 전체 이름으로 둔다. 동명은 다른 사람으로 본다</td></tr>
+<tr><td>연락처</td><td>(비어 있음)</td><td>profiles.phone</td><td>010-0000-0000 형식의 가상 번호를 겹치지 않게 만든다</td></tr>
+<tr><td>Instagram ID</td><td>(비어 있음)</td><td>저장 안 함</td><td>PRD 프로필 항목에 없어 수집하지 않는다</td></tr>
+<tr><td>나이</td><td>20~43세, 중앙값 30</td><td>profiles.birth_year</td><td>2026 − 나이. 나이 차이 8살 조건은 출생연도 차이로 계산한다</td></tr>
+<tr><td>성별</td><td>여 199 · 남 95</td><td>profiles.gender</td><td>여 → F, 남 → M. 성비가 2:1이라 성비 점수 영향이 크다</td></tr>
+<tr><td>직업</td><td>(비어 있음)</td><td>profiles.job</td><td>가상 직업 목록에서 채운다</td></tr>
+<tr><td>MBTI</td><td>대소문자 섞여 60종</td><td>profiles.mbti</td><td>대문자로 바꿔 16종에 맞으면 저장. 명백한 오타(wNTJ→ENTJ, lstp→ISTP, Wsfp→ESFP)와 본인이 한 유형을 밝힌 답(“ISTP인데 반반”)은 보정하고, 두 유형을 적은 답은 UNKNOWN(모름)</td></tr>
+<tr><td>참석 가능 지역</td><td>표준 4곳 + 자유 입력 23종</td><td>application_choices.region_code</td><td>6.3 지역 매핑 규칙. 표준 지역이 하나도 없으면 ETC(매칭 대상 아님)</td></tr>
+<tr><td>관심사</td><td>10종 복수</td><td>profiles.interests</td><td>라벨 → INTEREST 코드</td></tr>
+<tr><td>나는 어떤 사람인가요</td><td>6종 복수</td><td>profiles.self_traits</td><td>라벨 → SELF_TRAIT 코드</td></tr>
+<tr><td>어떤 사람을 만나고 싶으신가요</td><td>6종 복수</td><td>profiles.wanted_traits</td><td>라벨 → WANTED_TRAIT 코드</td></tr>
+<tr><td>식사 가격대</td><td>3구간 복수</td><td>profiles.price_ranges</td><td>"10,000~20,000원" 안의 쉼표 때문에 나뉜 값을 다시 합친 뒤 PRICE_RANGE 코드로 바꾼다</td></tr>
+<tr><td>참가 가능한 날짜</td><td>목요일 23일(5/21~10/22), 표기 변형 포함 26종</td><td>rounds, application_choices.round_id</td><td>"8/6 (목)"·"8/20(목)" → 2026-08-06. 괄호 안 지역 제한("홍대, 강남만")은 그 날짜의 선택지에만 적용</td></tr>
+<tr><td>참가권 선택</td><td>1회권 251 · 3회권 32 · 4회권 5 · 3회권 사용 6</td><td>payments, user_tickets</td><td>1회권 → SINGLE 결제, 3·4회권 → 구독 구매와 1회 차감, "3회권 사용" → 기존 보유 이용권 차감</td></tr>
+<tr><td>지속 관계 단톡방 동의</td><td>대부분 동의</td><td>저장 안 함</td><td>와썹하우스 커뮤니티 단톡방 안내라 이번 범위에 없다</td></tr>
+<tr><td>못 먹는 음식</td><td>빈값 170 · "없음" 류 다수</td><td>profiles.food_avoid</td><td>"없음·없습니다·X·아니요" 류는 빈 배열, 나머지는 쉼표로 나눠 저장. 알레르기와 구분할 수 없어 allergies는 비운다</td></tr></table>
+<h3>9.2 원본에 없는 항목 채우기</h3>
+<p>요구 분석서·기능 명세서에서 새로 추가한 항목은 신청서에 없던 정보라 원본을 고치지 않고, 적재·시연 데이터를 만들 때 아래처럼 채운다.</p>
+<table class="kv"><tr><th>항목</th><th>저장 위치</th><th>채우는 방법</th><th>범위</th></tr><tr><td>한 줄 소개</td><td>profiles.one_liner</td><td>관심사·성향으로 만든 짧은 문장을 약 절반에게 넣는다. 선택 항목이라 비어 있는 사람도 둔다</td><td>필수</td></tr>
+<tr><td>알레르기</td><td>profiles.allergies</td><td>원본에서 못 먹는 음식과 구분할 수 없어 비운다. 시연 참가자 일부에만 "갑각류"·"견과류" 등을 넣어 테이블 단위 요약을 보여 준다</td><td>필수</td></tr>
+<tr><td>개인정보·정책 동의 시각</td><td>profiles.privacy_agreed_at, policy_agreed_at</td><td>신청서를 낸 사람은 동의한 것으로 보고 신청 시각으로 채운다</td><td>필수</td></tr>
+<tr><td>알림 이메일·수신 설정</td><td>profiles.notify_email, notification_settings</td><td>가상 참가자는 이메일을 비운다(origin=SEED라 메일을 보내지 않음). 테스트 계정만 실제 받을 주소를 넣는다</td><td>필수</td></tr>
+<tr><td>웹 푸시 구독</td><td>push_subscriptions</td><td>넣지 않는다. 시연 기기에서 알림을 허용하면 생긴다</td><td>필수</td></tr>
+<tr><td>만족도·공개 후기</td><td>feedbacks</td><td>지난 회차 시연 테이블에 가상 피드백을 만들고, 일부는 공개 후기로 둔다</td><td>필수</td></tr>
+<tr><td>음주 선호</td><td>profiles.drink_pref</td><td>추가 기능(R-47)을 구현할 때 안 마심·가볍게·좋아함을 비율을 정해 무작위로 채운다</td><td>추가</td></tr>
+<tr><td>밸런스 질문 답</td><td>balance_answers</td><td>추가 기능(R-47)을 구현할 때 질문 2~3개에 무작위로 답을 채운다</td><td>추가</td></tr></table>
+
+<h2>10. 시연 데이터</h2>
+<table class="kv"><tr><th>구분</th><th>구성</th></tr><tr><td>회차</td><td>가상데이터의 목요일 24일 중 5/21~10/15의 22일은 지난 회차(DONE)로, 신청자가 있는 10/22·11/5와 새로 만드는 10/29는 19:00 모집 중(OPEN) 회차로 둔다. 지역은 표준 4곳 + ETC(정원 0). 원본에서 10/22를 고른 사람은 2명뿐이라, 10/1~10/15 신청자 8명(홍대, 25~31세, 남녀 4명씩)이 10/22에 다시 신청한 것으로 시연 매칭 풀 10명을 만든다. 원본 2명(39세·35세, 을지로)은 테이블을 이루지 못해 환불·보상 쿠폰 흐름을 보여 준다.</td></tr>
+<tr><td>파트너 식당</td><td>지역별 3곳씩 12곳. 회차마다 2~4테이블을 받게 두고, 한 지역은 일부러 재고를 적게 잡아 식당 부족 예외를 시연한다.</td></tr>
+<tr><td>과거 참석·피드백</td><td>지난 회차 일부에 테이블·참석·피드백을 만들어 만남(MET)·선호·비선호 관계를 쌓는다. 다음 매칭에서 "새로운 사람 우선"과 "비선호 제외"를 보여 주는 데 쓴다.</td></tr>
+<tr><td>차단·신고</td><td>시연용 참가자 사이에 차단 1건·신고 1건을 넣어 같은 테이블에 앉지 않는 것을 확인한다.</td></tr>
+<tr><td>테스트 계정</td><td>참가자 계정과 운영자 계정 각 1개(Auth 사용자 + profiles). 계정 정보는 제출 메시지에만 적는다.</td></tr>
+<tr><td>일괄 생성 참가자</td><td>시연 패널(F-77)이 origin=BULK로 만든다. 이메일은 보내지 않는다.</td></tr></table>
+
+<h2>11. 변경 이력</h2>
+<table class="log">
+  <tr><th>버전</th><th>일자</th><th>내용</th></tr>
+  <tr><td>v1.1</td><td>2026-10-19</td><td>가상데이터 적재 반영 — 표시 이름을 성 포함 전체 이름으로 변경·MBTI 오타 보정 규칙 추가(9.1), 회차에 11/5 추가·ETC 지역 행 추가, 10/22 시연 매칭 풀(재신청 8명 + 원본 2명) 구성(10장)</td></tr>
+  <tr><td>v1.0</td><td>2026-10-19</td><td>최초 작성 — 테이블 44개(필수 40, 추가 4)·컬럼 379개, 영역별 ERD 3장과 eXERD 전체 ERD(03-1), 코드·무결성·권한 규칙, 가상데이터 정제·적재 규칙(원본에 없는 항목 채우기 포함), 시연 데이터, DDL 초안(Supabase·eXERD용). 기능 86건 모두 테이블에 연결(4장 관련 기능)</td></tr>
+</table>
+</main>
+</body>
+</html>

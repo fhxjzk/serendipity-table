@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-001 기술 스택·아키텍처 결정 기록</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root {
+    --ink: #1f2328; --weak: #59636e; --line: #d0d7de; --soft: #f6f8fa;
+    --brand: #6b4423; --brand-soft: #f5efe6; --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    font-size: 10.5pt; line-height: 1.6; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 19pt; margin: 0 0 4px; color: var(--brand); }
+  .subtitle { color: var(--weak); margin: 0 0 18px; }
+  h2 { font-size: 13pt; margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--brand); }
+  h3 { font-size: 11pt; margin: 16px 0 6px; }
+  p { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 5px 7px; vertical-align: top; text-align: left; }
+  th { background: var(--soft); font-weight: 700; white-space: nowrap; }
+  .meta th { width: 22%; }
+  .pick { background: var(--brand-soft); }
+  .ok { color: var(--ok); font-weight: 700; }
+  .warn { color: var(--warn); font-weight: 700; }
+  .bad { color: var(--bad); font-weight: 700; }
+  .callout { border-left: 4px solid var(--brand); background: var(--brand-soft); padding: 10px 12px; margin: 10px 0; }
+  .note { color: var(--weak); font-size: 9.5pt; }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 2px 0; }
+  code { font-family: Consolas, monospace; font-size: 9.5pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  .arch { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 10px 0; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .box { border: 1.5px solid var(--brand); border-radius: 6px; padding: 8px 10px; background: #fff; }
+  .box b { color: var(--brand); }
+  .box.db { background: var(--brand-soft); }
+  .arrow { text-align: center; color: var(--weak); font-size: 9.5pt; }
+  .avoid-break { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>기술 스택·아키텍처 결정 기록 (ADR-001)</h1>
+<p class="subtitle">우연한 식탁 MVP — 수기 신청·매칭·안내를 자동화해 운영자는 예외만 처리하는 소셜다이닝 앱</p>
+
+<table class="meta">
+  <tr><th>문서 번호</th><td>ADR-001</td><th>상태</th><td><span class="ok">확정</span></td></tr>
+  <tr><th>작성일</th><td>2026-10-15 (v1.1 수정 2026-10-16)</td><th>작성자</th><td>정승환</td></tr>
+  <tr><th>관련 워크</th><td colspan="3">A1. 기획·설계 › 기술 스택·아키텍처 결정 1건과 근거 기록</td></tr>
+  <tr><th>관련 태스크</th><td colspan="3">기술 스택 후보 3안 비교 후 결정</td></tr>
+  <tr><th>기준 문서</th><td colspan="3">우연한 식탁 PRD v0.2 · CTO 온보딩 오리엔테이션 · 해커톤 킥오프 슬라이드</td></tr>
+</table>
+
+<h2>1. 문서 개요</h2>
+<table>
+  <tr><th>구분</th><th>내용</th></tr>
+  <tr><td>정한다</td><td>사용할 언어·프레임워크·데이터베이스·배포 환경, 자동 매칭 실행 방식, 모듈 경계와 핵심 설계 원칙, 해커톤 구성과 정식 운영 구성의 차이, 주요 위험과 대응</td></tr>
+  <tr><td>정하지 않는다</td><td>라이브러리 세부 버전(A2 기반 구축에서 확정) · 테이블과 속성(데이터 정의서) · 화면과 URL(기능 명세서) · 매칭 가중치와 최소 점수(기능 명세서, A3 매칭 엔진)</td></tr>
+</table>
+
+<h2>2. 결정이 필요한 이유 — 기술 요구사항</h2>
+<p>PRD와 해커톤 조건에서 스택 선택에 영향을 주는 요구사항만 뽑았다.</p>
+<table>
+  <tr><th>번호</th><th>요구사항</th><th>근거</th></tr>
+  <tr><td>T1</td><td>참가자 모바일 화면과 운영자 웹이 같은 데이터를 공유한다</td><td>PRD 4·11장</td></tr>
+  <tr><td>T2</td><td>회차별 매칭 마감 시각에 운영자 개입 없이 자동 매칭이 실행된다</td><td>MAT-01, 7.1장 1단계</td></tr>
+  <tr><td>T3</td><td>같은 작업을 여러 번 실행해도 중복 테이블·중복 환불·중복 단체방이 생기지 않는다</td><td>7.3장 매칭 원칙</td></tr>
+  <tr><td>T4</td><td>신청·결제·매칭·참석 상태를 분리 저장하고 변경 시각·주체를 기록한다</td><td>12장, 16장</td></tr>
+  <tr><td>T5</td><td>테스트 계정 로그인과 모의 결제·모의 환불을 허용한다</td><td>ACC-01, PAY-01, PAY-03</td></tr>
+  <tr><td>T6</td><td>10/21 23:59까지 배포 링크와 참가자·운영자 테스트 계정을 제출하고 결과 발표까지 링크를 유지한다</td><td>킥오프 제출 가이드</td></tr>
+  <tr><td>T7</td><td>1인 개발, 7일(10/15~10/21)</td><td>참가 조건</td></tr>
+  <tr><td>T8</td><td>해커톤 이후 정식 운영으로 이어질 수 있어야 한다</td><td>PRD 성장 시나리오, CTO 온보딩 11쪽</td></tr>
+  <tr><td>T9</td><td>확정 안내·1일 전 리마인드를 앱 푸시로 보내고, 확정된 참가자가 앱 안 단체방에서 대화한다</td><td>INF-01, INF-04, INF-07 (v1.1 추가)</td></tr>
+</table>
+
+<h2>3. 후보 비교</h2>
+<table>
+  <tr><th>기준</th><th class="pick">A. Next.js + TypeScript<br>+ Supabase + Vercel</th><th>B. Next.js + TypeScript<br>+ Neon(Postgres) + Vercel</th><th>C. Spring Boot + React<br>+ MySQL + VM(Docker)</th></tr>
+  <tr><td>구성 수 (T7)</td><td class="pick"><span class="ok">○</span> 앱 1개 + 관리형 DB</td><td><span class="ok">○</span> 앱 1개 + 관리형 DB</td><td><span class="warn">△</span> 백엔드·프런트·DB·Nginx</td></tr>
+  <tr><td>로그인 (T5)</td><td class="pick"><span class="ok">○</span> 내장 인증</td><td><span class="warn">△</span> 직접 구현</td><td><span class="warn">△</span> Spring Security + JWT 직접 구현</td></tr>
+  <tr><td>마감 시각 자동 실행 (T2)</td><td class="pick"><span class="ok">○</span> DB 내장 예약 실행(pg_cron + pg_net)으로 분 단위 API 호출</td><td><span class="bad">×</span> 외부 크론 서비스 별도 필요</td><td><span class="ok">○</span> <code>@Scheduled</code></td></tr>
+  <tr><td>배포·링크 유지 (T6)</td><td class="pick"><span class="warn">△</span> 무료로 즉시 배포. 단, 무료 DB는 7일 무사용 시 일시정지 → 대응책 있음(7장)</td><td><span class="ok">○</span> 무료 배포, DB 자동 재가동</td><td><span class="warn">△</span> 상시 서버 비용·관리 필요. 무료 PaaS는 잠들어 첫 접속 지연</td></tr>
+  <tr><td>멱등성·상태 관리 (T3·T4)</td><td class="pick"><span class="ok">○</span> Postgres 제약조건·트랜잭션·DB 함수</td><td><span class="ok">○</span> Postgres</td><td><span class="ok">○</span> MySQL 제약조건·JPA 트랜잭션</td></tr>
+  <tr><td>정식 운영 전환 (T8)</td><td class="pick"><span class="ok">○</span> 유료 요금제 전환. 표준 Postgres라 이전 가능</td><td><span class="ok">○</span> 동일</td><td><span class="ok">○</span> 국내에서 가장 흔한 구성</td></tr>
+  <tr><td>기존 경험</td><td class="pick">React·TypeScript 경험 활용, 서버 쪽은 신규</td><td>동일</td><td>Spring·React 경험(baseball 프로젝트) 활용</td></tr>
+</table>
+<p class="note">○ 유리 · △ 보완 필요 · × 불리. 무료 요금제 조건은 작성 시점에 알려진 기준이며, 계정 생성 시 최신 정책을 다시 확인한다.</p>
+
+<h3>baseball 프로젝트 스택 재사용 검토</h3>
+<p>기존 baseball 프로젝트(Spring Boot 4 · JWT · Flyway · MySQL · React 19 TS · Docker)는 인증·가짜 PG 결제·1분 주기 스케줄러 뼈대를 갖추고 있어, <b>코드를 재사용한다면 C안이 유리하다.</b> 이번 프로젝트는 새로 작성하기로 했으므로 재사용 이점이 사라지고, 1인 7일 조건에서 구성 수와 배포 부담이 더 큰 C안은 채택하지 않는다.</p>
+
+<h2>4. 결정</h2>
+<div class="callout">
+  <b>A안 — Next.js(App Router) + TypeScript + Supabase(Postgres·Auth·pg_cron) + Vercel</b>로 확정한다.
+</div>
+<ol>
+  <li><b>자동매칭(배점 25)의 핵심인 마감 시각 자동 실행을 별도 서비스 없이 해결한다.</b> DB 예약 실행이 1분마다 매칭 API를 호출하고, 운영자 화면의 "지금 마감 실행" 버튼도 같은 API를 쓴다.</li>
+  <li><b>앱 하나·배포 하나</b>로 참가자 모바일 웹과 운영자 어드민을 함께 운영해 1인 개발 부담을 줄인다.</li>
+  <li><b>정식 운영으로 그대로 이어진다.</b> 유료 요금제 전환과 보안 점검만으로 초기 운영이 가능하고, 데이터는 표준 Postgres라 이전이 쉽다.</li>
+</ol>
+
+<h3>4.1 알림·단체방 구성 (v1.1 추가)</h3>
+<p>기능 명세서 검토에서 PRD INF-01·INF-07이 "앱 푸시"를 요구하는 것을 확인해, 앱 내 알림함만 두던 v1.0 결정을 아래처럼 바꿨다.</p>
+<table>
+  <tr><th>대상</th><th>결정</th><th>이유</th></tr>
+  <tr><td>단체방</td><td><b>Supabase Realtime</b>으로 새 메시지를 바로 반영한다. 연결이 끊기면 30초 새로고침으로 대신한다.</td><td>Vercel 서버 함수는 소켓을 유지할 수 없지만, Realtime은 Supabase가 연결을 관리해 별도 서버가 필요 없다. RLS를 그대로 적용할 수 있다.</td></tr>
+  <tr><td>앱 내 알림</td><td>모든 알림을 DB에 먼저 기록하고 알림함에 보여 준다.</td><td>발송 결과와 관계없이 남는 기록(원장) 역할</td></tr>
+  <tr><td>웹 푸시</td><td><b>PWA</b>(manifest·서비스 워커) + Web Push(VAPID 키). 구독 정보를 저장하고 서버에서 발송한다.</td><td>앱스토어 앱 없이 PRD의 앱 푸시를 충족한다. 아이폰은 홈 화면에 설치한 뒤(iOS 16.4 이상) 받을 수 있다.</td></tr>
+  <tr><td>이메일</td><td><b>Gmail SMTP</b>(발송 전용 계정, 보낸 사람 이름 "우연한 식탁"). 중요 알림 5종만 참가자 설정에 따라 보낸다.</td><td>도메인 없이 무료로 실제 네이버·Gmail 주소에 보낼 수 있다. 앱 비밀번호는 환경변수로만 관리한다.</td></tr>
+  <tr><td>문자·카카오 알림톡</td><td>이번 범위에서 제외한다.</td><td>알림톡은 사업자 인증을 마친 비즈니스 채널과 템플릿 사전 심사가 필요하고, 문자는 발신번호 등록과 비용이 든다.</td></tr>
+  <tr><td>카카오톡 단체방</td><td>연동하지 않는다.</td><td>단체 채팅방을 만드는 공개 API가 없고, PRD INF-04와 완료 조건은 앱 내 단체방을 요구한다.</td></tr>
+</table>
+<p class="note">발송은 채널 어댑터(앱 내·웹 푸시·이메일)로 분리해, 정식 운영에서 자체 도메인 메일(Resend 등)이나 알림톡을 어댑터 추가만으로 붙인다.</p>
+
+<h2>5. 아키텍처 개요</h2>
+<div class="arch avoid-break">
+  <div class="row">
+    <div class="box"><b>참가자 반응형 웹 · PWA</b><br>신청·모의 결제·상태 확인·실패 해결·실시간 단체방·피드백·웹 푸시 수신</div>
+    <div class="box"><b>운영자 웹 /admin</b><br>대시보드·회차·식당 재고·매칭 모니터·예외 처리함</div>
+  </div>
+  <div class="arrow">▼ 같은 Next.js 앱 안의 화면</div>
+  <div class="box"><b>Next.js 앱 (Vercel, 서울 리전 함수)</b><br>
+    서버 API · <b>매칭 엔진 모듈</b>(화면·DB와 분리된 순수 함수) · 알림·단체방 메시지 생성 · 모의 결제 어댑터 · <b>알림 발송 어댑터</b>(앱 내·웹 푸시·Gmail SMTP)</div>
+  <div class="arrow">▼ 읽기·쓰기 (권한은 RLS로 제한) &nbsp;&nbsp; ▲ 1분마다 매칭 API 호출</div>
+  <div class="box db"><b>Supabase (서울 리전)</b><br>
+    Postgres(도메인 테이블·상태 이력·감사 로그) · Auth(테스트 계정 2종) · <b>Realtime</b>(단체방·알림 실시간 반영) · pg_cron + pg_net(1분마다 마감 시각 점검 후 매칭 API 호출)</div>
+</div>
+
+<h3>5.1 모듈 경계</h3>
+<p>CTO 온보딩 11쪽의 도메인 경계를 그대로 따른다. 초기에는 하나의 앱(모듈형 모놀리스)으로 만들고, 병목이 확인된 영역만 분리한다.</p>
+<table>
+  <tr><th>모듈</th><th>책임</th></tr>
+  <tr><td>사용자·프로필</td><td>기본 정보, 매칭 프로필, 식사 조건, 프로필 재사용</td></tr>
+  <tr><td>회차·신청</td><td>회차·지역·마감 시각, 신청과 신청 상태</td></tr>
+  <tr><td>결제·이용권</td><td>모의 결제, 결제 상태, 자동 환불, 이용권 보관, 구독 차감·복원, 보상 쿠폰</td></tr>
+  <tr><td>매칭</td><td>후보군 생성, 필수 조건 검증, 선호 점수, 재배치·분리·병합, 자동 확정, 처리 설명</td></tr>
+  <tr><td>식당</td><td>지역·시간별 수용 인원, 자동 배정</td></tr>
+  <tr><td>채팅·알림</td><td>단체방 생성·실시간 메시지, 시스템 메시지, 리마인드·대화 콘텐츠 자동 게시, 알림 발송(앱 내·웹 푸시·이메일)과 수신 설정</td></tr>
+  <tr><td>피드백·재방문</td><td>체크인, 만족도, 사람별 선호, 다음 일정 추천</td></tr>
+  <tr><td>안전·신고</td><td>신고·차단, 매칭 제외 관계</td></tr>
+  <tr><td>스케줄러·감사 로그</td><td>마감 점검, 재시도, 상태 변경 시각·주체·원인 기록</td></tr>
+</table>
+
+<h3>5.2 핵심 설계 원칙</h3>
+<ul>
+  <li><b>매칭 엔진은 순수 함수로 만든다.</b> 입력(후보·설정)과 출력(테이블·배치 사유)만 갖고 DB와 화면을 모른다. 단위 테스트로 "필수 조건 위반 확정 0건, 4명 미만 확정 0건"을 검증한다.</li>
+  <li><b>멱등 실행.</b> 회차별 매칭 실행에 고유 키를 두고 UNIQUE 제약으로 중복 실행을 막는다. 확정·환불·단체방 생성은 한 트랜잭션(DB 함수)에서 처리한다.</li>
+  <li><b>상태 4종 분리.</b> <code>application_status</code> · <code>payment_status</code> · <code>match_status</code> · <code>attendance_status</code>를 각각 저장하고, 변경마다 이력을 남긴다.</li>
+  <li><b>권한은 DB에서 막는다.</b> 행 단위 보안(RLS)으로 참가자는 본인 데이터만, 운영자 역할만 전체를 조회한다. 다른 참가자의 개인정보와 상세 점수는 노출하지 않는다.</li>
+  <li><b>단체방은 Realtime, 알림은 채널 어댑터.</b> 메시지와 알림은 DB에 먼저 기록하고, 화면 반영은 Realtime 구독으로, 바깥 발송은 앱 내·웹 푸시·이메일 어댑터로 한다. 연결이 끊기면 30초 새로고침으로 대신한다. (v1.0의 "주기적 새로고침·앱 내 알림만" 결정을 v1.1에서 변경)</li>
+  <li><b>결제는 교체 가능한 어댑터.</b> 지금은 모의 결제, 정식 운영에서 PG(토스페이먼츠 등)로 바꿀 때 어댑터만 교체한다.</li>
+</ul>
+
+<h2>6. 해커톤 구성과 정식 운영 구성</h2>
+<table>
+  <tr><th>항목</th><th>해커톤 (개발 10/15~10/21 · 결과 발표 10/29까지 유지)</th><th>정식 운영 전 전환</th><th>이유</th></tr>
+  <tr><td>Vercel</td><td>Hobby(무료)</td><td>Pro</td><td>무료 요금제는 상업적 이용 금지</td></tr>
+  <tr><td>Supabase</td><td>Free</td><td>Pro</td><td>일시정지 없음, 일일 백업</td></tr>
+  <tr><td>보안(RLS)</td><td>기본 정책 적용</td><td>테이블별 정책 전수 점검</td><td>개인정보 노출 방지 — 가장 큰 운영 위험</td></tr>
+  <tr><td>결제</td><td>모의 결제·모의 환불</td><td>PG 연동, 웹훅 처리</td><td>실결제·부분취소·환불</td></tr>
+  <tr><td>알림</td><td>앱 내 알림 + 웹 푸시 + 이메일(Gmail SMTP)</td><td>카카오 알림톡 추가, 이메일은 자체 도메인(Resend 등)</td><td>알림톡은 사업자 인증 채널 필요, 개인 Gmail은 발송 한도와 신뢰도에 한계</td></tr>
+  <tr><td>환경</td><td>DB 1개</td><td>개발용·운영용 분리</td><td>운영 데이터 보호</td></tr>
+  <tr><td>모니터링</td><td>없음</td><td>오류 추적 도구 도입</td><td>자동 매칭·환불 실패 즉시 감지</td></tr>
+  <tr><td>개인정보 처리방침</td><td>해당 없음</td><td>처리 위탁·국외 이전 고지 검토</td><td>해외 사업자 서비스 사용</td></tr>
+</table>
+<p class="note">앱스토어용 네이티브 앱이 필요해지면 백엔드(Supabase)는 유지하고 화면만 React Native(Expo)로 추가한다.</p>
+
+<h2>7. 위험과 대응</h2>
+<table>
+  <tr><th>위험</th><th>영향</th><th>대응</th></tr>
+  <tr><td>Supabase 무료 DB가 7일 무사용 시 일시정지</td><td>심사 기간(10/22~10/28)에 링크가 동작하지 않음</td><td>Vercel 크론으로 하루 1회 DB 조회, 심사 기간 중 매일 접속 확인</td></tr>
+  <tr><td>Vercel 무료 크론은 하루 1회만 실행</td><td>마감 시각 매칭을 맡길 수 없음</td><td>매칭 실행은 pg_cron이 담당하고, Vercel 크론은 유지용으로만 사용</td></tr>
+  <tr><td>RLS 설정 오류</td><td>다른 참가자 정보 노출</td><td>테이블별 정책 작성, 다른 계정으로 접근 시험을 테스트 체크리스트에 포함</td></tr>
+  <tr><td>서버 함수 실행 시간 제한</td><td>대규모 매칭 중단</td><td>회차 단위로 실행, 294명 가상데이터로 실행 시간 측정</td></tr>
+  <tr><td>Next.js 서버 기능 학습 시간</td><td>일정 지연</td><td>매칭 엔진을 프레임워크와 무관한 TypeScript 모듈로 작성해 영향 범위를 줄임</td></tr>
+  <tr><td>아이폰 웹 푸시는 홈 화면 설치 후에만 동작</td><td>일부 참가자가 푸시를 받지 못함</td><td>앱 내 알림·이메일로 보완하고, 설치 안내 배너를 띄운다</td></tr>
+  <tr><td>Gmail 발송 한도·스팸함 분류</td><td>메일 미도착</td><td>중요 5종만 발송, 시연 전 네이버·Gmail 수신 시험, 앱 비밀번호는 환경변수로만 관리</td></tr>
+  <tr><td>Realtime 연결 끊김·단체방 권한 누락</td><td>메시지 지연·다른 테이블 노출</td><td>30초 새로고침 대체, 단체방 메시지 RLS를 같은 테이블 참가자로 제한하고 다른 계정으로 접근 시험</td></tr>
+  <tr><td>무료 요금제 조건 변경</td><td>위 대응 무효화</td><td>계정 생성 시 현재 조건을 확인하고 결과를 기록</td></tr>
+</table>
+
+<h2>8. 다음 단계</h2>
+<table>
+  <tr><th>시점</th><th>할 일</th><th>관련 워크</th></tr>
+  <tr><td>10/16</td><td>기능 명세서·데이터 정의서에서 테이블·상태 전이 확정, Supabase 프로젝트 생성, 가상데이터 적재</td><td>A1, A2</td></tr>
+  <tr><td>10/16</td><td>Next.js 프로젝트 생성, 라이브러리 버전 확정, 테스트 계정 2종 인증</td><td>A2</td></tr>
+  <tr><td>10/17</td><td>빈 앱 첫 배포로 공개 링크 확보, 무료 요금제 조건 확인 결과 기록</td><td>A2</td></tr>
+  <tr><td>10/17~18</td><td>매칭 엔진 모듈과 단위 테스트, pg_cron 연결과 데모용 즉시 실행</td><td>A3</td></tr>
+</table>
+
+<h2>9. 변경 이력</h2>
+<table>
+  <tr><th>버전</th><th>일자</th><th>내용</th></tr>
+  <tr><td>v1.0</td><td>2026-10-15</td><td>최초 작성 — 후보 3안 비교, A안 확정</td></tr>
+  <tr><td>v1.1</td><td>2026-10-16</td><td>알림·단체방 구성 변경 — 단체방 Supabase Realtime, 웹 푸시(PWA)·이메일(Gmail SMTP) 추가, 문자·알림톡·카카오 단체방 제외 사유 기록 (T9, 4.1, 5장, 6장, 7장)</td></tr>
+</table>
+
+</main>
+</body>
+</html>
