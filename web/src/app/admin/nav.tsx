@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarPlus, LayoutDashboard, ShieldAlert, Shuffle, TriangleAlert, UsersRound, UtensilsCrossed } from "lucide-react";
+import { CalendarPlus, ClipboardCheck, LayoutDashboard, ReceiptText, ShieldAlert, Shuffle, Store, TriangleAlert, UsersRound, UtensilsCrossed } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "대시보드", icon: LayoutDashboard },
   { href: "/admin/rounds", label: "회차 관리", icon: CalendarPlus },
+  { href: "/admin/venues", label: "식당·재고", icon: Store },
   { href: "/admin/applicants", label: "신청자 목록", icon: UsersRound },
+  { href: "/admin/payments", label: "결제·환불 내역", icon: ReceiptText },
   { href: "/admin/matching", label: "매칭 모니터", icon: Shuffle },
   { href: "/admin/tables", label: "테이블 조회", icon: UtensilsCrossed },
+  { href: "/admin/attendance", label: "참석·노쇼 현황", icon: ClipboardCheck },
   { href: "/admin/exceptions", label: "예외 처리함", icon: TriangleAlert },
   { href: "/admin/reports", label: "신고·제재", icon: ShieldAlert },
 ];

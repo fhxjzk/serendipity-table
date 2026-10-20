@@ -20,7 +20,7 @@ type Profile = { name: string; birth_year: number; gender: string; job: string }
 type Row = {
   region_code: string; round_id: string;
   applications: {
-    id: string; payment_status: string; match_status: string; attendance_status: string; ticket_product_code: string | null; submitted_at: string | null; is_active: boolean;
+    id: string; profile_id: string; payment_status: string; match_status: string; attendance_status: string; ticket_product_code: string | null; submitted_at: string | null; is_active: boolean;
     profiles: Profile | Profile[] | null;
   } | null;
 };
@@ -39,7 +39,7 @@ export default async function ApplicantsPage({ searchParams }: PageProps<"/admin
   const q = pick("q").trim();
 
   let query = db.from("application_choices")
-    .select("region_code, round_id, applications!inner(id, payment_status, match_status, attendance_status, ticket_product_code, submitted_at, is_active, profiles(name, birth_year, gender, job))")
+    .select("region_code, round_id, applications!inner(id, profile_id, payment_status, match_status, attendance_status, ticket_product_code, submitted_at, is_active, profiles(name, birth_year, gender, job))")
     .eq("applications.is_active", true).eq("applications.application_status", "SUBMITTED");
   if (roundId) query = query.eq("round_id", roundId);
   if (region) query = query.eq("region_code", region);
@@ -49,6 +49,17 @@ export default async function ApplicantsPage({ searchParams }: PageProps<"/admin
   if (q) rows = rows.filter((r) => one(r.applications?.profiles)?.name.includes(q));
   rows.sort((a, b) => (a.applications?.submitted_at ?? "").localeCompare(b.applications?.submitted_at ?? ""));
   const shown = rows.slice(0, LIMIT);
+
+  // Past attendance and reports received, per person on this page (F-60).
+  const profileIds = [...new Set(shown.map((r) => r.applications!.profile_id))];
+  const [{ data: history }, { data: reports }] = profileIds.length
+    ? await Promise.all([
+        db.from("applications").select("profile_id, attendance_status").in("profile_id", profileIds).in("attendance_status", ["ATTENDED", "NO_SHOW"]),
+        db.from("reports").select("reported_id").in("reported_id", profileIds),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const past = (pid: string, s: string) => (history ?? []).filter((h) => h.profile_id === pid && h.attendance_status === s).length;
+  const reported = (pid: string) => (reports ?? []).filter((r) => r.reported_id === pid).length;
 
   return (
     <main className="flex flex-col gap-6">
@@ -69,11 +80,14 @@ export default async function ApplicantsPage({ searchParams }: PageProps<"/admin
         <button className={btnCls}>조회</button>
         <Link href="/admin/applicants" className="pb-2 text-[12px] text-muted underline">초기화</Link>
       </form>
-      <p className="text-[12px] text-muted">총 <span className="font-semibold text-ink tabular">{rows.length.toLocaleString()}</span>건{rows.length > LIMIT && ` 중 앞의 ${LIMIT}건`}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] text-muted">총 <span className="font-semibold text-ink tabular">{rows.length.toLocaleString()}</span>건{rows.length > LIMIT && ` 중 앞의 ${LIMIT}건`}</p>
+        {roundId && <a href={`/admin/export/applicants?round=${roundId}`} className="text-[13px] text-ink/70 underline">이 회차 신청자 CSV 내려받기</a>}
+      </div>
       <section className={cardCls}>
         <table className="w-full text-[13px] tabular">
           <thead className="border-b border-line bg-paper text-left text-[12px] text-muted">
-            <tr><th className={thCls}>이름</th><th className={thCls}>나이·성별</th><th className={thCls}>직업</th><th className={thCls}>지역</th><th className={thCls}>결제</th><th className={thCls}>매칭</th><th className={thCls}>신청 시각</th></tr>
+            <tr><th className={thCls}>이름</th><th className={thCls}>나이·성별</th><th className={thCls}>직업</th><th className={thCls}>지역</th><th className={thCls}>결제</th><th className={thCls}>매칭</th><th className={thCls}>이전 참석·노쇼</th><th className={thCls}>받은 신고</th><th className={thCls}>신청 시각</th></tr>
           </thead>
           <tbody>
             {shown.map((r) => {
@@ -81,12 +95,14 @@ export default async function ApplicantsPage({ searchParams }: PageProps<"/admin
               const p = one(a.profiles);
               return (
                 <tr key={`${a.id}-${r.region_code}`} className="border-t border-line/70">
-                  <td className="px-4 py-2.5 font-medium">{p?.name}</td>
+                  <td className="px-4 py-2.5"><Link href={`/admin/people/${a.profile_id}`} className="font-medium underline-offset-2 hover:underline">{p?.name}</Link></td>
                   <td className="px-4 py-2.5">{p ? `${ageOf(p.birth_year)}세 · ${p.gender === "F" ? "여" : "남"}` : "-"}</td>
                   <td className="px-4 py-2.5 text-muted">{p?.job}</td>
                   <td className="px-4 py-2.5">{REGION_LABEL[r.region_code] ?? r.region_code}</td>
                   <td className="px-4 py-2.5"><Badge tone={PAY[a.payment_status]?.tone}>{PAY[a.payment_status]?.label ?? a.payment_status}</Badge></td>
                   <td className="px-4 py-2.5"><Badge tone={MATCH[a.match_status]?.tone}>{MATCH[a.match_status]?.label ?? a.match_status}</Badge></td>
+                  <td className="px-4 py-2.5">{past(a.profile_id, "ATTENDED")}회 · <span className={past(a.profile_id, "NO_SHOW") ? "text-ember" : ""}>노쇼 {past(a.profile_id, "NO_SHOW")}</span></td>
+                  <td className={`px-4 py-2.5 ${reported(a.profile_id) ? "text-ember" : "text-muted"}`}>{reported(a.profile_id)}건</td>
                   <td className="px-4 py-2.5 text-muted">{formatKst(a.submitted_at)}</td>
                 </tr>
               );

@@ -3,7 +3,10 @@ import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { REGION_LABEL, formatKst, todayKst } from "@/lib/format";
 import { AdminHeader, Badge, Empty, cardCls, thCls } from "../ui";
-import { RoundForm } from "./round-form";
+import { RoundEditForm, RoundForm } from "./round-form";
+
+// "HH:MM" in KST, for the time inputs.
+const hm = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 
 const STATUS: Record<string, { label: string; tone: "blue" | "green" | "gray" | "red" | "amber" }> = {
   DRAFT: { label: "준비", tone: "gray" }, OPEN: { label: "모집 중", tone: "blue" }, CLOSED: { label: "마감", tone: "amber" },
@@ -14,7 +17,7 @@ export default async function RoundsPage() {
   await requireProfile("OPERATOR");
   const db = createAdminClient();
   const { data: rounds } = await db.from("rounds")
-    .select("id, title, event_date, start_at, apply_deadline_at, status, round_regions(region_code, capacity)")
+    .select("id, title, event_date, start_at, end_at, apply_deadline_at, status, round_regions(region_code, capacity)")
     .gte("event_date", todayKst()).order("event_date");
 
   return (
@@ -31,7 +34,18 @@ export default async function RoundsPage() {
           <tbody>
             {(rounds ?? []).map((r) => (
               <tr key={r.id} className="border-t border-line/70">
-                <td className="px-4 py-3 font-medium">{r.title}</td>
+                <td className="px-4 py-3">
+                  <span className="font-medium">{r.title}</span>
+                  {["DRAFT", "OPEN"].includes(r.status) && (
+                    <details>
+                      <summary className="cursor-pointer text-[12px] text-ink/60 underline">수정 (날짜·지역은 고정)</summary>
+                      <RoundEditForm round={{
+                        id: r.id, title: r.title, start: hm(r.start_at), end: hm(r.end_at),
+                        regions: ((r.round_regions ?? []) as { region_code: string; capacity: number }[]).filter((x) => x.region_code !== "ETC"),
+                      }} />
+                    </details>
+                  )}
+                </td>
                 <td className="px-4 py-3"><Badge tone={STATUS[r.status]?.tone}>{STATUS[r.status]?.label ?? r.status}</Badge></td>
                 <td className="px-4 py-3">{formatKst(r.start_at)}</td>
                 <td className="px-4 py-3">{formatKst(r.apply_deadline_at)}</td>

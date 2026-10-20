@@ -4,9 +4,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ALGORITHM_VERSION, runMatching } from "./engine";
 import { finalizeRound } from "./finalize";
-import type { Candidate, MatchSettings, Relation, RelationType } from "./types";
+import type { Candidate, MatchResult, MatchSettings, Relation, RelationType } from "./types";
 
 export type MatchTrigger = "SCHEDULER" | "DEMO";
+
+const must = <T>(r: { data: T; error: { message: string } | null }, what: string): NonNullable<T> => {
+  if (r.error || r.data == null) throw new Error(`${what}: ${r.error?.message ?? "no data"}`);
+  return r.data as NonNullable<T>;
+};
 
 export async function loadSettings(db: SupabaseClient): Promise<MatchSettings> {
   const { data, error } = await db.from("app_settings").select("key, value").in("key", ["match_weights", "min_match_score", "table_size", "max_age_gap"]);
@@ -21,23 +26,11 @@ export async function loadSettings(db: SupabaseClient): Promise<MatchSettings> {
   };
 }
 
-export async function runRoundMatching(db: SupabaseClient, roundId: string, trigger: MatchTrigger) {
-  const must = <T>(r: { data: T; error: { message: string } | null }, what: string): NonNullable<T> => {
-    if (r.error || r.data == null) throw new Error(`${what}: ${r.error?.message ?? "no data"}`);
-    return r.data as NonNullable<T>;
-  };
-
-  const round = must(await db.from("rounds").select("id, event_date, status").eq("id", roundId).single(), "round");
-  const runKey = `match:${roundId}`;
-  if (round.status !== "OPEN") {
-    const { data: prev } = await db.from("match_runs").select("id").eq("run_key", runKey).maybeSingle();
-    if (round.status === "MATCHED") await finalizeRound(db, roundId);
-    return { runId: (prev?.id as string | undefined) ?? null, alreadyApplied: true, stats: null };
-  }
-
+// Paid, active applications of the round as engine candidates, their relations, and later open rounds.
+async function loadRoundInput(db: SupabaseClient, round: { id: string; event_date: string }) {
+  const roundId = round.id;
   const settings = await loadSettings(db);
 
-  // Paid, active applications that chose this round.
   const choiceRows = must(
     await db.from("application_choices").select("application_id, region_code").eq("round_id", roundId),
     "choices",
@@ -89,7 +82,33 @@ export async function runRoundMatching(db: SupabaseClient, roundId: string, trig
     ? must(await db.from("relations").select("from_profile_id, to_profile_id, type").in("from_profile_id", profileIds).in("to_profile_id", profileIds), "relations")
     : [];
   const relations: Relation[] = relationRows.map((r) => ({ from: r.from_profile_id, to: r.to_profile_id, type: r.type as RelationType }));
+  return { settings, candidates, relations, laterRounds, laterChoices };
+}
 
+function statsOf(candidates: Candidate[], result: MatchResult) {
+  const seated = result.tables.reduce((n, t) => n + t.members.length, 0);
+  return {
+    candidates: candidates.length,
+    tables: result.tables.length,
+    seated,
+    failed: result.failures.filter((f) => !f.waitsForLaterRound).length,
+    waiting: result.failures.filter((f) => f.waitsForLaterRound).length,
+    success_rate: candidates.length ? Math.round((seated / candidates.length) * 1000) / 10 : 0,
+    reallocated: result.events.filter((e) => e.type === "REALLOCATED").length,
+    merged: new Set(result.events.filter((e) => e.type === "MERGED").map((e) => e.tableIndex)).size,
+  };
+}
+
+export async function runRoundMatching(db: SupabaseClient, roundId: string, trigger: MatchTrigger) {
+  const round = must(await db.from("rounds").select("id, event_date, status").eq("id", roundId).single(), "round");
+  const runKey = `match:${roundId}`;
+  if (round.status !== "OPEN") {
+    const { data: prev } = await db.from("match_runs").select("id").eq("run_key", runKey).maybeSingle();
+    if (round.status === "MATCHED") await finalizeRound(db, roundId);
+    return { runId: (prev?.id as string | undefined) ?? null, alreadyApplied: true, stats: null };
+  }
+
+  const { settings, candidates, relations, laterRounds, laterChoices } = await loadRoundInput(db, round);
   const result = runMatching(candidates, relations, settings);
 
   // Alternative offers (5.2 ⑤): later open rounds still taking applications that the person did not choose, same regions.
@@ -104,17 +123,7 @@ export async function runRoundMatching(db: SupabaseClient, roundId: string, trig
     return out.slice(0, 6);
   };
 
-  const seated = result.tables.reduce((n, t) => n + t.members.length, 0);
-  const stats = {
-    candidates: candidates.length,
-    tables: result.tables.length,
-    seated,
-    failed: result.failures.filter((f) => !f.waitsForLaterRound).length,
-    waiting: result.failures.filter((f) => f.waitsForLaterRound).length,
-    success_rate: candidates.length ? Math.round((seated / candidates.length) * 1000) / 10 : 0,
-    reallocated: result.events.filter((e) => e.type === "REALLOCATED").length,
-    merged: new Set(result.events.filter((e) => e.type === "MERGED").map((e) => e.tableIndex)).size,
-  };
+  const stats = statsOf(candidates, result);
 
   const payload = {
     round_id: roundId,
@@ -147,6 +156,20 @@ export async function runRoundMatching(db: SupabaseClient, roundId: string, trig
   const applied = must(await db.rpc("apply_match_run", { p: payload }), "apply_match_run") as { run_id: string; already_applied: boolean };
   await finalizeRound(db, roundId);
   return { runId: applied.run_id, alreadyApplied: applied.already_applied, stats };
+}
+
+// F-62: the same candidates and engine as the real run, computed on the spot and never saved.
+export async function previewRoundMatching(db: SupabaseClient, roundId: string) {
+  const round = must(await db.from("rounds").select("id, event_date, status").eq("id", roundId).single(), "round");
+  const { settings, candidates, relations } = await loadRoundInput(db, round);
+  const result = runMatching(candidates, relations, settings);
+  const ids = candidates.map((c) => c.profileId);
+  const names = new Map<string, { name: string; gender: string; birth_year: number }>();
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data } = await db.from("profiles").select("id, name, gender, birth_year").in("id", ids.slice(i, i + 100));
+    for (const p of data ?? []) names.set(p.id, p);
+  }
+  return { settings, result, stats: statsOf(candidates, result), names };
 }
 
 export async function resetRoundMatching(db: SupabaseClient, roundId: string) {

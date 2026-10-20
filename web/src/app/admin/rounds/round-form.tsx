@@ -1,12 +1,34 @@
 "use client";
 
 import { useActionState } from "react";
-import { createRound, type ActionState } from "./actions";
+import { createRound, updateRound, type ActionState } from "./actions";
 import { Result, btnCls, cardCls, inputCls } from "../ui";
 
 const REGIONS = [
   ["HONGDAE", "홍대/합정"], ["GANGNAM", "강남/신논현"], ["EULJIRO", "을지로/종로"], ["JAMSIL", "잠실"],
 ] as const;
+
+const LABEL: Record<string, string> = Object.fromEntries(REGIONS);
+
+export function RoundEditForm({ round }: { round: { id: string; title: string; start: string; end: string; regions: { region_code: string; capacity: number }[] } }) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(updateRound, {});
+  return (
+    <form action={action} className="mt-2 flex flex-wrap items-end gap-2">
+      <input type="hidden" name="id" value={round.id} />
+      <input name="title" defaultValue={round.title} aria-label="회차 이름" className={`${inputCls} w-44`} />
+      <input type="time" name="start_time" defaultValue={round.start} aria-label="시작" className={inputCls} />
+      <input type="time" name="end_time" defaultValue={round.end} aria-label="종료" className={inputCls} />
+      {round.regions.map((r) => (
+        <label key={r.region_code} className="flex items-center gap-1 text-[12px] text-muted">
+          {LABEL[r.region_code] ?? r.region_code}
+          <input type="number" name={`capacity_${r.region_code}`} defaultValue={r.capacity} min={0} max={1000} className={`${inputCls} w-16`} />
+        </label>
+      ))}
+      <button disabled={pending} className={btnCls}>{pending ? "저장 중…" : "저장"}</button>
+      <Result state={state} />
+    </form>
+  );
+}
 
 export function RoundForm() {
   const [state, action, pending] = useActionState<ActionState, FormData>(createRound, {});

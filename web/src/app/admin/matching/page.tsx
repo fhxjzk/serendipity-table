@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { FAIL_REASON_TEXT } from "@/lib/matching/reasons";
 import type { FailReason } from "@/lib/matching/types";
 import { REGION_LABEL, ageOf, formatKst, todayKst } from "@/lib/format";
+import { previewRoundMatching } from "@/lib/matching/run";
 import { setAutoMatch } from "./actions";
 import { EventStepButton, ResetButton, RunNowButton } from "./buttons";
 
@@ -114,8 +115,97 @@ export default async function MatchingPage({ searchParams }: PageProps<"/admin/m
         </table>
       </section>
 
+      {selected && selected.status === "OPEN" && <Preview roundId={selected.id} title={selected.title} />}
+      {selected && selected.status !== "OPEN" && <RunInfo roundId={selected.id} />}
       {selected && <RoundDetail roundId={selected.id} title={selected.title} />}
     </main>
+  );
+}
+
+const EVENT_LABEL: Record<string, string> = {
+  PLACED: "배치", RELEASED: "해제", REALLOCATED: "재배치", SPLIT: "분리", MERGED: "병합", CONFIRMED: "확정", FAILED: "실패", SHRINK: "인원 감소",
+};
+
+// F-62: what the engine would do right now with the paid applications. Nothing is saved.
+async function Preview({ roundId, title }: { roundId: string; title: string }) {
+  const { result, stats, names, settings } = await previewRoundMatching(createAdminClient(), roundId);
+  const who = (profileId: string) => {
+    const p = names.get(profileId);
+    return p ? `${p.name}(${p.gender === "M" ? "남" : "여"}·${ageOf(p.birth_year)})` : "-";
+  };
+  return (
+    <section className="rounded-xl border border-dashed border-sky-300 bg-sky-50/40 p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-lg font-bold tracking-[-0.02em]">{title} 매칭 미리보기</h2>
+        <span className="text-xs text-ink/60">저장하지 않는 계산이에요 · 최소 점수 {settings.minScore} · 나이 차이 {settings.maxAgeGap}살 이내 · {settings.tableMin}~{settings.tableMax}명</span>
+      </div>
+      {stats.candidates === 0 ? (
+        <p className="mt-3 text-sm text-ink/60">아직 결제를 마친 신청이 없어요.</p>
+      ) : (
+        <>
+          <p className="mt-2 text-sm">
+            후보 {stats.candidates}명 → 예상 테이블 <b>{stats.tables}개</b> · 배정 {stats.seated}명 · 예상 실패 <b>{stats.failed}명</b> · 다른 날짜 대기 {stats.waiting}명 · 예상 성공률 {stats.success_rate}%
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {result.tables.map((t, i) => (
+              <div key={i} className="rounded-lg border border-line bg-white p-4 text-sm">
+                <div className="flex justify-between font-semibold"><span>예상 테이블 {i + 1} · {REGION_LABEL[t.regionCode]}</span><span className="text-ember">{t.score.total.toFixed(1)}점</span></div>
+                <p className="mt-1 text-ink/70">{t.members.map((m) => who(m.profileId)).join(", ")}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-ink/70">
+                  {Object.entries(t.score.components).map(([k, v]) => <span key={k} className="rounded bg-sand/50 px-2 py-0.5">{COMPONENT_LABEL[k] ?? k} {Math.round(v * 100)}%</span>)}
+                </div>
+              </div>
+            ))}
+          </div>
+          {result.failures.length > 0 && (
+            <ul className="mt-3 flex flex-col gap-1 text-sm">
+              {result.failures.map((f) => (
+                <li key={f.candidate.applicationId}>
+                  <span className="font-medium">{who(f.candidate.profileId)}</span>
+                  <span className="ml-2 text-ink/70">{f.waitsForLaterRound ? "다른 날짜 매칭 대기" : FAIL_REASON_TEXT[f.reason]}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+// F-63: how the saved run was made — algorithm, criteria, and every placement change.
+async function RunInfo({ roundId }: { roundId: string }) {
+  const db = createAdminClient();
+  const { data: run } = await db.from("match_runs").select("id, trigger, algorithm_version, settings_snapshot, stats, finished_at")
+    .eq("round_id", roundId).eq("status", "DONE").order("started_at", { ascending: false }).limit(1).maybeSingle();
+  if (!run) return null;
+  const { data: events } = await db.from("match_events").select("event_type, reason_code, application_id, applications(profiles(name))").eq("match_run_id", run.id);
+  const counts = new Map<string, number>();
+  for (const e of events ?? []) counts.set(e.event_type, (counts.get(e.event_type) ?? 0) + 1);
+  const moves = (events ?? []).filter((e) => ["RELEASED", "REALLOCATED", "SPLIT", "MERGED"].includes(e.event_type));
+  const s = run.settings_snapshot as { weights?: Record<string, number>; minScore?: number; maxAgeGap?: number } | null;
+  type AppP = { profiles: { name: string } | { name: string }[] | null } | { profiles: { name: string } | { name: string }[] | null }[] | null;
+  const nameOf = (a: AppP) => {
+    const app = Array.isArray(a) ? a[0] : a;
+    const p = Array.isArray(app?.profiles) ? app?.profiles[0] : app?.profiles;
+    return p?.name ?? "-";
+  };
+  return (
+    <section className="rounded-xl border border-line bg-white p-5 text-sm shadow-[0_1px_2px_rgba(42,33,27,0.04)]">
+      <h2 className="text-[15px] font-bold">실행 기록</h2>
+      <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div><dt className="text-xs text-muted">알고리즘</dt><dd>{run.algorithm_version} · {run.trigger === "SCHEDULER" ? "자동 실행" : "즉시 실행"} · {formatKst(run.finished_at)}</dd></div>
+        <div><dt className="text-xs text-muted">적용 기준</dt><dd>최소 점수 {s?.minScore ?? "-"} · 나이 차이 {s?.maxAgeGap ?? "-"}살 이내 · 가중치 {Object.entries(s?.weights ?? {}).map(([k, v]) => `${COMPONENT_LABEL[k] ?? k} ${v}`).join(" / ")}</dd></div>
+      </dl>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        {[...counts.entries()].map(([k, n]) => <span key={k} className="rounded bg-sand/60 px-2 py-0.5">{EVENT_LABEL[k] ?? k} {n}건</span>)}
+      </div>
+      {moves.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-1 text-ink/80">
+          {moves.map((e, i) => <li key={i}>{nameOf(e.applications as AppP)} — {EVENT_LABEL[e.event_type]} ({e.reason_code})</li>)}
+        </ul>
+      )}
+    </section>
   );
 }
 
