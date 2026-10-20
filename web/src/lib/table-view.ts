@@ -38,7 +38,11 @@ export async function loadTableForMember(profileId: string, opts: { applicationI
 
   const label = (g: string, c: string) => codes?.find((x) => x.code_group === g && x.code === c)?.label ?? c;
   type P = { display_name: string; birth_year: number; mbti: string; interests: string[]; one_liner: string | null };
-  const mates: TableMate[] = (members ?? []).map((m) => {
+  // People who gave notice of absence stay in the chat room but are not counted as coming.
+  const absent = (m: { applications: unknown }) => ["CANCELED_EARLY", "CANCELED_LATE"].includes((Array.isArray(m.applications) ? m.applications[0] : m.applications as { attendance_status: string } | null)?.attendance_status ?? "");
+  const coming = (members ?? []).filter((m) => m.profile_id === profileId || !absent(m));
+  const absentCount = (members ?? []).length - coming.length;
+  const mates: TableMate[] = coming.map((m) => {
     const p = (Array.isArray(m.profiles) ? m.profiles[0] : m.profiles) as P;
     return {
       profileId: m.profile_id, name: p.display_name, ageBand: ageBand(p.birth_year), mbti: p.mbti,
@@ -56,7 +60,7 @@ export async function loadTableForMember(profileId: string, opts: { applicationI
   const checkInOpen = round.status !== "DONE" && (round.setting_overrides?.event_started === true || nowMs >= new Date(round.start_at).getTime() - 30 * 60000);
   return {
     tableId, roomId: room?.id ?? null, regionCode: table.region_code, reservationName: table.reservation_name,
-    curation: table.curation, foodSummary: table.food_summary, round, mates,
+    curation: table.curation, foodSummary: table.food_summary, round, mates, absentCount,
     myApplicationId: mine?.application_id ?? null,
     myAttendance: myApp?.attendance_status ?? "SCHEDULED",
     eventEnded: round.status === "DONE",

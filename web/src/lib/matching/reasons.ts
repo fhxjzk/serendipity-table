@@ -9,5 +9,8 @@ export const FAIL_REASON_TEXT: Record<FailReason, string> = {
   NO_REGION: "선택하신 지역은 아직 우연한 식탁이 열리지 않는 곳이에요.",
 };
 
+// After a confirmed table lost people and nobody could take the rest (F-33), shown on the same resolve screen.
+export const REALLOC_FAILED_TEXT = "함께하기로 한 분이 빠져 인원이 부족해졌고, 옮길 수 있는 다른 식탁도 없었어요. 불편을 드려 죄송해요.";
+
 export const CONFIRM_TEXT = "조건에 맞는 테이블이 확정됐어요. 식당과 단체방 안내를 확인해 주세요.";
 export const WAIT_TEXT = "이번 날짜에는 자리가 나지 않았어요. 함께 선택하신 다른 날짜의 매칭을 기다리는 중이에요.";

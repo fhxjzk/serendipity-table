@@ -2,6 +2,7 @@
 // Each job is recorded in job_runs under a stable key, so a repeated tick skips it.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { runRoundMatching } from "@/lib/matching/run";
+import { sweepShrunkTables } from "@/lib/matching/shrink";
 
 export async function runDueJobs(db: SupabaseClient) {
   const nowIso = new Date().toISOString();
@@ -57,6 +58,10 @@ export async function runDueJobs(db: SupabaseClient) {
       results.push({ job: jobKey, status: e ? "FAILED" : "DONE", detail: e?.message ?? data });
     }
   }
+  // Tables left under the minimum before the event day are reallocated (F-33); normally the cancel
+  // action already did it, this catches a crash in between.
+  const shrunk = await sweepShrunkTables(db);
+  for (const s of shrunk) results.push({ job: `shrink:${s.table}`, status: "DONE", detail: s });
   // No-show candidates past the objection window (F-55).
   const { data: confirmed } = await db.rpc("confirm_noshows", { p_round: null, p_force: false });
   if (confirmed) results.push({ job: "confirm-noshows", status: "DONE", detail: confirmed });

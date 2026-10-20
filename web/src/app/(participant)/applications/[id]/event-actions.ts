@@ -11,6 +11,7 @@ const MESSAGES: Record<string, string> = {
   TOO_EARLY: "체크인은 행사 시작 30분 전부터 할 수 있어요.",
   EVENT_ENDED: "행사가 끝나서 체크인할 수 없어요.",
   NOT_CONFIRMED: "확정된 식탁이 아니에요.",
+  ABSENCE_NOTED: "불참을 알려 주셔서 체크인할 수 없어요.",
   EVENT_NOT_ENDED: "피드백은 행사가 끝난 뒤에 남길 수 있어요.",
   DEADLINE_PASSED: "이의 제기 기한이 지났어요.",
   ALREADY_DECIDED: "이미 처리된 건이에요.",

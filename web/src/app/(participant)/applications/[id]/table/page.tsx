@@ -83,11 +83,22 @@ export default async function TablePage({ params }: PageProps<"/applications/[id
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-[11px] text-muted">연락처·나이·점수 같은 정보는 공개되지 않아요.</p>
+          <p className="mt-2 text-[11px] text-muted">
+            연락처·나이·점수 같은 정보는 공개되지 않아요.{t.absentCount > 0 && ` 불참을 알린 ${t.absentCount}명은 목록에서 빠졌어요.`}
+          </p>
         </section>
 
         {t.foodSummary && (
           <section className="rounded-2xl border border-line bg-white p-5 text-[13px] leading-relaxed whitespace-pre-line">{t.foodSummary}</section>
+        )}
+
+        {!t.eventEnded && t.myAttendance === "SCHEDULED" && (
+          <Link href={`/applications/${id}/cancel`} className="text-center text-[13px] text-muted underline underline-offset-2">
+            참석이 어려워졌나요? 취소 · 불참 알리기
+          </Link>
+        )}
+        {t.myAttendance === "CANCELED_LATE" && !t.eventEnded && (
+          <p className="rounded-xl bg-sand/60 px-4 py-3 text-center text-[13px] text-ink/80">불참을 알려 주셨어요. 단체방에도 전달됐어요.</p>
         )}
       </div>
     </main>

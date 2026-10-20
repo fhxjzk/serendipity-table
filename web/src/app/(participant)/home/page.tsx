@@ -220,6 +220,11 @@ function MyApplication({ app }: { app: MyApp }) {
       ) : app.match_status === "WAITING" && rounds[0] ? (
         <p className="mt-4 text-[12px] text-muted">{fmt(rounds[0].match_run_at, { month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false })}에 자동 매칭 결과를 알려 드려요.</p>
       ) : null}
+      {app.attendance_status === "SCHEDULED" && !["ALTERNATIVE_OFFERED", "EXCEPTION"].includes(app.match_status) && (
+        <Link href={`/applications/${app.id}/cancel`} className="mt-3 block text-center text-[12px] text-muted underline underline-offset-2">
+          신청 취소 · 불참 알리기
+        </Link>
+      )}
     </div>
   );
 }

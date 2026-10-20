@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Gift } from "lucide-react";
 import { requireProfile } from "@/lib/auth";
 import { PageHeader, primaryButton } from "@/components/participant-ui";
-import { FAIL_REASON_TEXT } from "@/lib/matching/reasons";
+import { FAIL_REASON_TEXT, REALLOC_FAILED_TEXT } from "@/lib/matching/reasons";
 import type { FailReason } from "@/lib/matching/types";
 import { REGION_LABEL } from "@/lib/format";
 import { ResolveForm, type OfferOption } from "./resolve-form";
@@ -80,7 +80,7 @@ export default async function ResolvePage({ params }: PageProps<"/applications/[
         <section className="rounded-2xl border border-line bg-white p-5">
           <p className="text-[12px] font-medium text-ember">{firstDate ? fmt(firstDate, { month: "long", day: "numeric", weekday: "short" }) : ""} 매칭 결과</p>
           <h2 className="mt-1.5 text-[18px] font-bold leading-snug tracking-[-0.02em]">이번에는 함께할 식탁을 찾지 못했어요</h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-ink/80">{FAIL_REASON_TEXT[app.reason_code as FailReason] ?? "조건에 맞는 테이블을 만들지 못했어요."}</p>
+          <p className="mt-2 text-[13px] leading-relaxed text-ink/80">{app.reason_code === "REALLOC_FAILED" ? REALLOC_FAILED_TEXT : (FAIL_REASON_TEXT[app.reason_code as FailReason] ?? "조건에 맞는 테이블을 만들지 못했어요.")}</p>
           {coupon && (
             <p className="mt-4 flex items-center gap-2 rounded-xl bg-sand/70 px-3 py-2.5 text-[13px]">
               <Gift className="h-4 w-4 text-ember" strokeWidth={1.75} />
