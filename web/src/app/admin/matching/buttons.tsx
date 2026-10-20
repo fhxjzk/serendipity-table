@@ -45,13 +45,15 @@ function Result({ state }: { state: ActionState }) {
   return null;
 }
 
-export function EventStepButton({ roundId, step, label }: { roundId: string; step: "remind" | "start" | "end" | "noshow"; label: string }) {
+type Step = "remind" | "start" | "end" | "noshow" | "generate" | "fill_checkin" | "fill_feedback";
+
+export function EventStepButton({ roundId, step, label, disabled, demo }: { roundId: string; step: Step; label: string; disabled?: boolean; demo?: boolean }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(eventStep, {});
   return (
     <form action={action} className="flex flex-col items-end gap-1">
       <input type="hidden" name="roundId" value={roundId} />
       <input type="hidden" name="step" value={step} />
-      <button disabled={pending} className="rounded-lg border border-line bg-white px-3.5 py-2 text-[13px] text-ink hover:bg-paper disabled:opacity-40">
+      <button disabled={pending || disabled} className={`rounded-lg border px-3.5 py-2 text-[13px] disabled:opacity-40 ${demo ? "border-dashed border-sky-300 bg-sky-50/60 text-sky-900 hover:bg-sky-50" : "border-line bg-white text-ink hover:bg-paper"}`}>
         {pending ? "처리 중…" : label}
       </button>
       <Result state={state} />

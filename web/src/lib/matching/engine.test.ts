@@ -95,6 +95,18 @@ describe("runMatching", () => {
     expect(total(metAndLiked)).toBe(total([]));
   });
 
+  it("records people from a too-small region as re-allocated to another chosen region (demo step 4)", () => {
+    const hongdae = [person("F", 27, ["HONGDAE"]), person("M", 28, ["HONGDAE"]), person("F", 29, ["HONGDAE"]), person("M", 30, ["HONGDAE"]), person("F", 28, ["HONGDAE"]), person("M", 31, ["HONGDAE"])];
+    const gangnam = [person("F", 29, ["GANGNAM"]), person("M", 30, ["GANGNAM"]), person("F", 31, ["GANGNAM"]), person("M", 32, ["GANGNAM"])];
+    const flex = [person("F", 30, ["EULJIRO", "GANGNAM"]), person("M", 29, ["EULJIRO", "GANGNAM"])];
+    const older = person("M", 46, ["HONGDAE"]);
+    const result = runMatching([...hongdae, ...gangnam, ...flex, older], [], settings);
+    const moved = result.events.filter((e) => e.type === "REALLOCATED").map((e) => e.applicationId);
+    expect(moved.sort()).toEqual(flex.map((f) => f.applicationId).sort());
+    expect(result.tables.find((t) => t.members.includes(flex[0]))?.regionCode).toBe("GANGNAM");
+    expect(result.failures.map((f) => [f.candidate.applicationId, f.reason])).toEqual([[older.applicationId, "AGE_GAP"]]);
+  });
+
   it("moves a leftover into an open seat in another chosen region", () => {
     const a = [person("M", 30, ["A"]), person("F", 30, ["A"]), person("M", 31, ["A"]), person("F", 31, ["A"])];
     const b = [person("M", 30, ["B"]), person("F", 30, ["B"]), person("M", 31, ["B"]), person("F", 31, ["B"]), person("M", 29, ["B"]), person("F", 29, ["B"])];

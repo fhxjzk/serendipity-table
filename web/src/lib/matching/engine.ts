@@ -25,7 +25,20 @@ export function partitionSizes(n: number, min: number, max: number): number[] {
   return Array.from({ length: k }, (_, i) => base + (i < extra ? 1 : 0));
 }
 
+// Two plans are computed and the one that seats more people wins. With the same number seated, the
+// single-choice-first plan is kept (it honours single-region people first and records moves between
+// regions as re-allocations) unless the other plan is clearly better, by 3+ points per seated person.
 export function runMatching(candidates: Candidate[], relations: Relation[], settings: MatchSettings): MatchResult {
+  const seated = (r: MatchResult) => r.tables.reduce((n, t) => n + t.members.length, 0);
+  const total = (r: MatchResult) => r.tables.reduce((n, t) => n + t.score.total * t.members.length, 0);
+  const singleFirst = plan(candidates, relations, settings, true);
+  const allIn = plan(candidates, relations, settings, false);
+  if (seated(allIn) > seated(singleFirst)) return allIn;
+  if (seated(allIn) === seated(singleFirst) && total(allIn) > total(singleFirst) + 3 * seated(allIn)) return allIn;
+  return singleFirst;
+}
+
+function plan(candidates: Candidate[], relations: Relation[], settings: MatchSettings, singleFirst: boolean): MatchResult {
   const { tableMin: min, tableMax: max, maxAgeGap, minScore } = settings;
   const conflicts = new Set(relations.filter((r) => r.type !== "MET" && r.type !== "LIKE").map((r) => key(r.from, r.to)));
   // Someone who said "I'd like to meet them again" is not counted as already met, so that pair keeps the new-people points (F-24).
@@ -110,9 +123,11 @@ export function runMatching(candidates: Candidate[], relations: Relation[], sett
   const poolOf = (region: string) => [...unassigned].filter((c) => c.regions.includes(region));
   const singleChoice = (region: string) => poolOf(region).filter((c) => c.regions.length === 1).length;
 
-  // 1~2. Regions with the most people who have nowhere else to go come first.
+  // 1~2. Tables first from people who chose only that region, regions with the most such people first.
+  // People who chose several regions are kept for step 3, where they fill open seats in any of their
+  // regions (re-allocation, 5.2), or step 4, where leftovers merge into a new table.
   for (const region of [...regionsInPlay].sort((a, b) => singleChoice(b) - singleChoice(a) || poolOf(b).length - poolOf(a).length)) {
-    buildRegion(region, poolOf(region), "INITIAL");
+    buildRegion(region, singleFirst ? poolOf(region).filter((c) => c.regions.length === 1) : poolOf(region), "INITIAL");
   }
 
   // 3. Open seats in chosen regions (same date, same or other chosen region).

@@ -100,10 +100,14 @@ export default async function MatchingPage({ searchParams }: PageProps<"/admin/m
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap justify-end gap-2">
+                      {r.status === "OPEN" && <EventStepButton roundId={r.id} step="generate" label="시연 참가자 13명 만들기" demo />}
                       {r.status === "OPEN" && <RunNowButton roundId={r.id} disabled={paidCount(r.id) === 0} />}
                       {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="remind" label="전날 리마인드 보내기" />}
                       {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="start" label={r.setting_overrides?.event_started ? "행사 진행 중(다시 게시)" : "행사 시작(체크인·대화 주제)"} />}
-                      {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="end" label="행사 종료 처리" />}
+                      {r.status === "MATCHED" && r.setting_overrides?.event_started && <EventStepButton roundId={r.id} step="fill_checkin" label="가상 참가자 체크인(시연)" demo />}
+                      {/* Kept on screen after the event ends so its result message stays visible. */}
+                      {(r.status === "MATCHED" || r.status === "DONE") && <EventStepButton roundId={r.id} step="end" label={r.status === "DONE" ? "행사 종료됨" : "행사 종료 처리"} disabled={r.status === "DONE"} />}
+                      {r.status === "DONE" && <EventStepButton roundId={r.id} step="fill_feedback" label="가상 참가자 피드백(시연)" demo />}
                       {r.status === "DONE" && <EventStepButton roundId={r.id} step="noshow" label="노쇼 확정(시연)" />}
                       {(r.status === "MATCHED" || r.status === "DONE") && <ResetButton roundId={r.id} />}
                     </div>

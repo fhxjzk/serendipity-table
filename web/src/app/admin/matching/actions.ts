@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resetRoundMatching, runRoundMatching } from "@/lib/matching/run";
+import { generateDemoParticipants } from "@/lib/demo/participants";
 
 export type ActionState = { ok?: string; error?: string };
 
@@ -91,8 +92,37 @@ export async function eventStep(_prev: ActionState, formData: FormData): Promise
       revalidatePath("/admin/matching");
       return { ok: `이의가 없는 노쇼 후보 ${data ?? 0}명을 확정했어요.` };
     }
+    // 시연 도구 (R-34, F-77): virtual applicants for a round, and their side of the event.
+    if (step === "generate") {
+      const n = await generateDemoParticipants(db, roundId);
+      await audit(profile.id, "DEMO_PARTICIPANTS", roundId, { created: n });
+      revalidatePath("/admin/matching");
+      return { ok: `서로 다른 프로필의 테스트 참가자 ${n}명이 신청·결제까지 마쳤어요. 아래 미리보기를 보고 즉시 실행해 보세요.` };
+    }
+    if (step === "fill_checkin") {
+      const { data, error } = await db.rpc("demo_fill_attendance", { p_round: roundId });
+      if (error) throw error;
+      await audit(profile.id, "DEMO_CHECKIN", roundId, { filled: data });
+      revalidatePath("/admin/matching");
+      return { ok: `로그인하지 않는 가상 참가자 ${data ?? 0}명을 체크인했어요. 시연 계정은 직접 체크인해 주세요.` };
+    }
+    if (step === "fill_feedback") {
+      const { data, error } = await db.rpc("demo_fill_feedback", { p_round: roundId });
+      if (error) throw error;
+      await audit(profile.id, "DEMO_FEEDBACK", roundId, { filled: data });
+      revalidatePath("/admin/matching");
+      return { ok: `가상 참가자 ${data ?? 0}명이 피드백을 남겼어요. 다음 매칭에 반영돼요.` };
+    }
     return { error: "알 수 없는 작업이에요." };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "실행하지 못했어요." };
+    const message = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? "");
+    const known: Record<string, string> = {
+      ALREADY_GENERATED: "이 회차에는 이미 테스트 참가자를 만들었어요.",
+      ROUND_NOT_OPEN: "모집 중인 회차에서만 만들 수 있어요.",
+      NOT_STARTED: "행사를 시작한 뒤에 쓸 수 있어요.",
+      ROUND_NOT_DONE: "행사를 종료한 뒤에 쓸 수 있어요.",
+    };
+    const key = Object.keys(known).find((k) => message.includes(k));
+    return { error: key ? known[key] : message || "실행하지 못했어요." };
   }
 }

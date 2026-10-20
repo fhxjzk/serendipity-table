@@ -55,7 +55,9 @@ export default async function HomePage() {
   const reviews = reviewRows ?? [];
 
   const regions = ((nextRound?.round_regions ?? []) as { region_code: string }[]).map((r) => r.region_code).filter((c) => c !== "ETC");
-  const daysLeft = nextRound ? Math.max(0, Math.ceil((new Date(nextRound.apply_deadline_at).getTime() - new Date(nowIso).getTime()) / 86400000)) : 0;
+  // D-day by calendar days in KST (a deadline on Monday seen on the Tuesday before is D-6, not D-7).
+  const kstDay = (iso: string) => new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
+  const daysLeft = nextRound ? Math.max(0, Math.round((Date.parse(kstDay(nextRound.apply_deadline_at)) - Date.parse(kstDay(nowIso))) / 86400000)) : 0;
 
   return (
     <main className="flex min-h-dvh flex-1 flex-col bg-paper">
