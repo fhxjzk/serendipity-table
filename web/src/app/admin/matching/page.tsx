@@ -100,7 +100,8 @@ export default async function MatchingPage({ searchParams }: PageProps<"/admin/m
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap justify-end gap-2">
                       {r.status === "OPEN" && <RunNowButton roundId={r.id} disabled={paidCount(r.id) === 0} />}
-                      {r.status === "MATCHED" && !r.setting_overrides?.event_started && <EventStepButton roundId={r.id} step="start" label="행사 시작(체크인 열기)" />}
+                      {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="remind" label="전날 리마인드 보내기" />}
+                      {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="start" label={r.setting_overrides?.event_started ? "행사 진행 중(다시 게시)" : "행사 시작(체크인·대화 주제)"} />}
                       {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="end" label="행사 종료 처리" />}
                       {r.status === "DONE" && <EventStepButton roundId={r.id} step="noshow" label="노쇼 확정(시연)" />}
                       {(r.status === "MATCHED" || r.status === "DONE") && <ResetButton roundId={r.id} />}

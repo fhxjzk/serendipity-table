@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 
 export type ChatMessage = { id: string; sender_id: string | null; kind: string; body: string; created_at: string };
 
+const KIND_LABEL: Record<string, string> = { REMINDER: "전날 리마인드", TOPIC: "오늘의 대화 주제", ICEBREAKER: "아이스브레이킹", CURATION: "이 식탁을 고른 이유" };
+
 const time = (iso: string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 
 // F-42: Realtime inserts appear at once; if the channel drops, reload every 30 seconds.
@@ -60,7 +62,7 @@ export function ChatRoom({ roomId, me, names, initial }: { roomId: string; me: s
           if (m.kind !== "USER") {
             return (
               <div key={m.id} className="mx-auto max-w-[92%] whitespace-pre-line rounded-2xl bg-sand/80 px-4 py-3 text-[13px] leading-relaxed text-ink/85">
-                <p className="mb-1 text-[11px] font-semibold text-ember">우연한 식탁 안내</p>
+                <p className="mb-1 text-[11px] font-semibold text-ember">{KIND_LABEL[m.kind] ?? "우연한 식탁 안내"}</p>
                 {m.body}
               </div>
             );

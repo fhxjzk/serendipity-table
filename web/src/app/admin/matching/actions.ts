@@ -53,19 +53,29 @@ export async function setAutoMatch(formData: FormData) {
   revalidatePath("/admin/matching");
 }
 
-// F-76 시점 즉시 실행: open check-in now, end the event now, confirm pending no-shows now (demo).
+// F-76 시점 즉시 실행: send the reminder now, start the event now (check-in and topics), end it now,
+// confirm pending no-shows now (demo). Each step is the same database function the scheduler calls.
 export async function eventStep(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { profile } = await requireProfile("OPERATOR");
   const roundId = String(formData.get("roundId"));
   const step = String(formData.get("step"));
   const db = createAdminClient();
   try {
+    if (step === "remind") {
+      const { data, error } = await db.rpc("post_round_reminder", { p_round: roundId });
+      if (error) throw error;
+      await audit(profile.id, "REMINDER_NOW", roundId, { tables: data });
+      revalidatePath("/admin/matching");
+      return { ok: `테이블 ${data ?? 0}곳 단체방과 알림함에 전날 리마인드를 보냈어요. 이미 보낸 곳은 다시 보내지 않아요.` };
+    }
     if (step === "start") {
       const { data: round } = await db.from("rounds").select("setting_overrides").eq("id", roundId).single();
       await db.from("rounds").update({ setting_overrides: { ...(round?.setting_overrides ?? {}), event_started: true } }).eq("id", roundId);
-      await audit(profile.id, "EVENT_START_NOW", roundId, {});
+      const { data, error } = await db.rpc("post_table_contents", { p_round: roundId });
+      if (error) throw error;
+      await audit(profile.id, "EVENT_START_NOW", roundId, { tables: data });
       revalidatePath("/admin/matching");
-      return { ok: "체크인을 열었어요. 참가자 화면에 체크인 버튼이 보여요." };
+      return { ok: data ? `체크인을 열고, 테이블 ${data}곳에 대화 주제 3개와 아이스브레이킹을 올렸어요.` : "체크인이 열려 있고, 모든 테이블에 대화 주제가 이미 올라가 있어요." };
     }
     if (step === "end") {
       const { data, error } = await db.rpc("end_round_event", { p_round: roundId });

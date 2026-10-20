@@ -45,7 +45,7 @@ function Result({ state }: { state: ActionState }) {
   return null;
 }
 
-export function EventStepButton({ roundId, step, label }: { roundId: string; step: "start" | "end" | "noshow"; label: string }) {
+export function EventStepButton({ roundId, step, label }: { roundId: string; step: "remind" | "start" | "end" | "noshow"; label: string }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(eventStep, {});
   return (
     <form action={action} className="flex flex-col items-end gap-1">

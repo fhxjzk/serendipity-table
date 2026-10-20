@@ -40,15 +40,22 @@ export async function runDueJobs(db: SupabaseClient) {
   }
   if (expired) results.push({ job: "expire-unpaid", status: "DONE", detail: expired });
 
-  // Event end (F-53) at the round's end time, once per round.
-  const { data: ended } = await db.from("rounds").select("id").eq("status", "MATCHED").lte("end_at", nowIso);
-  for (const round of ended ?? []) {
-    const jobKey = `end:${round.id}`;
-    const claim = await db.from("job_runs").insert({ job_key: jobKey, job_type: "EVENT_END", round_id: round.id, trigger: "SCHEDULER" });
-    if (claim.error) continue;
-    const { data, error: e } = await db.rpc("end_round_event", { p_round: round.id });
-    await db.from("job_runs").update({ status: e ? "FAILED" : "DONE", result: e ? { error: e.message } : data, finished_at: new Date().toISOString() }).eq("job_key", jobKey);
-    results.push({ job: jobKey, status: e ? "FAILED" : "DONE", detail: e?.message ?? data });
+  // Day-before reminder (F-43), topics at the start time (F-44) and event end (F-53), once per round, in that order.
+  const steps = [
+    { prefix: "reminder", type: "REMINDER", column: "reminder_at", fn: "post_round_reminder" },
+    { prefix: "start", type: "EVENT_START", column: "start_at", fn: "post_table_contents" },
+    { prefix: "end", type: "EVENT_END", column: "end_at", fn: "end_round_event" },
+  ] as const;
+  for (const step of steps) {
+    const { data: rounds } = await db.from("rounds").select("id").eq("status", "MATCHED").lte(step.column, nowIso);
+    for (const round of rounds ?? []) {
+      const jobKey = `${step.prefix}:${round.id}`;
+      const claim = await db.from("job_runs").insert({ job_key: jobKey, job_type: step.type, round_id: round.id, trigger: "SCHEDULER" });
+      if (claim.error) continue;
+      const { data, error: e } = await db.rpc(step.fn, { p_round: round.id });
+      await db.from("job_runs").update({ status: e ? "FAILED" : "DONE", result: e ? { error: e.message } : { value: data }, finished_at: new Date().toISOString() }).eq("job_key", jobKey);
+      results.push({ job: jobKey, status: e ? "FAILED" : "DONE", detail: e?.message ?? data });
+    }
   }
   // No-show candidates past the objection window (F-55).
   const { data: confirmed } = await db.rpc("confirm_noshows", { p_round: null, p_force: false });

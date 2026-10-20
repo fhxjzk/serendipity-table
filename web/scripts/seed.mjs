@@ -303,7 +303,7 @@ async function main() {
     end_at: kst(date, "21:00").toISOString(),
     apply_deadline_at: kst(addDays(date, -3), "18:00").toISOString(),
     match_run_at: kst(addDays(date, -3), "18:00").toISOString(),
-    reminder_at: kst(date, "10:00").toISOString(),
+    reminder_at: kst(addDays(date, -1), "18:00").toISOString(),
     status: date < today ? "DONE" : "OPEN",
     // Paused until the applications are in, so the scheduler cannot match a half-seeded round.
     setting_overrides: { auto_match: false },

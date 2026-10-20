@@ -25,11 +25,12 @@ export default async function HomePage() {
   const { supabase, profile } = await requireProfile("PARTICIPANT");
   const nowIso = new Date().toISOString();
 
-  const [{ data: nextRound }, { data: myApp }] = await Promise.all([
+  const [{ data: nextRound }, { data: myApp }, { count: unread }] = await Promise.all([
     supabase.from("rounds").select("id, event_date, start_at, apply_deadline_at, round_regions(region_code)")
       .eq("status", "OPEN").gt("apply_deadline_at", nowIso).order("event_date").limit(1).maybeSingle(),
     supabase.from("applications").select("id, application_status, match_status, payment_status, attendance_status, payment_due_at, application_choices(region_code, rounds(start_at, match_run_at))")
       .eq("profile_id", profile.id).eq("is_active", true).maybeSingle(),
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("profile_id", profile.id).is("read_at", null),
   ]);
 
   // After the event the application is closed; show the last table for feedback / no-show check.
@@ -56,7 +57,14 @@ export default async function HomePage() {
       <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-5">
           <Wordmark size="sm" />
-          <button aria-label="알림" className="rounded-full p-2 text-ink/70 hover:bg-sand"><Bell className="h-5 w-5" strokeWidth={1.75} /></button>
+          <Link href="/notifications" aria-label={unread ? `알림 ${unread}개 읽지 않음` : "알림"} className="relative rounded-full p-2 text-ink/70 hover:bg-sand">
+            <Bell className="h-5 w-5" strokeWidth={1.75} />
+            {!!unread && (
+              <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-ember px-1 text-[10px] font-semibold leading-none text-white tabular">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </Link>
         </div>
       </header>
 
