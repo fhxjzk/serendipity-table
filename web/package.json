@@ -10,7 +10,8 @@
     "seed": "node --env-file=.env.local scripts/seed.mjs",
     "db:reset": "supabase db reset",
     "test": "vitest run",
-    "match": "tsx --env-file=.env.local scripts/match.mts"
+    "match": "tsx --env-file=.env.local scripts/match.mts",
+    "seed:history": "tsx --env-file=.env.local scripts/seed-history.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

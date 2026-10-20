@@ -1,7 +1,7 @@
 // S-05 홈: 다음 모집 회차, 내 신청 상태, 진행 순서.
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, CalendarCheck, ChevronRight, Clock, MapPin, MessageCircle, UserRound, UtensilsCrossed, WalletCards } from "lucide-react";
+import { Bell, CalendarCheck, ChevronRight, CircleHelp, Clock, MapPin, MessageCircle, UserRound, UtensilsCrossed, WalletCards } from "lucide-react";
 import { requireProfile } from "@/lib/auth";
 import { logout } from "@/app/login/actions";
 import { Endorsement, Eyebrow, Wordmark } from "@/components/brand";
@@ -160,6 +160,10 @@ export default async function HomePage() {
 
         <Link href="/profile" className="mt-8 flex items-center justify-between rounded-2xl border border-line bg-white px-5 py-4 text-[14px] font-medium">
           <span className="flex items-center gap-2"><UserRound className="h-4 w-4 text-muted" strokeWidth={1.75} />내 프로필·알림 설정</span>
+          <ChevronRight className="h-4 w-4 text-muted" />
+        </Link>
+        <Link href="/support" className="mt-3 flex items-center justify-between rounded-2xl border border-line bg-white px-5 py-4 text-[14px] font-medium">
+          <span className="flex items-center gap-2"><CircleHelp className="h-4 w-4 text-muted" strokeWidth={1.75} />FAQ · 문의</span>
           <ChevronRight className="h-4 w-4 text-muted" />
         </Link>
 

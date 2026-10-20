@@ -86,6 +86,15 @@ describe("runMatching", () => {
     expect(together).toBe(false);
   });
 
+  it("does not penalise a pair who asked to meet again", () => {
+    const pool = [person("M", 28, ["A"]), person("F", 28, ["A"]), person("M", 29, ["A"]), person("F", 29, ["A"])];
+    const total = (rel: Relation[]) => runMatching(pool, rel, settings).tables[0].score.total;
+    const met: Relation[] = pool.flatMap((a) => pool.filter((b) => b !== a).map((b) => ({ from: a.profileId, to: b.profileId, type: "MET" as const })));
+    const metAndLiked: Relation[] = [...met, ...pool.flatMap((a) => pool.filter((b) => b !== a).map((b) => ({ from: a.profileId, to: b.profileId, type: "LIKE" as const })))];
+    expect(total(met)).toBeLessThan(total([]));
+    expect(total(metAndLiked)).toBe(total([]));
+  });
+
   it("moves a leftover into an open seat in another chosen region", () => {
     const a = [person("M", 30, ["A"]), person("F", 30, ["A"]), person("M", 31, ["A"]), person("F", 31, ["A"])];
     const b = [person("M", 30, ["B"]), person("F", 30, ["B"]), person("M", 31, ["B"]), person("F", 31, ["B"]), person("M", 29, ["B"]), person("F", 29, ["B"])];

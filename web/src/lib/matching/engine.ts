@@ -28,7 +28,9 @@ export function partitionSizes(n: number, min: number, max: number): number[] {
 export function runMatching(candidates: Candidate[], relations: Relation[], settings: MatchSettings): MatchResult {
   const { tableMin: min, tableMax: max, maxAgeGap, minScore } = settings;
   const conflicts = new Set(relations.filter((r) => r.type !== "MET" && r.type !== "LIKE").map((r) => key(r.from, r.to)));
-  const met = new Set(relations.filter((r) => r.type === "MET").map((r) => key(r.from, r.to)));
+  // Someone who said "I'd like to meet them again" is not counted as already met, so that pair keeps the new-people points (F-24).
+  const liked = new Set(relations.filter((r) => r.type === "LIKE").map((r) => key(r.from, r.to)));
+  const met = new Set(relations.filter((r) => r.type === "MET").map((r) => key(r.from, r.to)).filter((k) => !liked.has(k)));
   const metBefore = (a: string, b: string) => met.has(key(a, b));
   const score = (group: Candidate[]) => scoreTable(group, settings, metBefore);
 

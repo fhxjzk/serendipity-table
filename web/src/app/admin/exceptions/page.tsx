@@ -3,7 +3,7 @@ import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatKst } from "@/lib/format";
 import { AdminHeader, Badge, Empty, cardCls } from "../ui";
-import { ExceptionForm } from "./exception-form";
+import { ExceptionForm, InquiryAnswerForm } from "./exception-form";
 
 const TYPE: Record<string, string> = {
   PAYMENT_ERROR: "결제 오류", DATA_MISSING: "데이터 누락", VENUE_SHORTAGE: "식당 재고 부족", CONDITION_CONFLICT: "조건 충돌",
@@ -13,7 +13,7 @@ const STATUS: Record<string, { label: string; tone: "red" | "amber" | "green" }>
   OPEN: { label: "대기", tone: "red" }, IN_PROGRESS: { label: "처리 중", tone: "amber" }, RESOLVED: { label: "해결", tone: "green" },
 };
 type Exc = {
-  id: string; type: string; status: string; round_id: string | null; application_id: string | null; reason: string;
+  id: string; type: string; status: string; round_id: string | null; application_id: string | null; inquiry_id: string | null; reason: string;
   detail: Record<string, unknown> | null; resolution_note: string | null; created_at: string; resolved_at: string | null;
 };
 type AppRow = { id: string; profiles: { name: string } | { name: string }[] | null };
@@ -54,7 +54,9 @@ export default async function ExceptionsPage() {
         <td className="px-4 py-3">
           {e.status === "RESOLVED"
             ? <span className="text-[12px] text-muted">{formatKst(e.resolved_at)} 해결</span>
-            : <ExceptionForm id={e.id} needsVerdict={e.type === "NOSHOW_OBJECTION"} inProgress={e.status === "IN_PROGRESS"} />}
+            : e.type === "INQUIRY" && e.inquiry_id
+              ? <InquiryAnswerForm inquiryId={e.inquiry_id} />
+              : <ExceptionForm id={e.id} needsVerdict={e.type === "NOSHOW_OBJECTION"} inProgress={e.status === "IN_PROGRESS"} />}
         </td>
       </tr>
     );
