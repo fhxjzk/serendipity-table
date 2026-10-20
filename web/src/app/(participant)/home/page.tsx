@@ -1,7 +1,8 @@
 // S-05 홈: 다음 모집 회차, 내 신청 상태, 진행 순서.
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, CalendarCheck, ChevronRight, CircleHelp, Clock, MapPin, MessageCircle, UserRound, UtensilsCrossed, WalletCards } from "lucide-react";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { Bell, CalendarCheck, ChevronRight, CircleHelp, Clock, History, MapPin, MessageCircle, UserRound, UtensilsCrossed, WalletCards } from "lucide-react";
 import { requireProfile } from "@/lib/auth";
 import { logout } from "@/app/login/actions";
 import { Endorsement, Eyebrow, Wordmark } from "@/components/brand";
@@ -48,6 +49,10 @@ export default async function HomePage() {
       lastTable = { id: last.id, when: fmt(round.start_at, { month: "long", day: "numeric", weekday: "short" }), needsFeedback: !fb, noshowPending: ns?.result === "PENDING" };
     }
   }
+
+  const { data: reviewRows } = await createAdminClient().from("feedbacks").select("review_rating, review_text")
+    .eq("review_public", true).eq("review_hidden", false).not("review_text", "is", null).order("submitted_at", { ascending: false }).limit(3);
+  const reviews = reviewRows ?? [];
 
   const regions = ((nextRound?.round_regions ?? []) as { region_code: string }[]).map((r) => r.region_code).filter((c) => c !== "ETC");
   const daysLeft = nextRound ? Math.max(0, Math.ceil((new Date(nextRound.apply_deadline_at).getTime() - new Date(nowIso).getTime()) / 86400000)) : 0;
@@ -162,10 +167,32 @@ export default async function HomePage() {
           <span className="flex items-center gap-2"><UserRound className="h-4 w-4 text-muted" strokeWidth={1.75} />내 프로필·알림 설정</span>
           <ChevronRight className="h-4 w-4 text-muted" />
         </Link>
+        <Link href="/history" className="mt-3 flex items-center justify-between rounded-2xl border border-line bg-white px-5 py-4 text-[14px] font-medium">
+          <span className="flex items-center gap-2"><History className="h-4 w-4 text-muted" strokeWidth={1.75} />참가 이력 · 다음 일정 추천</span>
+          <ChevronRight className="h-4 w-4 text-muted" />
+        </Link>
         <Link href="/support" className="mt-3 flex items-center justify-between rounded-2xl border border-line bg-white px-5 py-4 text-[14px] font-medium">
           <span className="flex items-center gap-2"><CircleHelp className="h-4 w-4 text-muted" strokeWidth={1.75} />FAQ · 문의</span>
           <ChevronRight className="h-4 w-4 text-muted" />
         </Link>
+
+        {/* F-86: three latest public reviews, writers never named */}
+        {reviews.length > 0 && (
+          <section className="mt-8">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-[15px] font-bold">지난 모임 후기</h2>
+              <Link href="/reviews" className="text-[12px] text-muted underline underline-offset-2">더 보기</Link>
+            </div>
+            <ul className="mt-3 flex flex-col gap-2">
+              {reviews.map((r, i) => (
+                <li key={i} className="rounded-2xl border border-line bg-white px-4 py-3">
+                  <p className="text-[12px] text-ember">{"★".repeat(r.review_rating ?? 0)}</p>
+                  <p className="mt-0.5 text-[14px] leading-relaxed">{r.review_text}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <footer className="mt-12 flex items-center justify-between border-t border-line pt-5">
           <Endorsement />

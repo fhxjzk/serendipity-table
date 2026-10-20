@@ -27,6 +27,19 @@ export async function reviewReport(_prev: ActionState, formData: FormData): Prom
   return { ok: action === "REVIEWING" ? "검토 중으로 표시했어요." : "신고를 처리했어요." };
 }
 
+// F-86: hide an inappropriate public review, or show it again.
+export async function toggleReviewHidden(formData: FormData) {
+  const { profile } = await requireProfile("OPERATOR");
+  const app = String(formData.get("app"));
+  const hidden = formData.get("hidden") === "true";
+  const db = createAdminClient();
+  await db.from("feedbacks").update({ review_hidden: hidden }).eq("application_id", app);
+  await db.from("audit_logs").insert({ actor_id: profile.id, action: hidden ? "REVIEW_HIDE" : "REVIEW_SHOW", target_table: "feedbacks", target_id: app, before: { review_hidden: !hidden }, after: { review_hidden: hidden } });
+  revalidatePath("/admin/reports");
+  revalidatePath("/reviews");
+  revalidatePath("/home");
+}
+
 // F-68: confirm or reject a proposed sanction (such as the restriction after a second no-show).
 export async function decideSanction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { profile } = await requireProfile("OPERATOR");

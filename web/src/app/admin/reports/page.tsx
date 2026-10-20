@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatKst } from "@/lib/format";
 import { AdminHeader, Badge, Empty, cardCls } from "../ui";
 import { ReportForm, SanctionForm } from "./report-forms";
+import { toggleReviewHidden } from "./actions";
 
 const REASON: Record<string, string> = { RUDE: "무례한 언행", HARASS: "불쾌한 접근", NOSHOW: "무단 불참", ETC: "기타" };
 const ACTION: Record<string, string> = { NONE: "조치 없음", WARNING: "경고", RESTRICTED: "참가 제한", BANNED: "이용 정지" };
@@ -28,6 +29,8 @@ export default async function ReportsPage() {
   const ids = [...new Set([...reports.flatMap((r) => [r.reporter_id, r.reported_id]), ...sanctions.map((s) => s.profile_id)])];
   const { data: people } = ids.length ? await db.from("profiles").select("id, name, restriction").in("id", ids) : { data: [] };
   const person = (id: string) => ((people ?? []) as { id: string; name: string; restriction: string }[]).find((p) => p.id === id);
+  const { data: reviews } = await db.from("feedbacks").select("application_id, review_rating, review_text, review_hidden, submitted_at, profiles(name)")
+    .eq("review_public", true).not("review_text", "is", null).order("submitted_at", { ascending: false }).limit(20);
 
   return (
     <main className="flex flex-col gap-8">
@@ -73,6 +76,29 @@ export default async function ReportsPage() {
           </tbody>
         </table>
         {!reports.length && <Empty>접수된 신고가 없어요.</Empty>}
+      </section>
+
+      <section className={cardCls}>
+        <h2 className="border-b border-line bg-paper px-4 py-2.5 text-[13px] font-bold">공개 후기 (최근 20개) · 부적절하면 숨겨요</h2>
+        <table className="w-full text-[13px]">
+          <tbody>
+            {(reviews ?? []).map((r) => (
+              <tr key={r.application_id} className={`border-t border-line/70 ${r.review_hidden ? "opacity-50" : ""}`}>
+                <td className="px-4 py-2.5 text-ember">{"★".repeat(r.review_rating ?? 0)}</td>
+                <td className="px-4 py-2.5">{r.review_text}</td>
+                <td className="px-4 py-2.5 text-[12px] text-muted">{(Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { name: string } | null)?.name} · {formatKst(r.submitted_at)}</td>
+                <td className="px-4 py-2.5">
+                  <form action={toggleReviewHidden}>
+                    <input type="hidden" name="app" value={r.application_id} />
+                    <input type="hidden" name="hidden" value={r.review_hidden ? "false" : "true"} />
+                    <button className="text-[12px] text-ink/70 underline">{r.review_hidden ? "다시 보이기" : "숨기기"}</button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!reviews?.length && <Empty>공개 후기가 없어요.</Empty>}
       </section>
 
       {!!decided?.length && (

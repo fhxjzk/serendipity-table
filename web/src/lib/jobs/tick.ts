@@ -62,6 +62,9 @@ export async function runDueJobs(db: SupabaseClient) {
   // action already did it, this catches a crash in between.
   const shrunk = await sweepShrunkTables(db);
   for (const s of shrunk) results.push({ job: `shrink:${s.table}`, status: "DONE", detail: s });
+  // One feedback reminder for anyone still silent after the set hours (F-50).
+  const { data: reminded } = await db.rpc("send_feedback_reminders");
+  if (reminded) results.push({ job: "feedback-remind", status: "DONE", detail: reminded });
   // No-show candidates past the objection window (F-55).
   const { data: confirmed } = await db.rpc("confirm_noshows", { p_round: null, p_force: false });
   if (confirmed) results.push({ job: "confirm-noshows", status: "DONE", detail: confirmed });

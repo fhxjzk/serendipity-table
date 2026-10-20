@@ -8,7 +8,9 @@ import { RoundsForm, type RoundOption } from "./rounds-form";
 
 const fmt = (iso: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", ...o }).format(new Date(iso));
 
-export default async function RoundsPage() {
+export default async function RoundsPage({ searchParams }: PageProps<"/rounds">) {
+  const sp = await searchParams;
+  const list = (v: string | string[] | undefined) => (typeof v === "string" ? v.split(",").filter(Boolean) : []);
   const { supabase, profile } = await requireProfile("PARTICIPANT");
   const complete = profile.privacy_agreed_at && profile.policy_agreed_at && profile.interests.length && profile.self_traits.length && profile.wanted_traits.length && profile.price_ranges.length;
   if (!complete) redirect("/profile?next=/rounds");
@@ -51,7 +53,7 @@ export default async function RoundsPage() {
         {rounds.length === 0 ? (
           <p className="pt-10 text-center text-[14px] text-muted">지금 모집 중인 회차가 없어요. 다음 회차가 열리면 알려 드릴게요.</p>
         ) : (
-          <RoundsForm rounds={rounds} regions={regions} />
+          <RoundsForm rounds={rounds} regions={regions} initialRounds={list(sp.round)} initialRegions={list(sp.regions)} />
         )}
       </div>
     </main>

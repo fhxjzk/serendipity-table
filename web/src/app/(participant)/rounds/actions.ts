@@ -31,5 +31,16 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
     const code = Object.keys(MESSAGES).find((k) => error.message.includes(k));
     return { error: code ? MESSAGES[code] : "신청하지 못했어요. 잠시 후 다시 시도해 주세요." };
   }
+
+  // F-14: how and by when to pay, also in the notification inbox.
+  const { data: app } = await db.from("applications").select("payment_due_at").eq("id", appId).single();
+  if (app?.payment_due_at) {
+    const due = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(app.payment_due_at));
+    await db.from("notifications").upsert({
+      profile_id: profile.id, type: "PAYMENT_DUE", title: "결제하면 신청이 끝나요",
+      body: `${due}까지 이용권으로 결제해 주세요. 기한이 지나면 신청이 자동으로 만료돼요.`,
+      link: `/apply/payment?app=${appId}`, dedupe_key: `paydue:${appId}`,
+    }, { onConflict: "dedupe_key", ignoreDuplicates: true });
+  }
   redirect(`/apply/payment?app=${appId}`);
 }

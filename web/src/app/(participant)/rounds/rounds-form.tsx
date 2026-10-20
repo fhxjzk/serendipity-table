@@ -8,10 +8,11 @@ import { submitApplication, type ApplyState } from "./actions";
 export type RoundOption = { id: string; dateLabel: string; timeLabel: string; deadlineLabel: string; regions: string[] };
 export type RegionOption = { code: string; label: string };
 
-export function RoundsForm({ rounds, regions }: { rounds: RoundOption[]; regions: RegionOption[] }) {
+// initialRounds / initialRegions come from a recommendation (F-52) and only pre-select; the person can still change them.
+export function RoundsForm({ rounds, regions, initialRounds = [], initialRegions = [] }: { rounds: RoundOption[]; regions: RegionOption[]; initialRounds?: string[]; initialRegions?: string[] }) {
   const [state, action, pending] = useActionState<ApplyState, FormData>(submitApplication, {});
-  const [picked, setPicked] = useState<string[]>([]);
-  const [picks, setPicks] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string[]>(initialRounds.filter((id) => rounds.some((r) => r.id === id)));
+  const [picks, setPicks] = useState<string[]>(initialRegions.filter((c) => regions.some((g) => g.code === c)));
   const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const pairs = rounds.filter((r) => picked.includes(r.id)).reduce((n, r) => n + r.regions.filter((g) => picks.includes(g)).length, 0);
 
