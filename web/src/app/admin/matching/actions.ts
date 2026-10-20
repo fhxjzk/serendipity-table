@@ -8,17 +8,24 @@ import { generateDemoParticipants } from "@/lib/demo/participants";
 
 export type ActionState = { ok?: string; error?: string };
 
-async function audit(actorId: string, action: string, roundId: string, after: unknown) {
-  await createAdminClient().from("audit_logs").insert({ actor_id: actorId, action, target_table: "rounds", target_id: roundId, after });
+// Round state before an operator action, kept next to the result (F-57).
+async function roundState(roundId: string) {
+  const { data } = await createAdminClient().from("rounds").select("status, setting_overrides").eq("id", roundId).maybeSingle();
+  return data;
+}
+
+async function audit(actorId: string, action: string, roundId: string, before: unknown, after: unknown) {
+  await createAdminClient().from("audit_logs").insert({ actor_id: actorId, action, target_table: "rounds", target_id: roundId, before, after });
 }
 
 // F-76: run the round's matching now, the same code path the scheduler uses.
 export async function runNow(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { profile } = await requireProfile("OPERATOR");
   const roundId = String(formData.get("roundId"));
+  const before = await roundState(roundId);
   try {
     const result = await runRoundMatching(createAdminClient(), roundId, "DEMO");
-    await audit(profile.id, "MATCH_RUN_NOW", roundId, result);
+    await audit(profile.id, "MATCH_RUN_NOW", roundId, before, result);
     revalidatePath("/admin/matching");
     if (result.alreadyApplied) return { ok: "이미 매칭된 회차라 기존 결과를 유지했어요." };
     const s = result.stats!;
@@ -32,9 +39,10 @@ export async function runNow(_prev: ActionState, formData: FormData): Promise<Ac
 export async function resetRound(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { profile } = await requireProfile("OPERATOR");
   const roundId = String(formData.get("roundId"));
+  const before = await roundState(roundId);
   try {
     await resetRoundMatching(createAdminClient(), roundId);
-    await audit(profile.id, "MATCH_RESET", roundId, { auto_match: false });
+    await audit(profile.id, "MATCH_RESET", roundId, before, { auto_match: false });
     revalidatePath("/admin/matching");
     return { ok: "매칭을 되돌렸어요. 이 회차의 자동 실행은 멈췄고, 즉시 실행으로 다시 돌릴 수 있어요." };
   } catch (e) {
@@ -45,12 +53,13 @@ export async function resetRound(_prev: ActionState, formData: FormData): Promis
 export async function setAutoMatch(formData: FormData) {
   const { profile } = await requireProfile("OPERATOR");
   const roundId = String(formData.get("roundId"));
+  const before = await roundState(roundId);
   const on = formData.get("on") === "true";
   const db = createAdminClient();
   const { data: round } = await db.from("rounds").select("setting_overrides").eq("id", roundId).single();
   const overrides = { ...(round?.setting_overrides ?? {}), auto_match: on };
   await db.from("rounds").update({ setting_overrides: overrides }).eq("id", roundId);
-  await audit(profile.id, on ? "AUTO_MATCH_ON" : "AUTO_MATCH_OFF", roundId, overrides);
+  await audit(profile.id, on ? "AUTO_MATCH_ON" : "AUTO_MATCH_OFF", roundId, before, overrides);
   revalidatePath("/admin/matching");
 }
 
@@ -59,13 +68,14 @@ export async function setAutoMatch(formData: FormData) {
 export async function eventStep(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { profile } = await requireProfile("OPERATOR");
   const roundId = String(formData.get("roundId"));
+  const before = await roundState(roundId);
   const step = String(formData.get("step"));
   const db = createAdminClient();
   try {
     if (step === "remind") {
       const { data, error } = await db.rpc("post_round_reminder", { p_round: roundId });
       if (error) throw error;
-      await audit(profile.id, "REMINDER_NOW", roundId, { tables: data });
+      await audit(profile.id, "REMINDER_NOW", roundId, before, { tables: data });
       revalidatePath("/admin/matching");
       return { ok: `테이블 ${data ?? 0}곳 단체방과 알림함에 전날 리마인드를 보냈어요. 이미 보낸 곳은 다시 보내지 않아요.` };
     }
@@ -74,42 +84,42 @@ export async function eventStep(_prev: ActionState, formData: FormData): Promise
       await db.from("rounds").update({ setting_overrides: { ...(round?.setting_overrides ?? {}), event_started: true } }).eq("id", roundId);
       const { data, error } = await db.rpc("post_table_contents", { p_round: roundId });
       if (error) throw error;
-      await audit(profile.id, "EVENT_START_NOW", roundId, { tables: data });
+      await audit(profile.id, "EVENT_START_NOW", roundId, before, { tables: data });
       revalidatePath("/admin/matching");
       return { ok: data ? `체크인을 열고, 테이블 ${data}곳에 대화 주제 3개와 아이스브레이킹을 올렸어요.` : "체크인이 열려 있고, 모든 테이블에 대화 주제가 이미 올라가 있어요." };
     }
     if (step === "end") {
       const { data, error } = await db.rpc("end_round_event", { p_round: roundId });
       if (error) throw error;
-      await audit(profile.id, "EVENT_END_NOW", roundId, data);
+      await audit(profile.id, "EVENT_END_NOW", roundId, before, data);
       revalidatePath("/admin/matching");
       return { ok: `행사를 종료했어요. 노쇼 후보 ${data?.noshow_candidates ?? 0}명, 피드백 요청을 보냈어요.` };
     }
     if (step === "noshow") {
       const { data, error } = await db.rpc("confirm_noshows", { p_round: roundId, p_force: true });
       if (error) throw error;
-      await audit(profile.id, "NOSHOW_CONFIRM_NOW", roundId, { confirmed: data });
+      await audit(profile.id, "NOSHOW_CONFIRM_NOW", roundId, before, { confirmed: data });
       revalidatePath("/admin/matching");
       return { ok: `이의가 없는 노쇼 후보 ${data ?? 0}명을 확정했어요.` };
     }
     // 시연 도구 (R-34, F-77): virtual applicants for a round, and their side of the event.
     if (step === "generate") {
       const n = await generateDemoParticipants(db, roundId);
-      await audit(profile.id, "DEMO_PARTICIPANTS", roundId, { created: n });
+      await audit(profile.id, "DEMO_PARTICIPANTS", roundId, before, { created: n });
       revalidatePath("/admin/matching");
       return { ok: `서로 다른 프로필의 테스트 참가자 ${n}명이 신청·결제까지 마쳤어요. 아래 미리보기를 보고 즉시 실행해 보세요.` };
     }
     if (step === "fill_checkin") {
       const { data, error } = await db.rpc("demo_fill_attendance", { p_round: roundId });
       if (error) throw error;
-      await audit(profile.id, "DEMO_CHECKIN", roundId, { filled: data });
+      await audit(profile.id, "DEMO_CHECKIN", roundId, before, { filled: data });
       revalidatePath("/admin/matching");
       return { ok: `로그인하지 않는 가상 참가자 ${data ?? 0}명을 체크인했어요. 시연 계정은 직접 체크인해 주세요.` };
     }
     if (step === "fill_feedback") {
       const { data, error } = await db.rpc("demo_fill_feedback", { p_round: roundId });
       if (error) throw error;
-      await audit(profile.id, "DEMO_FEEDBACK", roundId, { filled: data });
+      await audit(profile.id, "DEMO_FEEDBACK", roundId, before, { filled: data });
       revalidatePath("/admin/matching");
       return { ok: `가상 참가자 ${data ?? 0}명이 피드백을 남겼어요. 다음 매칭에 반영돼요.` };
     }

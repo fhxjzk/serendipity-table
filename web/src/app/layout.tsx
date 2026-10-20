@@ -8,6 +8,9 @@ const display = Nanum_Myeongjo({ variable: "--font-display", weight: ["700", "80
 export const metadata: Metadata = {
   title: "우연한 식탁",
   description: "매주 목요일 저녁, 처음 보는 사람들과 좋은 저녁 한 끼",
+  // Home-screen install (F-40): iPhone needs the app installed before it can receive web push.
+  appleWebApp: { capable: true, title: "우연한 식탁", statusBarStyle: "default" },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = { themeColor: "#18120e" };

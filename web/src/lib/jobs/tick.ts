@@ -3,6 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { runRoundMatching } from "@/lib/matching/run";
 import { sweepShrunkTables } from "@/lib/matching/shrink";
+import { sendDueDeliveries } from "@/lib/delivery/send";
 
 export async function runDueJobs(db: SupabaseClient) {
   const nowIso = new Date().toISOString();
@@ -68,5 +69,15 @@ export async function runDueJobs(db: SupabaseClient) {
   // No-show candidates past the objection window (F-55).
   const { data: confirmed } = await db.rpc("confirm_noshows", { p_round: null, p_force: false });
   if (confirmed) results.push({ job: "confirm-noshows", status: "DONE", detail: confirmed });
+  // Tables still without a venue get another try (R-24, F-45).
+  const { data: venues } = await db.rpc("retry_venue_assignment");
+  if (venues) results.push({ job: "venue-retry", status: "DONE", detail: venues });
+  // Last, so the notifications created above go out in the same tick (F-40, F-41, F-45).
+  try {
+    const sent = await sendDueDeliveries(db);
+    if (sent.sent + sent.skipped + sent.retry + sent.failed > 0) results.push({ job: "deliveries", status: "DONE", detail: sent });
+  } catch (e) {
+    results.push({ job: "deliveries", status: "FAILED", detail: e instanceof Error ? e.message : String(e) });
+  }
   return results;
 }

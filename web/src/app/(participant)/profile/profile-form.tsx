@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
 import { Chip, FieldError, Section, inputClass, primaryButton } from "@/components/participant-ui";
+import { PushToggle } from "@/components/push-toggle";
 import { saveProfile, type ProfileState } from "./actions";
 
 type Code = { code: string; label: string };
@@ -65,11 +66,12 @@ export function ProfileForm({ profile: p, codes, emails, next }: ProfileFormData
         <Field label="알레르기 (쉼표로 구분)" error={e.allergies}><input name="allergies" defaultValue={p.allergies.join(", ")} placeholder="예: 갑각류" className={inputClass} /></Field>
       </Section>
 
-      <Section title="알림" hint="앱 안 알림은 항상 받아요. 이메일은 종류별로 끌 수 있어요.">
+      <Section title="알림" hint="앱 안 알림은 항상 받아요. 이메일은 종류별로, 웹 푸시는 전체를 켜고 끌 수 있어요.">
         <Field label="알림 받을 이메일 (선택)" error={e.notifyEmail}><input name="notifyEmail" type="email" defaultValue={p.notify_email ?? ""} placeholder="name@example.com" className={inputClass} /></Field>
         <div className="flex flex-wrap gap-2">
           {EMAIL_LABELS.map(([k, label]) => <Chip key={k} name={k} value="on" label={label} defaultChecked={emails[k] ?? true} />)}
         </div>
+        <PushToggle enabled={Boolean(emails.push_enabled)} />
       </Section>
 
       <Section title="동의">

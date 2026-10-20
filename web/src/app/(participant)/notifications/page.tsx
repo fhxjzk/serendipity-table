@@ -1,7 +1,8 @@
 // S-11 알림함: 확정·실패·리마인드·대화 주제·피드백·노쇼 알림을 최신순으로 모아 봐요.
-import { BellOff, CalendarCheck, CircleAlert, Clock, MessageCircle, MessageSquareHeart, UserCheck, type LucideIcon } from "lucide-react";
+import { BellOff, BellRing, CalendarCheck, CircleAlert, Clock, MessageCircle, MessageSquareHeart, UserCheck, type LucideIcon } from "lucide-react";
 import { requireProfile } from "@/lib/auth";
 import { PageHeader } from "@/components/participant-ui";
+import { PushToggle } from "@/components/push-toggle";
 import { markAllRead, openNotification } from "./actions";
 
 const ICON: Record<string, LucideIcon> = {
@@ -12,6 +13,10 @@ const ICON: Record<string, LucideIcon> = {
   FEEDBACK_REQUEST: MessageSquareHeart,
   NOSHOW_CHECK: UserCheck,
   NOSHOW_CONFIRMED: CircleAlert,
+  PAYMENT_DONE: CalendarCheck,
+  REFUND_DONE: CircleAlert,
+  VENUE_ASSIGNED: CalendarCheck,
+  PUSH_TEST: BellRing,
 };
 
 const ago = (iso: string, now: number) => {
@@ -24,9 +29,12 @@ const ago = (iso: string, now: number) => {
 
 export default async function NotificationsPage() {
   const { supabase, profile } = await requireProfile("PARTICIPANT");
-  const { data: items } = await supabase.from("notifications")
-    .select("id, type, title, body, link, read_at, created_at")
-    .eq("profile_id", profile.id).order("created_at", { ascending: false }).limit(50);
+  const [{ data: items }, { data: setting }] = await Promise.all([
+    supabase.from("notifications")
+      .select("id, type, title, body, link, read_at, created_at")
+      .eq("profile_id", profile.id).order("created_at", { ascending: false }).limit(50),
+    supabase.from("notification_settings").select("push_enabled").eq("profile_id", profile.id).maybeSingle(),
+  ]);
   const list = items ?? [];
   const unread = list.filter((n) => !n.read_at).length;
   const now = new Date().getTime();
@@ -35,6 +43,7 @@ export default async function NotificationsPage() {
     <main className="flex min-h-dvh flex-1 flex-col bg-paper">
       <PageHeader title="알림" />
       <div className="mx-auto flex w-full max-w-md flex-col px-5 pb-16 pt-4">
+        <div className="pb-4"><PushToggle enabled={Boolean(setting?.push_enabled)} /></div>
         {list.length === 0 ? (
           <div className="flex flex-col items-center gap-3 pt-20 text-center text-muted">
             <BellOff className="h-8 w-8" strokeWidth={1.5} />

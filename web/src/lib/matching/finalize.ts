@@ -33,7 +33,7 @@ export function buildCuration(members: Member[], labels: Map<string, string>) {
     const label = labels.get(`SELF_TRAIT:${trait[0]}`) ?? trait[0];
     parts.push(`스스로 ${josa(`'${label}'`, "이라고", "라고")} 답한 분이 ${trait[1]}명이에요.`);
   }
-  parts.push("첫 만남이니 가볍게 인사부터 나눠 보세요.");
+  // The closing line lives in the CHAT_CURATION template, which the operator can edit (F-70).
   return parts.join(" ");
 }
 
@@ -79,15 +79,10 @@ export async function finalizeRound(db: SupabaseClient, roundId: string) {
   if (ids.length) {
     const { data: failed } = await db.from("applications").select("id, profile_id")
       .in("id", ids).eq("is_active", true).in("match_status", ["ALTERNATIVE_OFFERED", "EXCEPTION"]);
-    if (failed?.length) {
-      await db.from("notifications").upsert(
-        failed.map((a) => ({
-          profile_id: a.profile_id, type: "MATCH_FAILED", title: "이번에는 식탁을 찾지 못했어요",
-          body: "다른 일정으로 옮기거나 이용권 보관·환불 중에서 고를 수 있어요. 보상 쿠폰도 함께 드렸어요.",
-          link: `/applications/${a.id}/resolve`, dedupe_key: `matchfail:${a.id}`,
-        })),
-        { onConflict: "dedupe_key", ignoreDuplicates: true },
-      );
+    for (const a of failed ?? []) {
+      await db.rpc("notify_template", {
+        p_profile: a.profile_id, p_code: "MATCH_FAILED", p_vars: {}, p_link: `/applications/${a.id}/resolve`, p_dedupe: `matchfail:${a.id}`,
+      });
     }
   }
   return results;

@@ -22,13 +22,22 @@ export async function resolveFailure(_prev: ResolveState, formData: FormData): P
   const [round, region] = String(formData.get("offer") ?? "").split("|");
   if (choice === "MOVE" && (!round || !region)) return { error: "옮길 일정을 골라 주세요." };
 
-  const { error } = await createAdminClient().rpc("resolve_match_failure", {
+  const db = createAdminClient();
+  const { data, error } = await db.rpc("resolve_match_failure", {
     p_profile: profile.id, p_app: appId, p_choice: choice,
     p_round: choice === "MOVE" ? round : null, p_region: choice === "MOVE" ? region : null,
   });
   if (error) {
     const code = Object.keys(MESSAGES).find((k) => error.message.includes(k));
     return { error: code ? MESSAGES[code] : "처리하지 못했어요. 잠시 후 다시 시도해 주세요." };
+  }
+  // 환불 완료 알림 (이메일 5종 중 하나): money back for a single ticket, one use back for a subscription.
+  if (choice === "REFUND" && !data?.already_resolved) {
+    const { data: refund } = data?.refund_id ? await db.from("refunds").select("amount").eq("id", data.refund_id).maybeSingle() : { data: null };
+    await db.rpc("notify_template", {
+      p_profile: profile.id, p_code: "REFUND_DONE", p_vars: { 환불: refund ? `${refund.amount.toLocaleString("ko-KR")}원` : "이용권 1회" },
+      p_link: `/applications/${appId}/resolve`, p_dedupe: `refund:${appId}`,
+    });
   }
   redirect(`/applications/${appId}/resolve`);
 }

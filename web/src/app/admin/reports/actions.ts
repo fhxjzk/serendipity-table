@@ -20,9 +20,10 @@ export async function reviewReport(_prev: ActionState, formData: FormData): Prom
   const id = String(formData.get("id"));
   const action = String(formData.get("action"));
   const db = createAdminClient();
+  const { data: before } = await db.from("reports").select("status").eq("id", id).maybeSingle();
   const { error } = await db.rpc("review_report", { p_actor: profile.id, p_report: id, p_action: action, p_until: untilOf(formData) });
   if (error) return { error: textOf(error.message) };
-  await db.from("audit_logs").insert({ actor_id: profile.id, action: "REPORT_REVIEW", target_table: "reports", target_id: id, after: { action } });
+  await db.from("audit_logs").insert({ actor_id: profile.id, action: "REPORT_REVIEW", target_table: "reports", target_id: id, before, after: { action } });
   revalidatePath("/admin/reports");
   return { ok: action === "REVIEWING" ? "검토 중으로 표시했어요." : "신고를 처리했어요." };
 }
@@ -46,9 +47,10 @@ export async function decideSanction(_prev: ActionState, formData: FormData): Pr
   const id = String(formData.get("id"));
   const decision = String(formData.get("decision"));
   const db = createAdminClient();
+  const { data: before } = await db.from("sanctions").select("status, until_date").eq("id", id).maybeSingle();
   const { error } = await db.rpc("decide_sanction", { p_actor: profile.id, p_sanction: id, p_decision: decision, p_until: untilOf(formData) });
   if (error) return { error: textOf(error.message) };
-  await db.from("audit_logs").insert({ actor_id: profile.id, action: "SANCTION_DECIDE", target_table: "sanctions", target_id: id, after: { decision } });
+  await db.from("audit_logs").insert({ actor_id: profile.id, action: "SANCTION_DECIDE", target_table: "sanctions", target_id: id, before, after: { decision, until: untilOf(formData) } });
   revalidatePath("/admin/reports");
   return { ok: decision === "CONFIRM" ? "제재를 확정했어요. 본인에게 알림이 가요." : "제안을 반려했어요." };
 }

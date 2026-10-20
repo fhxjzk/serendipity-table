@@ -21,10 +21,17 @@ export async function pay(_prev: PayState, formData: FormData): Promise<PayState
   if (!option) return { error: "이용권을 골라 주세요." };
   const [kind, ticketId] = option.startsWith("TICKET:") ? ["TICKET", option.slice(7)] : [option, null];
 
-  const { error } = await createAdminClient().rpc("pay_application", { p_profile: profile.id, p_app: appId, p_option: kind, p_ticket: ticketId });
+  const db = createAdminClient();
+  const { error } = await db.rpc("pay_application", { p_profile: profile.id, p_app: appId, p_option: kind, p_ticket: ticketId });
   if (error) {
     const code = Object.keys(MESSAGES).find((k) => error.message.includes(k));
     return { error: code ? MESSAGES[code] : "결제하지 못했어요. 잠시 후 다시 시도해 주세요." };
   }
+  // 결제 완료 알림 (F-39, 이메일 5종 중 하나). A ticket use has no payment row.
+  const { data: paid } = await db.from("payments").select("amount").eq("application_id", appId).eq("status", "PAID").order("paid_at", { ascending: false }).limit(1).maybeSingle();
+  await db.rpc("notify_template", {
+    p_profile: profile.id, p_code: "PAYMENT_DONE", p_vars: { 결제: paid && kind !== "TICKET" ? `${paid.amount.toLocaleString("ko-KR")}원` : "이용권 1회" },
+    p_link: "/home", p_dedupe: `paydone:${appId}`,
+  });
   redirect(`/apply/payment?app=${appId}`);
 }
