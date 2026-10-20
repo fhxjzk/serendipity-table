@@ -6,6 +6,7 @@
 // Skipped when history already exists. Nobody who applied for an upcoming round gets a negative
 // relation, so the upcoming demo rounds keep their expected results.
 import { createClient } from "@supabase/supabase-js";
+import { reviewFor } from "./copy-pool.mjs";
 import { randomUUID } from "node:crypto";
 import { ALGORITHM_VERSION, runMatching } from "../src/lib/matching/engine";
 import { loadSettings } from "../src/lib/matching/run";
@@ -52,11 +53,6 @@ const upcomingChoices = ok(
 ) as unknown as { applications: { profile_id: string } | { profile_id: string }[] | null }[];
 const protectedIds = new Set(upcomingChoices.map((c) => (Array.isArray(c.applications) ? c.applications[0] : c.applications)?.profile_id).filter(Boolean) as string[]);
 
-const REVIEWS = [
-  "처음 보는 분들인데 대화가 끊기지 않았어요.", "식당 분위기가 좋아서 편하게 이야기했어요.", "혼자 먹기 아쉬운 날 딱 좋았어요.",
-  "연령대가 비슷해서 이야기가 잘 통했어요.", "생각보다 훨씬 즐거운 저녁이었어요.", "다음에도 또 신청하고 싶어요.",
-  "대화 주제 덕분에 어색하지 않게 시작했어요.", "새로운 사람을 만나는 부담이 적었어요.",
-];
 const REPORT_REASONS = ["RUDE", "HARASS", "ETC"];
 
 type ProfileRow = { gender: "M" | "F"; birth_year: number; mbti: string; interests: string[]; self_traits: string[]; wanted_traits: string[] };
@@ -137,7 +133,7 @@ for (const round of rounds) {
         const publicReview = rand() < 0.35;
         feedbackRows.push({
           application_id: a.applicationId, table_id: tableId, profile_id: a.profileId, mood_score: score(), talk_score: score(), venue_score: score(),
-          rejoin_intent: score(), recommend_intent: score(), review_rating: publicReview ? score() : null, review_text: publicReview ? pick(REVIEWS) : null,
+          rejoin_intent: score(), recommend_intent: score(), review_rating: publicReview ? score() : null, review_text: publicReview ? reviewFor(a.applicationId) : null,
           review_public: publicReview, submitted_at: round.start_at,
         });
         stats.feedbacks += 1;

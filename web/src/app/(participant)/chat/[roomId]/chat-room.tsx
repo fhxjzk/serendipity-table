@@ -62,8 +62,11 @@ export function ChatRoom({ roomId, me, names, initial }: { roomId: string; me: s
           if (m.kind !== "USER") {
             return (
               <div key={m.id} className="mx-auto max-w-[92%] whitespace-pre-line rounded-2xl bg-sand/80 px-4 py-3 text-[13px] leading-relaxed text-ink/85">
-                <p className="mb-1 text-[11px] font-semibold text-ember">{KIND_LABEL[m.kind] ?? "우연한 식탁 안내"}</p>
-                {m.body}
+                <p className="mb-1 flex items-center justify-between gap-3 text-[11px] font-semibold text-ember">
+                  <span>{m.body.startsWith("식사 조건 (") ? "식사 조건 · 이름 없이 공유돼요" : KIND_LABEL[m.kind] ?? "우연한 식탁 안내"}</span>
+                  <span className="font-normal text-muted tabular">{time(m.created_at)}</span>
+                </p>
+                {m.body.startsWith("식사 조건 (") ? m.body.split("\n").slice(1).join("\n") : m.body}
               </div>
             );
           }

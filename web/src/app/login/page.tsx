@@ -3,6 +3,8 @@ import { CalendarDays, MapPin, Users } from "lucide-react";
 import { Endorsement, Eyebrow, Wordmark } from "@/components/brand";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LoginForm } from "./login-form";
+import { DemoLogins } from "./demo-logins";
+import { demoAccounts } from "./actions";
 
 async function loadStats() {
   const db = createAdminClient();
@@ -56,8 +58,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           <div className="mt-7">
             <LoginForm next={typeof next === "string" ? next : undefined} />
           </div>
-          <p className="mt-8 border-t border-line pt-5 text-xs leading-relaxed text-muted">
-            해커톤 시연용 서비스예요. 참가자·운영자 테스트 계정으로 로그인할 수 있어요.
+          <DemoLogins kinds={await demoAccounts()} />
+          <p className="mt-5 text-xs leading-relaxed text-muted">
+            해커톤 시연용 서비스예요. 위 버튼이나 안내받은 테스트 계정으로 로그인할 수 있어요.
           </p>
         </div>
       </section>

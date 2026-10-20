@@ -21,9 +21,9 @@ export default async function HistoryPage() {
   const { profile } = await requireProfile("PARTICIPANT");
   const db = createAdminClient();
   const [{ data: apps }, { data: feedbacks }, { data: open }] = await Promise.all([
-    db.from("applications").select("id, match_status, attendance_status, is_active, table_id, dining_tables(region_code, rounds(start_at)), application_choices(region_code, rounds(id, start_at, status))")
+    db.from("applications").select("id, match_status, attendance_status, is_active, table_id, dining_tables(region_code, venues(name), table_members(count), rounds(start_at)), application_choices(region_code, rounds(id, start_at, status))")
       .eq("profile_id", profile.id).order("created_at", { ascending: false }),
-    db.from("feedbacks").select("application_id").eq("profile_id", profile.id),
+    db.from("feedbacks").select("application_id, mood_score").eq("profile_id", profile.id),
     db.from("rounds").select("id, start_at, round_regions(region_code, capacity)").eq("status", "OPEN").gt("apply_deadline_at", new Date().toISOString()).order("event_date"),
   ]);
 
@@ -31,12 +31,15 @@ export default async function HistoryPage() {
   const past = (apps ?? []).filter((a) => !a.is_active && (a.match_status === "CONFIRMED" || a.attendance_status !== "SCHEDULED"));
   const active = (apps ?? []).find((a) => a.is_active);
   const rows = past.map((a) => {
-    const table = one(a.dining_tables as { region_code: string; rounds: { start_at: string } | { start_at: string }[] | null } | { region_code: string; rounds: { start_at: string } | { start_at: string }[] | null }[] | null);
+    type T = { region_code: string; venues: { name: string } | { name: string }[] | null; table_members: { count: number }[] | null; rounds: { start_at: string } | { start_at: string }[] | null };
+    const table = one(a.dining_tables as unknown as T | T[] | null);
+    const mine = (feedbacks ?? []).find((f) => f.application_id === a.id);
     const choices = (a.application_choices ?? []) as unknown as Choice[];
     const when = one(table?.rounds)?.start_at ?? choices.map((c) => one(c.rounds)?.start_at).filter(Boolean).sort()[0] ?? null;
     return {
       id: a.id, when, region: table?.region_code ?? choices[0]?.region_code ?? null, result: a.attendance_status,
-      feedback: (feedbacks ?? []).some((f) => f.application_id === a.id),
+      feedback: !!mine, mood: mine?.mood_score ?? null,
+      venue: one(table?.venues)?.name ?? null, people: table?.table_members?.[0]?.count ?? null,
     };
   });
 
@@ -91,7 +94,8 @@ export default async function HistoryPage() {
                   <li key={r.id} className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4">
                     <div className="flex-1">
                       <p className="text-[14px] font-semibold">{r.when ? fmt(r.when) : "-"}</p>
-                      <p className="text-[12px] text-muted">{r.region ? REGION_LABEL[r.region] : "-"} · 피드백 {r.feedback ? "제출함" : "안 함"}</p>
+                      <p className="text-[12px] text-muted">{[r.venue ?? (r.region ? REGION_LABEL[r.region] : null), r.people ? `${r.people}명` : null].filter(Boolean).join(" · ") || "-"}</p>
+                      <p className="mt-0.5 text-[12px] text-muted">{r.mood ? <>내 만족도 <span className="text-ember">{"★".repeat(r.mood)}</span></> : r.feedback ? "피드백 제출함" : "피드백 안 함"}</p>
                     </div>
                     <span className={`rounded-full px-2 py-0.5 text-[12px] font-medium ${res.cls}`}>{res.label}</span>
                     {r.result === "ATTENDED" && !r.feedback && <Link href={`/applications/${r.id}/feedback`} className="text-[12px] text-ember underline">피드백</Link>}

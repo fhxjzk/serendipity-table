@@ -19,7 +19,7 @@ export default async function TablePage({ params }: PageProps<"/applications/[id
   const start = new Date(t.round.start_at);
   const gather = new Date(start.getTime() - 10 * 60000).toISOString();
   const rows = [
-    { icon: Clock, label: "일시", value: `${fmt(t.round.start_at, { month: "long", day: "numeric", weekday: "long" })} ${fmt(t.round.start_at, { hour: "2-digit", minute: "2-digit", hour12: false })} (${fmt(gather, { hour: "2-digit", minute: "2-digit", hour12: false })}까지 도착)` },
+    { icon: Clock, label: "일시", value: <>{fmt(t.round.start_at, { month: "long", day: "numeric", weekday: "long" })} {fmt(t.round.start_at, { hour: "2-digit", minute: "2-digit", hour12: false })}<span className="mt-0.5 block text-[12px] text-muted">{fmt(gather, { hour: "2-digit", minute: "2-digit", hour12: false })}까지 도착해 주세요</span></> },
     { icon: MapPin, label: "장소", value: t.venue ? `${t.venue.name} · ${t.venue.address}` : `${REGION_LABEL[t.regionCode] ?? t.regionCode} — 식당은 곧 안내해 드려요` },
     { icon: Ticket, label: "예약명", value: t.reservationName ?? "-" },
     { icon: Wallet, label: "식사 가격", value: t.venue?.priceLabel ? `1인 ${t.venue.priceLabel} (현장에서 각자 결제)` : "현장에서 각자 결제" },
@@ -89,7 +89,7 @@ export default async function TablePage({ params }: PageProps<"/applications/[id
         </section>
 
         {t.foodSummary && (
-          <section className="rounded-2xl border border-line bg-white p-5 text-[13px] leading-relaxed whitespace-pre-line">{t.foodSummary}</section>
+          <FoodSummary text={t.foodSummary} />
         )}
 
         {!t.eventEnded && t.myAttendance === "SCHEDULED" && (
@@ -102,5 +102,26 @@ export default async function TablePage({ params }: PageProps<"/applications/[id
         )}
       </div>
     </main>
+  );
+}
+
+// The table's food summary (F-38) as a titled list: "알레르기: 갑각류 1명" per line.
+function FoodSummary({ text }: { text: string }) {
+  const lines = text.split("\n").filter(Boolean);
+  const items = lines[0]?.startsWith("식사 조건 (") ? lines.slice(1) : [];
+  return (
+    <section className="rounded-2xl border border-line bg-white p-5">
+      <p className="text-[14px] font-semibold">식사 조건 <span className="ml-1 text-[12px] font-normal text-muted">이름 없이 공유돼요</span></p>
+      {items.length ? (
+        <ul className="mt-2 flex flex-col gap-1.5 text-[13px]">
+          {items.map((l) => {
+            const [k, v] = l.split(": ");
+            return <li key={l} className="flex gap-3"><span className="w-20 shrink-0 text-muted">{k}</span><span>{v}</span></li>;
+          })}
+        </ul>
+      ) : (
+        <p className="mt-2 text-[13px] text-ink/80">이 식탁에는 알레르기나 못 먹는 음식이 없어요.</p>
+      )}
+    </section>
   );
 }

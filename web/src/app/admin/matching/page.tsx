@@ -98,19 +98,10 @@ export default async function MatchingPage({ searchParams }: PageProps<"/admin/m
                       </>
                     ) : "-"}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap justify-end gap-2">
-                      {r.status === "OPEN" && <EventStepButton roundId={r.id} step="generate" label="시연 참가자 13명 만들기" demo />}
-                      {r.status === "OPEN" && <RunNowButton roundId={r.id} disabled={paidCount(r.id) === 0} />}
-                      {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="remind" label="전날 리마인드 보내기" />}
-                      {r.status === "MATCHED" && <EventStepButton roundId={r.id} step="start" label={r.setting_overrides?.event_started ? "행사 진행 중(다시 게시)" : "행사 시작(체크인·대화 주제)"} />}
-                      {r.status === "MATCHED" && r.setting_overrides?.event_started && <EventStepButton roundId={r.id} step="fill_checkin" label="가상 참가자 체크인(시연)" demo />}
-                      {/* Kept on screen after the event ends so its result message stays visible. */}
-                      {(r.status === "MATCHED" || r.status === "DONE") && <EventStepButton roundId={r.id} step="end" label={r.status === "DONE" ? "행사 종료됨" : "행사 종료 처리"} disabled={r.status === "DONE"} />}
-                      {r.status === "DONE" && <EventStepButton roundId={r.id} step="fill_feedback" label="가상 참가자 피드백(시연)" demo />}
-                      {r.status === "DONE" && <EventStepButton roundId={r.id} step="noshow" label="노쇼 확정(시연)" />}
-                      {(r.status === "MATCHED" || r.status === "DONE") && <ResetButton roundId={r.id} />}
-                    </div>
+                  <td className="px-4 py-3 text-right">
+                    <Link href={`/admin/matching?round=${r.id}#steps`} className={`inline-flex rounded-lg border px-3 py-1.5 text-[12px] ${selected?.id === r.id ? "border-ink bg-ink text-cream" : "border-line bg-white text-ink hover:bg-paper"}`}>
+                      {selected?.id === r.id ? "진행 단계 보는 중" : "진행 단계 보기"}
+                    </Link>
                   </td>
                 </tr>
               );
@@ -119,12 +110,19 @@ export default async function MatchingPage({ searchParams }: PageProps<"/admin/m
         </table>
       </section>
 
+      {selected && <DemoSteps round={selected} paid={paidCount(selected.id)} />}
       {selected && selected.status === "OPEN" && <Preview roundId={selected.id} title={selected.title} />}
       {selected && selected.status !== "OPEN" && <RunInfo roundId={selected.id} />}
       {selected && <RoundDetail roundId={selected.id} title={selected.title} />}
     </main>
   );
 }
+
+const REASON_LABEL: Record<string, string> = {
+  POOL_SPLIT: "신청자가 많아 테이블을 나눔", AGE_GAP: "나이 차이 8살 안에 맞는 사람이 부족해 이 지역에서 제외",
+  OPEN_SEAT: "함께 고른 다른 지역 테이블의 빈자리로 이동", LEFTOVER_MERGE: "남은 사람끼리 새 테이블로 합침",
+  NO_GROUP: "4명 묶음을 만들지 못함", LOW_SCORE: "최소 점수에 못 미쳐 묶지 않음", INITIAL: "처음 배치",
+};
 
 const EVENT_LABEL: Record<string, string> = {
   PLACED: "배치", RELEASED: "해제", REALLOCATED: "재배치", SPLIT: "분리", MERGED: "병합", CONFIRMED: "확정", FAILED: "실패", SHRINK: "인원 감소",
@@ -183,10 +181,13 @@ async function RunInfo({ roundId }: { roundId: string }) {
   const { data: run } = await db.from("match_runs").select("id, trigger, algorithm_version, settings_snapshot, stats, finished_at")
     .eq("round_id", roundId).eq("status", "DONE").order("started_at", { ascending: false }).limit(1).maybeSingle();
   if (!run) return null;
-  const { data: events } = await db.from("match_events").select("event_type, reason_code, application_id, applications(profiles(name))").eq("match_run_id", run.id);
+  const { data: events } = await db.from("match_events").select("event_type, reason_code, detail, application_id, applications(profiles(name))").eq("match_run_id", run.id);
   const counts = new Map<string, number>();
   for (const e of events ?? []) counts.set(e.event_type, (counts.get(e.event_type) ?? 0) + 1);
   const moves = (events ?? []).filter((e) => ["RELEASED", "REALLOCATED", "SPLIT", "MERGED"].includes(e.event_type));
+  // One line per split region instead of one per person.
+  const splits = [...new Map((events ?? []).filter((e) => e.event_type === "SPLIT")
+    .map((e) => [(e.detail as { region?: string })?.region ?? "", e.detail as { poolSize: number; tables: number }])).entries()];
   const s = run.settings_snapshot as { weights?: Record<string, number>; minScore?: number; maxAgeGap?: number } | null;
   type AppP = { profiles: { name: string } | { name: string }[] | null } | { profiles: { name: string } | { name: string }[] | null }[] | null;
   const nameOf = (a: AppP) => {
@@ -206,7 +207,10 @@ async function RunInfo({ roundId }: { roundId: string }) {
       </div>
       {moves.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1 text-ink/80">
-          {moves.map((e, i) => <li key={i}>{nameOf(e.applications as AppP)} — {EVENT_LABEL[e.event_type]} ({e.reason_code})</li>)}
+          {splits.map(([region, d]) => <li key={region}>{REGION_LABEL[region] ?? region} 신청자 {d.poolSize}명을 테이블 {d.tables}개로 나눴어요</li>)}
+          {moves.filter((e) => e.event_type !== "SPLIT").map((e, i) => (
+            <li key={i}><span className="font-medium">{nameOf(e.applications as AppP)}</span> — {EVENT_LABEL[e.event_type]} · {REASON_LABEL[e.reason_code] ?? e.reason_code}</li>
+          ))}
         </ul>
       )}
     </section>
@@ -287,6 +291,73 @@ async function RoundDetail({ roundId, title }: { roundId: string; title: string 
               );
             })}
           </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+type RoundRow = { id: string; title: string; status: string; setting_overrides: { event_started?: boolean } | null };
+
+// 시연 진행 단계 (F-76, F-77): every button for one round in demo order, with what is already done.
+async function DemoSteps({ round, paid }: { round: RoundRow; paid: number }) {
+  const db = createAdminClient();
+  const { data: tables } = await db.from("dining_tables").select("id").eq("round_id", round.id);
+  const tableIds = (tables ?? []).map((t) => t.id);
+  const none = ["00000000-0000-0000-0000-000000000000"];
+  const [{ data: bulk }, { data: rooms }, { count: checkedIn }, { count: feedbacks }] = await Promise.all([
+    db.from("application_choices").select("application_id, applications!inner(profiles!inner(origin))").eq("round_id", round.id).eq("applications.profiles.origin", "BULK").limit(1),
+    db.from("chat_rooms").select("id").in("table_id", tableIds.length ? tableIds : none),
+    db.from("applications").select("id", { count: "exact", head: true }).in("table_id", tableIds.length ? tableIds : none).not("checked_in_at", "is", null),
+    db.from("feedbacks").select("application_id", { count: "exact", head: true }).in("table_id", tableIds.length ? tableIds : none),
+  ]);
+  const { count: reminders } = await db.from("chat_messages").select("id", { count: "exact", head: true })
+    .in("room_id", (rooms ?? []).map((r) => r.id).concat(none)).eq("kind", "REMINDER");
+
+  const open = round.status === "OPEN", matched = round.status === "MATCHED", done = round.status === "DONE";
+  const started = !!round.setting_overrides?.event_started || done;
+  const steps: { n: number; title: string; note: string; state: "done" | "now" | "wait"; button: React.ReactNode }[] = [
+    { n: 1, title: "시연 참가자 만들기", note: "서로 다른 프로필 13명이 신청·결제까지 마쳐요(재배치·나이 차이 실패 장면 포함).",
+      state: bulk?.length ? "done" : open ? "now" : "wait", button: open && !bulk?.length && <EventStepButton roundId={round.id} step="generate" label="13명 만들기" demo /> },
+    { n: 2, title: "자동 매칭 즉시 실행", note: `결제 완료 ${paid}명을 4~6명 테이블로 묶고, 식당·단체방·안내를 자동으로 처리해요.`,
+      state: open ? "now" : "done", button: open && <RunNowButton roundId={round.id} disabled={paid === 0} /> },
+    { n: 3, title: "전날 리마인드", note: "단체방과 알림함(설정 시 웹 푸시·이메일)에 전날 안내를 보내요.",
+      state: reminders ? "done" : matched ? "now" : "wait", button: matched && <EventStepButton roundId={round.id} step="remind" label="리마인드 보내기" /> },
+    { n: 4, title: "행사 시작", note: "체크인을 열고 단체방에 대화 주제 3개와 아이스브레이킹을 올려요.",
+      state: started ? "done" : matched ? "now" : "wait", button: matched && <EventStepButton roundId={round.id} step="start" label={started ? "다시 게시" : "행사 시작"} /> },
+    { n: 5, title: "가상 참가자 체크인", note: `시연 계정은 직접 체크인하고, 나머지는 이 버튼으로 채워요. 지금 ${checkedIn ?? 0}명 체크인.`,
+      state: (checkedIn ?? 0) > 1 || done ? "done" : started ? "now" : "wait", button: matched && started && <EventStepButton roundId={round.id} step="fill_checkin" label="체크인 채우기" demo /> },
+    { n: 6, title: "행사 종료", note: "체크인 없는 사람을 노쇼 후보로 기록하고 피드백 요청을 보내요.",
+      state: done ? "done" : started ? "now" : "wait", button: matched && <EventStepButton roundId={round.id} step="end" label="행사 종료" /> },
+    { n: 7, title: "가상 참가자 피드백", note: `만족도·다시 만나고 싶은 사람이 다음 매칭에 반영돼요. 지금 ${feedbacks ?? 0}건.`,
+      state: (feedbacks ?? 0) > 1 ? "done" : done ? "now" : "wait", button: done && <EventStepButton roundId={round.id} step="fill_feedback" label="피드백 채우기" demo /> },
+    { n: 8, title: "노쇼 확정", note: "이의 제기 기간을 기다리지 않고 남은 노쇼 후보를 확정해요.",
+      state: done ? "now" : "wait", button: done && <EventStepButton roundId={round.id} step="noshow" label="노쇼 확정" /> },
+  ];
+  return (
+    <section id="steps" className="scroll-mt-6 rounded-xl border border-line bg-white p-5 shadow-[0_1px_2px_rgba(42,33,27,0.04)]">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-[15px] font-bold">{round.title} · 진행 단계</h2>
+        <p className="text-[12px] text-muted">파란 점선 버튼은 시연용이에요. 실제 운영에서는 스케줄러가 시각에 맞춰 자동으로 실행해요.</p>
+      </div>
+      <ol className="mt-4 grid gap-2 lg:grid-cols-2">
+        {steps.map((st) => (
+          <li key={st.n} className={`flex items-start gap-3 rounded-lg border p-3 ${st.state === "now" ? "border-ink/40 bg-paper" : "border-line"} ${st.state === "wait" ? "opacity-55" : ""}`}>
+            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold tabular ${st.state === "done" ? "bg-emerald-600 text-white" : st.state === "now" ? "bg-ink text-cream" : "bg-sand text-ink/60"}`}>
+              {st.state === "done" ? "✓" : st.n}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-semibold">{st.title}</p>
+              <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{st.note}</p>
+            </div>
+            <div className="shrink-0">{st.button}</div>
+          </li>
+        ))}
+      </ol>
+      {(matched || done) && (
+        <div className="mt-4 flex items-center justify-end gap-3 border-t border-line pt-3">
+          <p className="text-[12px] text-muted">처음부터 다시 시연하려면</p>
+          <ResetButton roundId={round.id} />
         </div>
       )}
     </section>

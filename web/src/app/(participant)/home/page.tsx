@@ -29,7 +29,7 @@ export default async function HomePage() {
   const [{ data: nextRound }, { data: myApp }, { count: unread }] = await Promise.all([
     supabase.from("rounds").select("id, event_date, start_at, apply_deadline_at, round_regions(region_code)")
       .eq("status", "OPEN").gt("apply_deadline_at", nowIso).order("event_date").limit(1).maybeSingle(),
-    supabase.from("applications").select("id, application_status, match_status, payment_status, attendance_status, payment_due_at, application_choices(region_code, rounds(start_at, match_run_at))")
+    supabase.from("applications").select("id, table_id, application_status, match_status, payment_status, attendance_status, payment_due_at, application_choices(region_code, rounds(start_at, match_run_at))")
       .eq("profile_id", profile.id).eq("is_active", true).maybeSingle(),
     supabase.from("notifications").select("id", { count: "exact", head: true }).eq("profile_id", profile.id).is("read_at", null),
   ]);
@@ -50,9 +50,22 @@ export default async function HomePage() {
     }
   }
 
-  const { data: reviewRows } = await createAdminClient().from("feedbacks").select("review_rating, review_text")
-    .eq("review_public", true).eq("review_hidden", false).not("review_text", "is", null).order("submitted_at", { ascending: false }).limit(3);
-  const reviews = reviewRows ?? [];
+  const db = createAdminClient();
+  const [{ data: reviewRows }, { data: myTable }] = await Promise.all([
+    db.from("feedbacks").select("review_rating, review_text, dining_tables(region_code, rounds(event_date))")
+      .eq("review_public", true).eq("review_hidden", false).not("review_text", "is", null).order("submitted_at", { ascending: false }).limit(3),
+    myApp?.table_id && myApp.match_status === "CONFIRMED"
+      ? db.from("dining_tables").select("venues(name)").eq("id", myApp.table_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  type ReviewTable = { region_code: string; rounds: { event_date: string } | { event_date: string }[] | null };
+  const one = <X,>(v: X | X[] | null | undefined): X | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
+  const reviews = (reviewRows ?? []).map((r) => {
+    const t = one(r.dining_tables as unknown as ReviewTable | ReviewTable[] | null);
+    const d = one(t?.rounds)?.event_date;
+    return { ...r, where: [t ? REGION_LABEL[t.region_code] : "", d ? fmt(`${d}T12:00:00+09:00`, { month: "long", day: "numeric" }) : ""].filter(Boolean).join(" · ") };
+  });
+  const venueName = (one((myTable as { venues: unknown } | null)?.venues as { name: string } | { name: string }[] | null))?.name ?? null;
 
   const regions = ((nextRound?.round_regions ?? []) as { region_code: string }[]).map((r) => r.region_code).filter((c) => c !== "ETC");
   // D-day by calendar days in KST (a deadline on Monday seen on the Tuesday before is D-6, not D-7).
@@ -78,76 +91,152 @@ export default async function HomePage() {
       <div className="mx-auto w-full max-w-md px-5 pb-16">
         <section className="pt-7">
           <p className="text-sm text-muted">{profile.display_name}님,</p>
-          <h1 className="mt-1 text-[22px] font-bold leading-snug tracking-[-0.02em]">이번 주는 어떤 저녁을 보낼까요?</h1>
+          <h1 className="mt-1 text-[22px] font-bold leading-snug tracking-[-0.02em]">{myApp?.match_status === "CONFIRMED" ? "곧 만날 식탁이 기다리고 있어요" : "이번 주는 어떤 저녁을 보낼까요?"}</h1>
         </section>
 
-        {/* 다음 모집 회차 */}
-        <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(42,33,27,0.04),0_8px_24px_rgba(42,33,27,0.06)]">
-          <div className="relative h-36">
-            <Image src="/images/hero-toast.jpg" alt="" fill sizes="448px" className="object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent" />
-            <div className="absolute bottom-4 left-5 right-5 text-cream">
-              <Eyebrow tone="light">다음 우연한 식탁</Eyebrow>
-              {nextRound ? (
-                <p className="mt-1.5 text-xl font-bold tracking-[-0.02em]">
-                  {fmt(nextRound.start_at, { month: "long", day: "numeric", weekday: "long" })} · {fmt(nextRound.start_at, { hour: "2-digit", minute: "2-digit", hour12: false })}
-                </p>
-              ) : (
-                <p className="mt-1.5 text-xl font-bold">다음 회차를 준비하고 있어요</p>
-              )}
-            </div>
-          </div>
-          {nextRound && (
-            <div className="space-y-4 p-5">
-              <div className="flex flex-wrap gap-1.5">
-                {regions.map((r) => (
-                  <span key={r} className="inline-flex items-center gap-1 rounded-full bg-sand px-2.5 py-1 text-[12px] text-ink/80">
-                    <MapPin className="h-3 w-3" strokeWidth={2} />{REGION_LABEL[r] ?? r}
-                  </span>
-                ))}
+        {myApp ? (
+          <>
+          {/* 내 신청 */}
+          <section className="mt-8">
+            <h2 className="text-[15px] font-bold">내 신청</h2>
+            {myApp ? (
+              <MyApplication app={myApp as unknown as MyApp} venue={venueName} />
+            ) : lastTable ? (
+              <div className="mt-3 rounded-2xl border border-line bg-white p-5">
+                <p className="text-[12px] font-medium text-muted">지난 식탁</p>
+                <p className="mt-1 text-[15px] font-semibold">{lastTable.when}</p>
+                <div className="mt-4 flex flex-col gap-2">
+                  {lastTable.noshowPending && (
+                    <Link href={`/applications/${lastTable.id}/noshow`} className="flex h-11 items-center justify-center rounded-xl bg-ember text-[14px] font-semibold text-cream">참석 여부 확인하기</Link>
+                  )}
+                  {lastTable.needsFeedback ? (
+                    <Link href={`/applications/${lastTable.id}/feedback`} className="flex h-11 items-center justify-center rounded-xl bg-ink text-[14px] font-semibold text-cream">피드백 남기기</Link>
+                  ) : (
+                    <p className="text-center text-[12px] text-muted">피드백을 남겨 주셔서 고마워요. 다음 식탁에 반영돼요.</p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center justify-between text-[13px]">
-                <span className="flex items-center gap-1.5 text-muted"><Clock className="h-4 w-4" strokeWidth={1.75} />신청 마감 {fmt(nextRound.apply_deadline_at, { month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
-                <span className="rounded-md bg-ember/10 px-2 py-0.5 text-[12px] font-semibold text-ember tabular">D-{daysLeft}</span>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-dashed border-line px-5 py-6 text-center">
+                <p className="text-[14px] text-ink/80">아직 신청한 식탁이 없어요.</p>
+                <p className="mt-1 text-[12px] text-muted">마음에 드는 날짜를 골라 첫 저녁을 시작해 보세요.</p>
               </div>
-              {myApp ? (
-                <p className="rounded-xl bg-sand/70 py-3 text-center text-[13px] text-ink/80">진행 중인 신청이 있어 새로 신청할 수 없어요.</p>
-              ) : (
-                <Link href="/rounds" className="flex h-12 w-full items-center justify-center rounded-xl bg-ink text-[15px] font-semibold text-cream transition hover:bg-espresso">
-                  신청하기
-                </Link>
-              )}
-            </div>
-          )}
-        </section>
+            )}
+          </section>
 
-        {/* 내 신청 */}
-        <section className="mt-8">
-          <h2 className="text-[15px] font-bold">내 신청</h2>
-          {myApp ? (
-            <MyApplication app={myApp as unknown as MyApp} />
-          ) : lastTable ? (
-            <div className="mt-3 rounded-2xl border border-line bg-white p-5">
-              <p className="text-[12px] font-medium text-muted">지난 식탁</p>
-              <p className="mt-1 text-[15px] font-semibold">{lastTable.when}</p>
-              <div className="mt-4 flex flex-col gap-2">
-                {lastTable.noshowPending && (
-                  <Link href={`/applications/${lastTable.id}/noshow`} className="flex h-11 items-center justify-center rounded-xl bg-ember text-[14px] font-semibold text-cream">참석 여부 확인하기</Link>
-                )}
-                {lastTable.needsFeedback ? (
-                  <Link href={`/applications/${lastTable.id}/feedback`} className="flex h-11 items-center justify-center rounded-xl bg-ink text-[14px] font-semibold text-cream">피드백 남기기</Link>
+          {/* 다음 모집 회차 */}
+          <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(42,33,27,0.04),0_8px_24px_rgba(42,33,27,0.06)]">
+            <div className="relative h-36">
+              <Image src="/images/hero-toast.jpg" alt="" fill sizes="448px" className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent" />
+              <div className="absolute bottom-4 left-5 right-5 text-cream">
+                <Eyebrow tone="light">다음 우연한 식탁</Eyebrow>
+                {nextRound ? (
+                  <p className="mt-1.5 text-xl font-bold tracking-[-0.02em]">
+                    {fmt(nextRound.start_at, { month: "long", day: "numeric", weekday: "long" })} · {fmt(nextRound.start_at, { hour: "2-digit", minute: "2-digit", hour12: false })}
+                  </p>
                 ) : (
-                  <p className="text-center text-[12px] text-muted">피드백을 남겨 주셔서 고마워요. 다음 식탁에 반영돼요.</p>
+                  <p className="mt-1.5 text-xl font-bold">다음 회차를 준비하고 있어요</p>
                 )}
               </div>
             </div>
-          ) : (
-            <div className="mt-3 rounded-2xl border border-dashed border-line px-5 py-6 text-center">
-              <p className="text-[14px] text-ink/80">아직 신청한 식탁이 없어요.</p>
-              <p className="mt-1 text-[12px] text-muted">마음에 드는 날짜를 골라 첫 저녁을 시작해 보세요.</p>
+            {nextRound && (
+              <div className="space-y-4 p-5">
+                <div className="flex flex-wrap gap-1.5">
+                  {regions.map((r) => (
+                    <span key={r} className="inline-flex items-center gap-1 rounded-full bg-sand px-2.5 py-1 text-[12px] text-ink/80">
+                      <MapPin className="h-3 w-3" strokeWidth={2} />{REGION_LABEL[r] ?? r}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="flex items-center gap-1.5 text-muted"><Clock className="h-4 w-4" strokeWidth={1.75} />신청 마감 {fmt(nextRound.apply_deadline_at, { month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
+                  <span className="rounded-md bg-ember/10 px-2 py-0.5 text-[12px] font-semibold text-ember tabular">D-{daysLeft}</span>
+                </div>
+                {myApp ? (
+                  <p className="text-center text-[12px] text-muted">지금 신청이 끝나면 이 회차부터 다시 신청할 수 있어요.</p>
+                ) : (
+                  <Link href="/rounds" className="flex h-12 w-full items-center justify-center rounded-xl bg-ink text-[15px] font-semibold text-cream transition hover:bg-espresso">
+                    신청하기
+                  </Link>
+                )}
+              </div>
+            )}
+          </section>
+
+          </>
+        ) : (
+          <>
+          {/* 다음 모집 회차 */}
+          <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(42,33,27,0.04),0_8px_24px_rgba(42,33,27,0.06)]">
+            <div className="relative h-36">
+              <Image src="/images/hero-toast.jpg" alt="" fill sizes="448px" className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent" />
+              <div className="absolute bottom-4 left-5 right-5 text-cream">
+                <Eyebrow tone="light">다음 우연한 식탁</Eyebrow>
+                {nextRound ? (
+                  <p className="mt-1.5 text-xl font-bold tracking-[-0.02em]">
+                    {fmt(nextRound.start_at, { month: "long", day: "numeric", weekday: "long" })} · {fmt(nextRound.start_at, { hour: "2-digit", minute: "2-digit", hour12: false })}
+                  </p>
+                ) : (
+                  <p className="mt-1.5 text-xl font-bold">다음 회차를 준비하고 있어요</p>
+                )}
+              </div>
             </div>
-          )}
-        </section>
+            {nextRound && (
+              <div className="space-y-4 p-5">
+                <div className="flex flex-wrap gap-1.5">
+                  {regions.map((r) => (
+                    <span key={r} className="inline-flex items-center gap-1 rounded-full bg-sand px-2.5 py-1 text-[12px] text-ink/80">
+                      <MapPin className="h-3 w-3" strokeWidth={2} />{REGION_LABEL[r] ?? r}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="flex items-center gap-1.5 text-muted"><Clock className="h-4 w-4" strokeWidth={1.75} />신청 마감 {fmt(nextRound.apply_deadline_at, { month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
+                  <span className="rounded-md bg-ember/10 px-2 py-0.5 text-[12px] font-semibold text-ember tabular">D-{daysLeft}</span>
+                </div>
+                {myApp ? (
+                  <p className="text-center text-[12px] text-muted">지금 신청이 끝나면 이 회차부터 다시 신청할 수 있어요.</p>
+                ) : (
+                  <Link href="/rounds" className="flex h-12 w-full items-center justify-center rounded-xl bg-ink text-[15px] font-semibold text-cream transition hover:bg-espresso">
+                    신청하기
+                  </Link>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* 내 신청 */}
+          <section className="mt-8">
+            <h2 className="text-[15px] font-bold">내 신청</h2>
+            {myApp ? (
+              <MyApplication app={myApp as unknown as MyApp} venue={venueName} />
+            ) : lastTable ? (
+              <div className="mt-3 rounded-2xl border border-line bg-white p-5">
+                <p className="text-[12px] font-medium text-muted">지난 식탁</p>
+                <p className="mt-1 text-[15px] font-semibold">{lastTable.when}</p>
+                <div className="mt-4 flex flex-col gap-2">
+                  {lastTable.noshowPending && (
+                    <Link href={`/applications/${lastTable.id}/noshow`} className="flex h-11 items-center justify-center rounded-xl bg-ember text-[14px] font-semibold text-cream">참석 여부 확인하기</Link>
+                  )}
+                  {lastTable.needsFeedback ? (
+                    <Link href={`/applications/${lastTable.id}/feedback`} className="flex h-11 items-center justify-center rounded-xl bg-ink text-[14px] font-semibold text-cream">피드백 남기기</Link>
+                  ) : (
+                    <p className="text-center text-[12px] text-muted">피드백을 남겨 주셔서 고마워요. 다음 식탁에 반영돼요.</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-dashed border-line px-5 py-6 text-center">
+                <p className="text-[14px] text-ink/80">아직 신청한 식탁이 없어요.</p>
+                <p className="mt-1 text-[12px] text-muted">마음에 드는 날짜를 골라 첫 저녁을 시작해 보세요.</p>
+              </div>
+            )}
+          </section>
+
+          </>
+        )}
 
         {/* 진행 순서 */}
         <section className="mt-8">
@@ -188,7 +277,7 @@ export default async function HomePage() {
             <ul className="mt-3 flex flex-col gap-2">
               {reviews.map((r, i) => (
                 <li key={i} className="rounded-2xl border border-line bg-white px-4 py-3">
-                  <p className="text-[12px] text-ember">{"★".repeat(r.review_rating ?? 0)}</p>
+                  <p className="flex items-center gap-2 text-[12px]"><span className="text-ember">{"★".repeat(r.review_rating ?? 0)}</span><span className="text-muted">{r.where}</span></p>
                   <p className="mt-0.5 text-[14px] leading-relaxed">{r.review_text}</p>
                 </li>
               ))}
@@ -206,7 +295,7 @@ export default async function HomePage() {
 }
 
 type MyApp = {
-  id: string; application_status: string; match_status: string; payment_status: string; attendance_status: string; payment_due_at: string | null;
+  id: string; table_id: string | null; application_status: string; match_status: string; payment_status: string; attendance_status: string; payment_due_at: string | null;
   application_choices: { region_code: string; rounds: { start_at: string; match_run_at: string } | null }[];
 };
 
@@ -217,19 +306,30 @@ const PAYMENT_LABEL: Record<string, string> = {
 const ATTEND_LABEL: Record<string, string> = { SCHEDULED: "참석 예정", ATTENDED: "참석", CANCELED_EARLY: "사전 취소", CANCELED_LATE: "늦은 취소", NO_SHOW: "노쇼" };
 
 // F-17: 신청·결제·매칭·참석 상태를 한 카드에.
-function MyApplication({ app }: { app: MyApp }) {
+function MyApplication({ app, venue }: { app: MyApp; venue: string | null }) {
   const rounds = [...new Map(app.application_choices.filter((c) => c.rounds).map((c) => [c.rounds!.start_at, c.rounds!])).values()].sort((a, b) => a.start_at.localeCompare(b.start_at));
   const regions = [...new Set(app.application_choices.map((c) => c.region_code))];
   const rows: [string, string, boolean][] = [
     ["신청", app.application_status === "SUBMITTED" ? "제출 완료" : app.application_status === "CANCELED" ? "취소" : "작성 중", true],
     ["결제", PAYMENT_LABEL[app.payment_status] ?? app.payment_status, app.payment_status === "PAID"],
     ["매칭", MATCH_LABEL[app.match_status] ?? app.match_status, app.match_status === "CONFIRMED"],
-    ["참석", ATTEND_LABEL[app.attendance_status] ?? app.attendance_status, app.attendance_status === "ATTENDED"],
+    // Attendance only means something once a table is confirmed.
+    ["참석", app.match_status === "CONFIRMED" || app.attendance_status !== "SCHEDULED"
+      ? ATTEND_LABEL[app.attendance_status] ?? app.attendance_status
+      : ["ALTERNATIVE_OFFERED", "EXCEPTION", "NO_MATCH"].includes(app.match_status) ? "해당 없음" : "확정 후", app.attendance_status === "ATTENDED"],
   ];
+  const confirmed = app.match_status === "CONFIRMED" && rounds[0];
+  const kstDay = (iso: string) => new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
+  const dday = confirmed ? Math.round((Date.parse(kstDay(rounds[0].start_at)) - Date.parse(kstDay(new Date().toISOString()))) / 86400000) : null;
   return (
     <div className="mt-3 rounded-2xl border border-line bg-white p-5">
-      <p className="text-[15px] font-semibold">{rounds.map((r) => fmt(r.start_at, { month: "numeric", day: "numeric", weekday: "short" })).join(" · ")}</p>
-      <p className="mt-0.5 text-[13px] text-muted">{regions.map((r) => REGION_LABEL[r] ?? r).join(" · ")}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[15px] font-semibold">{confirmed ? fmt(rounds[0].start_at, { month: "long", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : rounds.map((r) => fmt(r.start_at, { month: "numeric", day: "numeric", weekday: "short" })).join(" · ")}</p>
+          <p className="mt-0.5 text-[13px] text-muted">{confirmed && venue ? `${venue} · ` : ""}{regions.map((r) => REGION_LABEL[r] ?? r).join(" · ")}</p>
+        </div>
+        {dday !== null && dday >= 0 && <span className="shrink-0 rounded-md bg-ember/10 px-2 py-0.5 text-[12px] font-semibold text-ember tabular">{dday === 0 ? "오늘" : `D-${dday}`}</span>}
+      </div>
       <dl className="mt-4 grid grid-cols-4 gap-2 text-center">
         {rows.map(([k, v, done]) => (
           <div key={k} className={`rounded-xl px-1 py-2.5 ${done ? "bg-ink text-cream" : "bg-sand/70 text-ink/80"}`}>

@@ -7,6 +7,7 @@
 // Usage: npm run seed            (first run on an empty DB)
 //        npm run seed -- --reset (deletes rounds/applications/payments and rebuilds)
 import { createClient } from "@supabase/supabase-js";
+import { oneLinerFor } from "./copy-pool.mjs";
 import { readFileSync } from "node:fs";
 import { randomBytes, randomUUID } from "node:crypto";
 
@@ -60,15 +61,6 @@ const DEMO_ALLERGIES = { 255: ["갑각류"], 277: ["견과류"], 292: ["갑각�
 const DEMO_LOGINS = {
   255: ["SEED_TABLE_EMAIL", "SEED_TABLE_PASSWORD"],
   292: ["SEED_FAIL_EMAIL", "SEED_FAIL_PASSWORD"],
-};
-
-const INTEREST_SHORT = {
-  EXERCISE: "운동", FOOD_CAFE: "맛집·카페 탐방", TRAVEL: "여행", MOVIE_DRAMA: "영화·드라마", MUSIC: "음악",
-  READING: "독서", SELF_DEV: "자기계발", ART: "전시·공연", FASHION_BEAUTY: "패션·뷰티", PHOTO_VIDEO: "사진·영상",
-};
-const TRAIT_PHRASE = {
-  LISTENER: "이야기를 잘 들어줘요", DEEP_TALK: "깊은 대화를 좋아해요", HUMOR_TALK: "유쾌한 대화를 좋아해요",
-  CALM: "잔잔한 편이에요", ENERGETIC: "에너지 넘치는 편이에요", LEADER: "대화를 이끄는 편이에요",
 };
 
 // ---------- raw value mapping (03.데이터 정의서 9.1) ----------
@@ -150,13 +142,6 @@ const norm = (s) => s.replace(/[^가-힣a-zA-Z]/g, "").slice(0, 4);
 function codeMapper(codes, group) {
   const byKey = new Map(codes.filter((c) => c.code_group === group).map((c) => [norm(c.label), c.code]));
   return (raw) => [...new Set(splitTop(raw).map((v) => byKey.get(norm(v))).filter(Boolean))];
-}
-
-function oneLiner(interests, traits) {
-  const i = INTEREST_SHORT[interests[0]];
-  const t = TRAIT_PHRASE[traits[0]];
-  if (!i || !t) return null;
-  return `${i} 좋아하고 ${t}`.slice(0, 30);
 }
 
 // ---------- time helpers (KST) ----------
@@ -391,7 +376,7 @@ async function main() {
     const submittedAt = randomBetween(kst(addDays(firstDate, -14), "09:00"), kst(addDays(firstDate, -4), "23:00"));
     const its = interests(a.interests);
     const selfs = selfTraits(a.self_traits);
-    const liner = i % 2 === 0 ? oneLiner(its, selfs) : null;
+    const liner = i % 2 === 0 ? oneLinerFor(`seed-${i}`, its, selfs) : null;
     const food = mapFoodAvoid(a.food_avoid);
     const mbti = mapMbti(a.mbti);
     if (regions[0] === "ETC") stats.etc++;

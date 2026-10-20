@@ -29,7 +29,12 @@ const COMMON: Record<string, string[]> = { HONGDAE: ["FOOD_CAFE", "MOVIE_DRAMA"]
 const SELF = ["LISTENER", "HUMOR_TALK", "DEEP_TALK", "CALM", "ENERGETIC", "LEADER"];
 const WANTED = ["EASY_HUMOR", "CALM_STABLE", "DEEP_TALK", "PASSIONATE", "SIMILAR", "DIFFERENT"];
 const JOBS = ["개발자", "디자이너", "마케터", "간호사", "교사", "회계사", "PD", "연구원", "기획자", "영업직", "공무원", "약사", "건축가"];
-const LINERS = ["맛집 지도를 만들고 있어요", "주말엔 러닝해요", "영화 이야기라면 밤새도 좋아요", "처음 만나는 자리도 편하게 즐겨요", null];
+// One per person, so nobody at a demo table shares a sentence.
+const LINERS = [
+  "맛집 지도를 만들고 있어요", "주말엔 한강에서 러닝해요", "영화 이야기라면 밤새도 좋아요", "처음 만나는 자리도 편하게 즐겨요", null,
+  "요즘 재즈 바에 빠졌어요", "필름 카메라 들고 다녀요", "여행 계획 세우는 게 취미예요", "어색함은 제가 깰게요", "독립서점 구경을 좋아해요",
+  "새로 생긴 카페는 꼭 가 봐요", null, "등산 메이트 구해요",
+];
 
 export async function generateDemoParticipants(db: SupabaseClient, roundId: string) {
   const { data: round } = await db.from("rounds").select("id, event_date, status, round_regions(region_code, capacity)").eq("id", roundId).single();
