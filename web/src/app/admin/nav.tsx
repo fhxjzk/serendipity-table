@@ -2,11 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Shuffle } from "lucide-react";
+import { CalendarPlus, LayoutDashboard, ShieldAlert, Shuffle, TriangleAlert, UsersRound, UtensilsCrossed } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "대시보드", icon: LayoutDashboard },
+  { href: "/admin/rounds", label: "회차 관리", icon: CalendarPlus },
+  { href: "/admin/applicants", label: "신청자 목록", icon: UsersRound },
   { href: "/admin/matching", label: "매칭 모니터", icon: Shuffle },
+  { href: "/admin/tables", label: "테이블 조회", icon: UtensilsCrossed },
+  { href: "/admin/exceptions", label: "예외 처리함", icon: TriangleAlert },
+  { href: "/admin/reports", label: "신고·제재", icon: ShieldAlert },
 ];
 
 export function AdminNav() {

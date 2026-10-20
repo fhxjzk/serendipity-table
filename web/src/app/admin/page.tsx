@@ -39,10 +39,19 @@ export default async function AdminPage() {
           </div>
         ))}
       </section>
-      <Link href="/admin/matching" className="group flex items-center justify-between rounded-xl border border-line bg-white px-5 py-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(42,33,27,0.04)] hover:border-ink/20">
-        매칭 모니터에서 회차별 결과 보기
-        <ArrowRight className="h-4 w-4 text-muted transition group-hover:translate-x-0.5" />
-      </Link>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[
+          ["/admin/matching", "매칭 모니터에서 회차별 결과 보기"],
+          ["/admin/exceptions", `예외 처리함에서 처리할 ${openExceptions ?? 0}건 확인`],
+          ["/admin/rounds", "새 회차 만들기"],
+          ["/admin/reports", "신고 검토와 제재 확정"],
+        ].map(([href, label]) => (
+          <Link key={href} href={href} className="group flex items-center justify-between rounded-xl border border-line bg-white px-5 py-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(42,33,27,0.04)] hover:border-ink/20">
+            {label}
+            <ArrowRight className="h-4 w-4 text-muted transition group-hover:translate-x-0.5" />
+          </Link>
+        ))}
+      </div>
     </main>
   );
 }
