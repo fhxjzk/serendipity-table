@@ -58,6 +58,7 @@
   .br { font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; font-size: 11px; fill: #9a6700; font-weight: 700; }
   .ln { stroke: #59636e; stroke-width: 1.2; fill: none; }
   .log td:nth-child(-n+2), .log th:nth-child(-n+2) { white-space: nowrap; }
+  .st td:first-child { white-space: normal; } .st td, .st th { font-size: 8.5pt; }
 </style>
 </head>
 <body>
@@ -350,8 +351,8 @@
 
 <h3>4.5 상태 전이</h3>
 <p>"-"는 값이 바뀌지 않는다는 뜻이다. 컬럼 구조는 데이터 정의서에서 확정한다.</p>
-<table class="ft tr">
-  <tr><th>이벤트</th><th>신청 application_status</th><th>결제 payment_status</th><th>매칭 match_status</th><th>참석 attendance_status</th></tr>
+<table class="ft tr st">
+  <tr><th>이벤트</th><th>신청<br>application_status</th><th>결제<br>payment_status</th><th>매칭<br>match_status</th><th>참석<br>attendance_status</th></tr>
   <tr><td>신청 시작(임시 저장)</td><td>DRAFT</td><td>-</td><td>-</td><td>-</td></tr>
 <tr><td>신청 제출</td><td>SUBMITTED</td><td>PENDING</td><td>WAITING</td><td>SCHEDULED</td></tr>
 <tr><td>결제 성공</td><td>-</td><td>PAID</td><td>-</td><td>-</td></tr>
@@ -359,18 +360,18 @@
 <tr><td>자동 매칭 시작</td><td>-</td><td>-</td><td>MATCHING</td><td>-</td></tr>
 <tr><td>재배치 진행</td><td>-</td><td>-</td><td>REALLOCATING</td><td>-</td></tr>
 <tr><td>자동 확정</td><td>-</td><td>-</td><td>CONFIRMED</td><td>-</td></tr>
-<tr><td>매칭 실패 전환</td><td>-</td><td>REFUND_AVAILABLE</td><td>ALTERNATIVE_OFFERED</td><td>-</td></tr>
+<tr><td>매칭 실패 전환</td><td>-</td><td>REFUND_<wbr>AVAILABLE</td><td>ALTERNATIVE_<wbr>OFFERED</td><td>-</td></tr>
 <tr><td>모든 후보 실패</td><td>-</td><td>-</td><td>EXCEPTION</td><td>-</td></tr>
 <tr><td>대체 일정 이동</td><td>기존: CANCELED<br>새 신청: SUBMITTED</td><td>PAID로 되돌려 새 신청에 연결</td><td>기존: TRANSFERRED<br>새 신청: WAITING</td><td>새 신청: SCHEDULED</td></tr>
 <tr><td>이용권 보관</td><td>CANCELED</td><td>PAID로 되돌려 이용권으로 이월</td><td>-</td><td>-</td></tr>
-<tr><td>환불 선택</td><td>CANCELED</td><td>REFUND_REQUESTED → REFUND_PROCESSING → REFUNDED (실패 시 REFUND_FAILED)</td><td>-</td><td>-</td></tr>
-<tr><td>사전 취소</td><td>CANCELED</td><td>환불 흐름과 동일</td><td>-</td><td>CANCELED_EARLY</td></tr>
-<tr><td>늦은 취소</td><td>CANCELED</td><td>유지(환불 없음)</td><td>-</td><td>CANCELED_LATE</td></tr>
-<tr><td>당일 불참 알림</td><td>-</td><td>유지(환불 없음)</td><td>-</td><td>CANCELED_LATE</td></tr>
-<tr><td>인원 감소 후 재배치 실패 (전날까지)</td><td>-</td><td>REFUND_AVAILABLE (전액)</td><td>ALTERNATIVE_OFFERED</td><td>-</td></tr>
+<tr><td>환불 선택</td><td>CANCELED</td><td>REFUND_<wbr>REQUESTED → REFUND_<wbr>PROCESSING → REFUNDED (실패 시 REFUND_<wbr>FAILED)</td><td>-</td><td>-</td></tr>
+<tr><td>사전 취소</td><td>CANCELED</td><td>환불 흐름과 동일</td><td>-</td><td>CANCELED_<wbr>EARLY</td></tr>
+<tr><td>늦은 취소</td><td>CANCELED</td><td>유지(환불 없음)</td><td>-</td><td>CANCELED_<wbr>LATE</td></tr>
+<tr><td>당일 불참 알림</td><td>-</td><td>유지(환불 없음)</td><td>-</td><td>CANCELED_<wbr>LATE</td></tr>
+<tr><td>인원 감소 후 재배치 실패 (전날까지)</td><td>-</td><td>REFUND_<wbr>AVAILABLE (전액)</td><td>ALTERNATIVE_<wbr>OFFERED</td><td>-</td></tr>
 <tr><td>당일 테이블 취소 (2명 이하)</td><td>CANCELED</td><td>환불 흐름과 동일 (구독은 이용권 복원)</td><td>-</td><td>-</td></tr>
 <tr><td>체크인</td><td>-</td><td>-</td><td>-</td><td>ATTENDED</td></tr>
-<tr><td>노쇼 확정</td><td>-</td><td>-</td><td>-</td><td>NO_SHOW</td></tr>
+<tr><td>노쇼 확정</td><td>-</td><td>-</td><td>-</td><td>NO_<wbr>SHOW</td></tr>
 </table>
 
 <h3>4.6 알림 발송 시점</h3>
