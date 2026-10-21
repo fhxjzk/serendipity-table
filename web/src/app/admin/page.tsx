@@ -62,7 +62,7 @@ export default async function AdminPage() {
   const excBy = (...types: string[]) => (openExc ?? []).filter((e) => types.includes(e.type)).length;
 
   const cards = [
-    { icon: Users, label: "신청 · 결제 완료", value: `${(activeApps ?? 0).toLocaleString()} · ${(paidApps ?? 0).toLocaleString()}명`, note: `전체 참가자 ${(participants ?? 0).toLocaleString()}명` },
+    { icon: Users, label: "결제 완료 신청", value: `${(paidApps ?? 0).toLocaleString()}명`, note: `진행 중 신청 ${(activeApps ?? 0).toLocaleString()}건 중 · 전체 참가자 ${(participants ?? 0).toLocaleString()}명` },
     { icon: CalendarDays, label: "모집 중 회차", value: `${openRounds?.length ?? 0}개`, note: openRounds?.[0] ? `다음 자동 매칭 ${formatKst(openRounds[0].match_run_at)}` : "예정된 회차 없음" },
     { icon: Percent, label: "최근 매칭", value: run ? `${run.stats?.success_rate ?? 0}%` : "-", note: run ? `${runTitle} · 테이블 ${run.stats?.tables ?? 0}개 · ${run.stats?.seated ?? 0}/${run.stats?.candidates ?? 0}명 · 재배치 ${run.stats?.reallocated ?? 0}건` : "아직 실행 기록 없음" },
     { icon: TriangleAlert, label: "처리할 예외", value: `${openExc?.length ?? 0}건`, note: "매칭 실패·식당 부족 등" },
