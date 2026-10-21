@@ -4,6 +4,7 @@ import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageHeader, primaryButton } from "@/components/participant-ui";
+import { TableSeats } from "@/components/table-seats";
 import { REGION_LABEL } from "@/lib/format";
 
 const fmt = (iso: string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short" }).format(new Date(iso));
@@ -85,7 +86,10 @@ export default async function HistoryPage() {
         <section>
           <h2 className="text-[15px] font-bold">지난 식탁 {rows.length}번</h2>
           {rows.length === 0 ? (
-            <p className="mt-3 text-[13px] text-muted">아직 다녀온 식탁이 없어요.</p>
+            <div className="mt-3 flex flex-col items-center rounded-2xl border border-dashed border-line py-6 text-center">
+              <TableSeats seats={4} size={72} label="빈 식탁" />
+              <p className="mt-2 text-[13px] text-muted">아직 다녀온 식탁이 없어요.</p>
+            </div>
           ) : (
             <ul className="mt-3 flex flex-col gap-2">
               {rows.map((r) => {

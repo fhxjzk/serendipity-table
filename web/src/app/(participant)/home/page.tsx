@@ -6,6 +6,7 @@ import { Bell, CalendarCheck, ChevronRight, CircleHelp, Clock, History, MapPin, 
 import { requireProfile } from "@/lib/auth";
 import { logout } from "@/app/login/actions";
 import { Endorsement, Eyebrow, Wordmark } from "@/components/brand";
+import { TableSeats } from "@/components/table-seats";
 import { REGION_LABEL } from "@/lib/format";
 
 const fmt = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", ...opts }).format(new Date(iso));
@@ -117,8 +118,9 @@ export default async function HomePage() {
                 </div>
               </div>
             ) : (
-              <div className="mt-3 rounded-2xl border border-dashed border-line px-5 py-6 text-center">
-                <p className="text-[14px] text-ink/80">아직 신청한 식탁이 없어요.</p>
+              <div className="mt-3 flex flex-col items-center rounded-2xl border border-dashed border-line px-5 py-6 text-center">
+                <TableSeats seats={5} size={84} label="빈 식탁" />
+                <p className="mt-2 text-[14px] text-ink/80">아직 신청한 식탁이 없어요.</p>
                 <p className="mt-1 text-[12px] text-muted">마음에 드는 날짜를 골라 첫 저녁을 시작해 보세요.</p>
               </div>
             )}
@@ -228,8 +230,9 @@ export default async function HomePage() {
                 </div>
               </div>
             ) : (
-              <div className="mt-3 rounded-2xl border border-dashed border-line px-5 py-6 text-center">
-                <p className="text-[14px] text-ink/80">아직 신청한 식탁이 없어요.</p>
+              <div className="mt-3 flex flex-col items-center rounded-2xl border border-dashed border-line px-5 py-6 text-center">
+                <TableSeats seats={5} size={84} label="빈 식탁" />
+                <p className="mt-2 text-[14px] text-ink/80">아직 신청한 식탁이 없어요.</p>
                 <p className="mt-1 text-[12px] text-muted">마음에 드는 날짜를 골라 첫 저녁을 시작해 보세요.</p>
               </div>
             )}
@@ -322,14 +325,30 @@ function MyApplication({ app, venue }: { app: MyApp; venue: string | null }) {
   const kstDay = (iso: string) => new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
   const dday = confirmed ? Math.round((Date.parse(kstDay(rounds[0].start_at)) - Date.parse(kstDay(new Date().toISOString()))) / 86400000) : null;
   return (
-    <div className="mt-3 rounded-2xl border border-line bg-white p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[15px] font-semibold">{confirmed ? fmt(rounds[0].start_at, { month: "long", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : rounds.map((r) => fmt(r.start_at, { month: "numeric", day: "numeric", weekday: "short" })).join(" · ")}</p>
-          <p className="mt-0.5 text-[13px] text-muted">{confirmed && venue ? `${venue} · ` : ""}{regions.map((r) => REGION_LABEL[r] ?? r).join(" · ")}</p>
+    <div className="mt-3 overflow-hidden rounded-2xl border border-line bg-white">
+      {confirmed ? (
+        // A reservation ticket: dark stub with the table, a perforated edge, then the details.
+        <div className="relative bg-espresso px-5 py-4 text-cream">
+          <div className="flex items-center gap-4">
+            <TableSeats seats={4} size={64} tone="dark" label="확정된 식탁" />
+            <div className="min-w-0 flex-1">
+              <Eyebrow tone="light">이번 식탁</Eyebrow>
+              <p className="mt-1 text-[16px] font-bold">{fmt(rounds[0].start_at, { month: "long", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</p>
+              <p className="mt-0.5 truncate text-[13px] text-cream/70">{venue ?? "식당 안내 예정"} · {regions.map((r) => REGION_LABEL[r] ?? r).join(" · ")}</p>
+            </div>
+            {dday !== null && dday >= 0 && <span className="shrink-0 font-serif text-[26px] font-bold text-gold tabular">{dday === 0 ? "오늘" : `D-${dday}`}</span>}
+          </div>
+          <div aria-hidden className="absolute inset-x-4 -bottom-px border-b border-dashed border-cream/25" />
+          <span aria-hidden className="absolute -bottom-2.5 -left-2.5 h-5 w-5 rounded-full bg-paper" />
+          <span aria-hidden className="absolute -bottom-2.5 -right-2.5 h-5 w-5 rounded-full bg-paper" />
         </div>
-        {dday !== null && dday >= 0 && <span className="shrink-0 rounded-md bg-ember/10 px-2 py-0.5 text-[12px] font-semibold text-ember tabular">{dday === 0 ? "오늘" : `D-${dday}`}</span>}
-      </div>
+      ) : (
+        <div className="px-5 pt-5">
+          <p className="text-[15px] font-semibold">{rounds.map((r) => fmt(r.start_at, { month: "numeric", day: "numeric", weekday: "short" })).join(" · ")}</p>
+          <p className="mt-0.5 text-[13px] text-muted">{regions.map((r) => REGION_LABEL[r] ?? r).join(" · ")}</p>
+        </div>
+      )}
+      <div className="px-5 pb-5">
       <dl className="mt-4 grid grid-cols-4 gap-2 text-center">
         {rows.map(([k, v, done]) => (
           <div key={k} className={`rounded-xl px-1 py-2.5 ${done ? "bg-ink text-cream" : "bg-sand/70 text-ink/80"}`}>
@@ -358,6 +377,7 @@ function MyApplication({ app, venue }: { app: MyApp; venue: string | null }) {
           신청 취소 · 불참 알리기
         </Link>
       )}
+      </div>
     </div>
   );
 }

@@ -7,6 +7,8 @@ import { PageHeader, primaryButton } from "@/components/participant-ui";
 import { REGION_LABEL } from "@/lib/format";
 import { loadTableForMember } from "@/lib/table-view";
 import { CheckInButton } from "./checkin-button";
+import { Eyebrow } from "@/components/brand";
+import { TableSeats } from "@/components/table-seats";
 
 const fmt = (iso: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", ...o }).format(new Date(iso));
 
@@ -29,10 +31,21 @@ export default async function TablePage({ params }: PageProps<"/applications/[id
     <main className="flex min-h-dvh flex-1 flex-col bg-paper">
       <PageHeader title="확정된 식탁" />
       <div className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pb-16 pt-5">
+        {/* The table itself: who sits where, under a candle. */}
+        <section className="relative overflow-hidden rounded-3xl bg-espresso px-5 pb-6 pt-6 text-center text-cream shadow-[0_12px_32px_rgba(24,18,14,0.25)]">
+          <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-gold/20 blur-3xl" />
+          <div className="relative">
+            <Eyebrow tone="light">매칭 확정 · {t.mates.length}명의 식탁</Eyebrow>
+            <div className="mt-2 flex justify-center">
+              <TableSeats seats={t.mates.map((m) => ({ name: m.name, isMe: m.isMe }))} tone="dark" size={188} label={`${t.mates.length}명의 좌석: ${t.mates.map((m) => m.name).join(", ")}`} />
+            </div>
+            <h2 className="mt-1 font-serif text-[26px] font-bold tracking-[-0.02em]">{t.venue?.name ?? "식탁이 확정됐어요"}</h2>
+            <p className="mt-1 text-[13px] text-cream/70">{fmt(t.round.start_at, { month: "long", day: "numeric", weekday: "long", hour: "2-digit", minute: "2-digit", hour12: false })}</p>
+          </div>
+        </section>
+
         <section className="rounded-2xl border border-line bg-white p-5">
-          <p className="text-[12px] font-semibold text-emerald-700">매칭 확정</p>
-          <h2 className="mt-1 text-[20px] font-bold tracking-[-0.02em]">{t.venue?.name ?? "식탁이 확정됐어요"}</h2>
-          <dl className="mt-4 flex flex-col gap-3 text-[14px]">
+          <dl className="flex flex-col gap-3 text-[14px]">
             {rows.map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex gap-3">
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted" strokeWidth={1.75} />

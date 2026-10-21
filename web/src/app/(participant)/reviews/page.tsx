@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/components/participant-ui";
+import { TableSeats } from "@/components/table-seats";
 import { REGION_LABEL } from "@/lib/format";
 
 const REGIONS = ["HONGDAE", "GANGNAM", "EULJIRO", "JAMSIL"];
@@ -34,7 +35,10 @@ export default async function ReviewsPage({ searchParams }: PageProps<"/reviews"
           ))}
         </div>
         {shown.length === 0 ? (
-          <p className="pt-8 text-center text-[13px] text-muted">아직 공개된 후기가 없어요.</p>
+          <div className="flex flex-col items-center pt-8 text-center">
+            <TableSeats seats={6} size={84} label="빈 식탁" />
+            <p className="mt-2 text-[13px] text-muted">아직 공개된 후기가 없어요.</p>
+          </div>
         ) : (
           <ul className="flex flex-col gap-2">
             {shown.map((r) => (

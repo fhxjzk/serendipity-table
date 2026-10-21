@@ -44,3 +44,17 @@ body {
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
+
+/* Small finishing touches: content rises in gently, and buttons give way a little when pressed. */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+main > div, main > section { animation: page-in 0.35s ease-out both; }
+button:not(:disabled), a { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled) { transition-property: color, background-color, border-color, opacity, transform; transition-duration: 150ms; }
+button:not(:disabled):active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) {
+  main > div, main > section { animation: none; }
+  button:not(:disabled):active { transform: none; }
+}

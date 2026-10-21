@@ -1,12 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { BellRing, CalendarCheck, Info, MessageCircleQuestion, Send, Smile, Sparkles, UserMinus, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export type ChatMessage = { id: string; sender_id: string | null; kind: string; body: string; created_at: string };
 
-const KIND_LABEL: Record<string, string> = { REMINDER: "전날 리마인드", TOPIC: "오늘의 대화 주제", ICEBREAKER: "아이스브레이킹", CURATION: "이 식탁을 고른 이유" };
+const KIND_LABEL: Record<string, string> = { REMINDER: "전날 리마인드", TOPIC: "오늘의 대화 주제", ICEBREAKER: "아이스브레이킹", CURATION: "이 식탁을 고른 이유", ABSENCE: "불참 알림" };
+
+// Each kind of system note has its own look, so the room reads at a glance.
+const STYLE: Record<string, { icon: LucideIcon; box: string; label: string }> = {
+  NOTICE: { icon: CalendarCheck, box: "border border-line bg-white border-l-4 border-l-ember", label: "text-ember" },
+  CURATION: { icon: Sparkles, box: "bg-gold/15", label: "text-[#7a5a2a]" },
+  REMINDER: { icon: BellRing, box: "bg-ember/10", label: "text-ember" },
+  TOPIC: { icon: MessageCircleQuestion, box: "border border-line bg-white", label: "text-ember" },
+  ICEBREAKER: { icon: Smile, box: "border border-dashed border-gold/60 bg-paper", label: "text-[#7a5a2a]" },
+  FOOD: { icon: UtensilsCrossed, box: "bg-sand/80", label: "text-ink/70" },
+  ABSENCE: { icon: UserMinus, box: "bg-sand/60", label: "text-ink/60" },
+  SYSTEM: { icon: Info, box: "bg-sand/60", label: "text-ink/60" },
+};
 
 const time = (iso: string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 
@@ -60,13 +72,25 @@ export function ChatRoom({ roomId, me, names, initial }: { roomId: string; me: s
       <div className="flex-1 space-y-3 px-4 py-4">
         {messages.map((m) => {
           if (m.kind !== "USER") {
+            const food = m.body.startsWith("식사 조건 (");
+            const style = food ? STYLE.FOOD : STYLE[m.kind] ?? STYLE.SYSTEM;
+            const Icon = style.icon;
+            // A topic arrives as "Q2. ..." — show the number as a large serif mark.
+            const q = m.kind === "TOPIC" ? /^Q(\d+)\.\s*/.exec(m.body) : null;
+            const body = food ? m.body.split("\n").slice(1).join("\n") : q ? m.body.slice(q[0].length) : m.body;
             return (
-              <div key={m.id} className="mx-auto max-w-[92%] whitespace-pre-line rounded-2xl bg-sand/80 px-4 py-3 text-[13px] leading-relaxed text-ink/85">
-                <p className="mb-1 flex items-center justify-between gap-3 text-[11px] font-semibold text-ember">
-                  <span>{m.body.startsWith("식사 조건 (") ? "식사 조건 · 이름 없이 공유돼요" : KIND_LABEL[m.kind] ?? "우연한 식탁 안내"}</span>
-                  <span className="font-normal text-muted tabular">{time(m.created_at)}</span>
+              <div key={m.id} className={`mx-auto max-w-[94%] whitespace-pre-line rounded-2xl px-4 py-3 text-[13px] leading-relaxed text-ink/85 ${style.box}`}>
+                <p className={`mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold ${style.label}`}>
+                  <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+                  <span>{food ? "식사 조건 · 이름 없이 공유돼요" : KIND_LABEL[m.kind] ?? "우연한 식탁 안내"}</span>
+                  <span className="ml-auto font-normal text-muted tabular">{time(m.created_at)}</span>
                 </p>
-                {m.body.startsWith("식사 조건 (") ? m.body.split("\n").slice(1).join("\n") : m.body}
+                {q ? (
+                  <div className="flex gap-3">
+                    <span className="font-serif text-[26px] font-bold leading-none text-ember/80 tabular">{q[1]}</span>
+                    <p className="pt-0.5 text-[14px] font-medium text-ink">{body}</p>
+                  </div>
+                ) : body}
               </div>
             );
           }
