@@ -1,0 +1,32 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>A5-1. 운영자 어드민 구현(회차 생성·신청자 목록·테이블 조회·예외 처리함·신고 검토·제재 확정)</title><style>@page{size:A4;margin:14mm 14mm}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;color:#1f2328;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:9.6pt;line-height:1.55}
+main{max-width:820px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid #6b4423;padding-bottom:6px;margin-bottom:10px}
+.crumb{color:#59636e;font-size:8.5pt}
+h1{font-size:14.5pt;color:#6b4423;margin:2px 0 0;line-height:1.35}
+.id{font-size:20pt;font-weight:800;color:#c9a46a;white-space:nowrap}
+table.meta{width:100%;border-collapse:collapse;margin:0 0 10px}
+table.meta th,table.meta td{border:1px solid #d0d7de;padding:4px 7px;text-align:left;vertical-align:top}
+table.meta th{background:#f5efe6;width:16%;white-space:nowrap}
+h2{font-size:10.5pt;margin:12px 0 5px;padding-left:7px;border-left:4px solid #6b4423}
+ul{margin:4px 0;padding-left:18px} li{margin:2px 0}
+table.mini{border-collapse:collapse;margin:4px 0;font-size:8.8pt}
+table.mini th,table.mini td{border:1px solid #d0d7de;padding:2px 7px}
+table.mini th{background:#f6f8fa}
+code{font-family:Consolas,monospace;font-size:8.4pt;background:#f6f8fa;padding:0 3px;border-radius:3px}
+.tc{border-collapse:collapse;width:100%} .tc td{border:1px solid #d0d7de;padding:3px 7px} .tc td:first-child{white-space:nowrap;font-weight:700;width:1%;background:#f6f8fa}
+.result{background:#eef7f0;border:1px solid #b7dfc1;border-radius:6px;padding:7px 10px;margin-top:8px}
+.foot{margin-top:12px;color:#59636e;font-size:8pt;border-top:1px solid #d0d7de;padding-top:5px}</style></head><body><main>
+<div class="top"><div><div class="crumb">우연한 식탁 MVP · 구현 결과서 · A5. 자동화·피드백·어드민</div><h1>운영자 어드민 구현(회차 생성·신청자 목록·테이블 조회·예외 처리함·신고 검토·제재 확정)</h1></div><div class="id">A5-1</div></div>
+<table class="meta">
+<tr><th>워크</th><td>회차 생성·예외 처리함·대시보드 구현</td></tr>
+<tr><th>관련 기능</th><td>F-57 권한·변경 이력 · F-58 회차 생성 · F-60 신청자 목록 · F-64 테이블 조회 · F-66 예외 처리함 · F-68 신고 검토·참가 제한 · F-75 상태 이력 <span class="crumb">(02.기능 명세서 번호)</span></td></tr>
+<tr><th>목표</th><td>운영자는 자동화가 처리하지 못한 ‘예외’만 보고 처리한다.</td></tr>
+</table>
+<h2>구현 내용</h2><ul><li><code>/admin</code>은 운영자만 접근. 운영자 작업마다 이전·이후 값을 변경 이력에 남긴다.</li><li><b>회차 생성·수정</b>: 날짜·시간·지역별 정원.</li><li><b>신청자 목록</b>: 회차(전체 포함)·지역·상태·매칭 결과·이름 필터, 참가자별 이력 화면.</li><li><b>테이블 조회</b>: 구성원·식당·예약명·식사 조건·운영 안내 발송 수(참가자 대화 내용은 보지 않음).</li><li><b>예외 처리함</b>: 식당 부족·발송 실패·노쇼 이의·문의 등 사람 판단이 필요한 건을 모아 처리.</li><li><b>신고 검토</b>: 신고 내용 확인 → 참가 제한(제재) 확정 또는 기각.</li></ul>
+<h2>코드 위치</h2><ul><li><code>web/src/app/admin/rounds/, applicants/, tables/, exceptions/, reports/, people/[id]/</code></li><li><code>web/src/app/admin/round-picker.tsx (월별 회차 선택)</code></li><li><code>supabase/migrations/…000900_admin_ops.sql</code></li></ul>
+<h2>확인 방법 (04.테스트 체크리스트)</h2><table class="tc"><tr><td>TC-23</td><td>대시보드 할 일 → 신청자 목록 필터</td></tr><tr><td>TC-24</td><td>운영자 조회 화면·회차 선택기</td></tr><tr><td>TC-16</td><td>노쇼 이의 → 예외 처리함에서 처리</td></tr><tr><td>TC-27</td><td>좁은 화면(700px)</td></tr></table>
+<div class="result"><b>결과</b> — 운영자 계정으로 전 화면 확인. 회차가 늘어나도 월별 선택기로 찾을 수 있음.</div>
+<div class="foot">배포: https://serendipity-table-zeta.vercel.app · 저장소: https://github.com/fhxjzk/serendipity-table · 작성 2026-10-21</div>
+</main></body></html>

@@ -1,0 +1,32 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>A5-6. 참가 이력·다음 일정 추천·피드백 리마인드·후기 보기·결제 기한 알림</title><style>@page{size:A4;margin:14mm 14mm}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;color:#1f2328;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:9.6pt;line-height:1.55}
+main{max-width:820px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid #6b4423;padding-bottom:6px;margin-bottom:10px}
+.crumb{color:#59636e;font-size:8.5pt}
+h1{font-size:14.5pt;color:#6b4423;margin:2px 0 0;line-height:1.35}
+.id{font-size:20pt;font-weight:800;color:#c9a46a;white-space:nowrap}
+table.meta{width:100%;border-collapse:collapse;margin:0 0 10px}
+table.meta th,table.meta td{border:1px solid #d0d7de;padding:4px 7px;text-align:left;vertical-align:top}
+table.meta th{background:#f5efe6;width:16%;white-space:nowrap}
+h2{font-size:10.5pt;margin:12px 0 5px;padding-left:7px;border-left:4px solid #6b4423}
+ul{margin:4px 0;padding-left:18px} li{margin:2px 0}
+table.mini{border-collapse:collapse;margin:4px 0;font-size:8.8pt}
+table.mini th,table.mini td{border:1px solid #d0d7de;padding:2px 7px}
+table.mini th{background:#f6f8fa}
+code{font-family:Consolas,monospace;font-size:8.4pt;background:#f6f8fa;padding:0 3px;border-radius:3px}
+.tc{border-collapse:collapse;width:100%} .tc td{border:1px solid #d0d7de;padding:3px 7px} .tc td:first-child{white-space:nowrap;font-weight:700;width:1%;background:#f6f8fa}
+.result{background:#eef7f0;border:1px solid #b7dfc1;border-radius:6px;padding:7px 10px;margin-top:8px}
+.foot{margin-top:12px;color:#59636e;font-size:8pt;border-top:1px solid #d0d7de;padding-top:5px}</style></head><body><main>
+<div class="top"><div><div class="crumb">우연한 식탁 MVP · 구현 결과서 · A5. 자동화·피드백·어드민</div><h1>참가 이력·다음 일정 추천·피드백 리마인드·후기 보기·결제 기한 알림</h1></div><div class="id">A5-6</div></div>
+<table class="meta">
+<tr><th>워크</th><td>체크인·만족도·사람별 선호 수집 후 매칭 반영</td></tr>
+<tr><th>관련 기능</th><td>F-50 피드백 미응답 리마인드 · F-51 참가 이력 · F-52 다음 일정 추천 · F-86 공개 후기 · F-14 결제 기한 알림 <span class="crumb">(02.기능 명세서 번호)</span></td></tr>
+<tr><th>목표</th><td>한 번 온 참가자가 다시 오게 만든다.</td></tr>
+</table>
+<h2>구현 내용</h2><ul><li><b>참가 이력</b>: 지난 날짜·지역·식당·인원·참석 결과·내가 준 만족도.</li><li><b>다음 일정 추천</b>: 다녀온·골랐던 지역 기준으로 다음 회차를 추천하고, 저장된 프로필로 신청 화면을 미리 채운다.</li><li><b>피드백 리마인드</b>: 피드백 요청 후 24시간(설정값) 지나도 미응답이면 1회만 알림.</li><li><b>공개 후기</b>: 지역별 후기(작성자 비공개), 홈에 최근 3개. 운영자가 숨길 수 있다.</li><li><b>결제 기한 알림</b>: 신청 직후 기한 안내, 기한이 지나면 자동 만료.</li></ul>
+<h2>코드 위치</h2><ul><li><code>web/src/app/(participant)/history/, reviews/, home/</code></li><li><code>supabase/migrations/…001300_feedback_remind.sql</code></li></ul>
+<h2>확인 방법 (04.테스트 체크리스트)</h2><table class="tc"><tr><td>TC-04</td><td>참가 이력 › 추천 일정으로 신청</td></tr></table>
+<div class="result"><b>결과</b> — 새로 신청할 참가자 계정의 참가 이력에서 추천 일정으로 바로 신청까지 확인.</div>
+<div class="foot">배포: https://serendipity-table-zeta.vercel.app · 저장소: https://github.com/fhxjzk/serendipity-table · 작성 2026-10-21</div>
+</main></body></html>

@@ -1,0 +1,32 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>A4-1. 확정 테이블 식당 배정·단체방 생성과 확정 상세·실시간 단체방 화면 구현</title><style>@page{size:A4;margin:14mm 14mm}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;color:#1f2328;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:9.6pt;line-height:1.55}
+main{max-width:820px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid #6b4423;padding-bottom:6px;margin-bottom:10px}
+.crumb{color:#59636e;font-size:8.5pt}
+h1{font-size:14.5pt;color:#6b4423;margin:2px 0 0;line-height:1.35}
+.id{font-size:20pt;font-weight:800;color:#c9a46a;white-space:nowrap}
+table.meta{width:100%;border-collapse:collapse;margin:0 0 10px}
+table.meta th,table.meta td{border:1px solid #d0d7de;padding:4px 7px;text-align:left;vertical-align:top}
+table.meta th{background:#f5efe6;width:16%;white-space:nowrap}
+h2{font-size:10.5pt;margin:12px 0 5px;padding-left:7px;border-left:4px solid #6b4423}
+ul{margin:4px 0;padding-left:18px} li{margin:2px 0}
+table.mini{border-collapse:collapse;margin:4px 0;font-size:8.8pt}
+table.mini th,table.mini td{border:1px solid #d0d7de;padding:2px 7px}
+table.mini th{background:#f6f8fa}
+code{font-family:Consolas,monospace;font-size:8.4pt;background:#f6f8fa;padding:0 3px;border-radius:3px}
+.tc{border-collapse:collapse;width:100%} .tc td{border:1px solid #d0d7de;padding:3px 7px} .tc td:first-child{white-space:nowrap;font-weight:700;width:1%;background:#f6f8fa}
+.result{background:#eef7f0;border:1px solid #b7dfc1;border-radius:6px;padding:7px 10px;margin-top:8px}
+.foot{margin-top:12px;color:#59636e;font-size:8pt;border-top:1px solid #d0d7de;padding-top:5px}</style></head><body><main>
+<div class="top"><div><div class="crumb">우연한 식탁 MVP · 구현 결과서 · A4. 참가자 앱</div><h1>확정 테이블 식당 배정·단체방 생성과 확정 상세·실시간 단체방 화면 구현</h1></div><div class="id">A4-1</div></div>
+<table class="meta">
+<tr><th>워크</th><td>확정 상세·시스템 메시지 단체방 화면</td></tr>
+<tr><th>관련 기능</th><td>F-35 식당 자동 배정 · F-36 확정 알림·모임 정보 · F-37 단체방 생성 · F-38 공지·큐레이션 · F-42 실시간 대화 <span class="crumb">(02.기능 명세서 번호)</span></td></tr>
+<tr><th>목표</th><td>확정된 참가자가 ‘어디서, 언제, 누구와’를 한 화면에서 확인하고 같은 식탁 사람들과 바로 대화할 수 있게 한다.</td></tr>
+</table>
+<h2>구현 내용</h2><ul><li>홈의 <b>티켓 카드</b>(날짜·식당·시간·D-day)에서 확정 상세로 이동한다.</li><li>확정 상세: 식당명·주소·지도 링크·예약명·식사 조건 요약과 <b>좌석도</b>(구성원 자리 카드)를 보여 준다.</li><li>확정과 동시에 테이블 단체방이 만들어지고 구성원이 자동 초대된다.</li><li>단체방에는 확정 안내·큐레이션·식사 조건 같은 <b>시스템 메시지</b>가 종류별 모양으로 표시된다.</li><li>Supabase <b>Realtime</b>으로 새 메시지가 새로고침 없이 바로 보인다. 같은 테이블 구성원만 읽고 쓸 수 있다(RLS).</li></ul>
+<h2>코드 위치</h2><ul><li><code>web/src/app/(participant)/applications/[id]/table/</code></li><li><code>web/src/app/(participant)/chat/[roomId]/</code></li><li><code>web/src/components/table-seats.tsx</code></li><li><code>supabase/migrations/…000600_finalize_tables.sql</code></li></ul>
+<h2>확인 방법 (04.테스트 체크리스트)</h2><table class="tc"><tr><td>TC-10</td><td>확정 후 자동 안내(식당·단체방)</td></tr><tr><td>TC-12</td><td>실시간 단체방: 확정된 참가자 + 같은 식탁 참가자(시크릿 창)</td></tr></table>
+<div class="result"><b>결과</b> — 두 계정 창에서 메시지가 즉시 오가는 것 확인. 다른 테이블 사람은 단체방에 들어갈 수 없음.</div>
+<div class="foot">배포: https://serendipity-table-zeta.vercel.app · 저장소: https://github.com/fhxjzk/serendipity-table · 작성 2026-10-21</div>
+</main></body></html>
