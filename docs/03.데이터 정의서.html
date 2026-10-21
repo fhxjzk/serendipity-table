@@ -58,7 +58,7 @@
 <p class="subtitle">우연한 식탁 MVP — 기능 명세서의 기능을 Supabase(Postgres) 테이블·컬럼·관계·제약으로 옮긴 데이터 기준 문서</p>
 
 <table class="meta">
-  <tr><th>문서 버전</th><td>v1.1</td><th>작성일</th><td>2026-10-16 (수정 2026-10-19)</td></tr>
+  <tr><th>문서 버전</th><td>v1.2</td><th>작성일</th><td>2026-10-16 (수정 2026-10-21)</td></tr>
   <tr><th>작성자</th><td>정승환</td><th>상태</th><td>초안 (DB 적재·구현하며 보완)</td></tr>
   <tr><th>관련 워크</th><td colspan="3">A1. 기획·설계 › 데이터 정의서 작성(ERD·테이블 정의 포함)</td></tr>
   <tr><th>관련 태스크</th><td colspan="3">우연한 식탁 MVP 데이터 정의서 작성</td></tr>
@@ -992,24 +992,28 @@
 <tr><td>PACK3</td><td>3회권</td><td>SUBSCRIPTION</td><td>15,000원 (회당 5,000원)</td><td>3</td><td>60일</td></tr>
 <tr><td>PACK4</td><td>4회권</td><td>SUBSCRIPTION</td><td>18,000원 (회당 4,500원)</td><td>4</td><td>60일</td></tr></table>
 <h3>6.5 알림 유형 (notifications.type)</h3>
-<p>기능 명세서 4.6의 발송 시점과 1:1로 대응한다. ● 표시는 이메일도 보내는 5종이다.</p>
-<table><tr><th>코드</th><th>시점</th><th>이메일</th></tr><tr><td><code>APPLY_DONE</code></td><td>신청 완료</td><td></td></tr>
-<tr><td><code>PAYMENT_PENDING</code></td><td>결제 대기</td><td></td></tr>
+<p>구현 기준 목록이다(v1.2에서 실제 코드에 맞춰 갱신). ● 표시는 이메일 5종(결제 완료·매칭 확정·매칭 실패·행사 1일 전·환불 완료)에 해당해 참가자 설정에 따라 이메일도 보내는 알림이다. 웹 푸시는 켜 둔 참가자에게 모든 유형을 보낸다. 문구는 message_templates(T-28)에서 운영자가 수정할 수 있다.</p>
+<table><tr><th>코드</th><th>시점</th><th>이메일</th></tr><tr><td><code>PAYMENT_DUE</code></td><td>신청 직후 결제 기한 안내</td><td></td></tr>
 <tr><td><code>PAYMENT_DONE</code></td><td>결제 완료</td><td>●</td></tr>
-<tr><td><code>REALLOCATING</code></td><td>재배치 중</td><td></td></tr>
-<tr><td><code>MATCH_CONFIRMED</code></td><td>매칭 확정</td><td>●</td></tr>
-<tr><td><code>MATCH_FAILED</code></td><td>매칭 실패</td><td>●</td></tr>
-<tr><td><code>TRANSFER_DONE</code></td><td>일정 이동 완료</td><td></td></tr>
-<tr><td><code>REFUND_REQUESTED</code></td><td>환불 요청</td><td></td></tr>
-<tr><td><code>REFUND_DONE</code></td><td>환불 완료</td><td>●</td></tr>
-<tr><td><code>EVENT_REMINDER</code></td><td>행사 1일 전</td><td>●</td></tr>
-<tr><td><code>EVENT_ENDED</code></td><td>행사 종료 후 피드백 요청</td><td></td></tr>
-<tr><td><code>NEXT_ROUND_OPEN</code></td><td>다음 모집 시작</td><td></td></tr>
-<tr><td><code>TABLE_SHRINK</code></td><td>인원 감소 안내</td><td></td></tr>
-<tr><td><code>COUPON_ISSUED</code></td><td>보상 쿠폰 발급</td><td></td></tr>
-<tr><td><code>NOSHOW_CHECK</code></td><td>노쇼 후보 확인</td><td></td></tr>
-<tr><td><code>PENALTY_RECORDED</code></td><td>패널티 기록</td><td></td></tr>
-<tr><td><code>FEEDBACK_REMIND</code></td><td>피드백 리마인드</td><td></td></tr></table>
+<tr><td><code>MATCH_CONFIRMED</code></td><td>매칭 확정(식당·시간)</td><td>●</td></tr>
+<tr><td><code>MATCH_FAILED</code></td><td>매칭 실패·대체 일정 안내</td><td>●</td></tr>
+<tr><td><code>VENUE_ASSIGNED</code></td><td>식당 재배정 성공(재고 부족 후)</td><td></td></tr>
+<tr><td><code>REMINDER</code></td><td>행사 1일 전 리마인드</td><td>●</td></tr>
+<tr><td><code>EVENT_START</code></td><td>행사 시작 — 대화 주제 게시·체크인</td><td></td></tr>
+<tr><td><code>FEEDBACK_REQUEST</code></td><td>행사 종료 후 피드백 요청</td><td></td></tr>
+<tr><td><code>FEEDBACK_REMIND</code></td><td>피드백 미응답 리마인드(1회)</td><td></td></tr>
+<tr><td><code>NOSHOW_CHECK</code></td><td>노쇼 후보 확인·이의 제기 안내</td><td></td></tr>
+<tr><td><code>NOSHOW_CONFIRMED</code></td><td>노쇼 확정</td><td></td></tr>
+<tr><td><code>NOSHOW_RESOLVED</code></td><td>이의 인정(노쇼 기록 삭제)</td><td></td></tr>
+<tr><td><code>CANCELED</code></td><td>신청 취소·당일 불참 알림 접수</td><td>●¹</td></tr>
+<tr><td><code>REFUND_DONE</code></td><td>실패 후 환불 완료</td><td>●</td></tr>
+<tr><td><code>TABLE_SHRUNK</code></td><td>당일 인원 감소(3명 진행·쿠폰)</td><td></td></tr>
+<tr><td><code>TABLE_CHANGED</code></td><td>인원 감소로 다른 식탁 이동</td><td></td></tr>
+<tr><td><code>TABLE_CANCELED</code></td><td>인원 부족으로 식탁 취소·전액 환불</td><td>●</td></tr>
+<tr><td><code>SANCTION</code></td><td>경고·참가 제한 확정</td><td></td></tr>
+<tr><td><code>INQUIRY_ANSWERED</code></td><td>문의 답변 도착</td><td></td></tr>
+<tr><td><code>PUSH_TEST</code></td><td>웹 푸시 테스트 알림</td><td></td></tr></table>
+<p class="note">¹ 취소는 실제로 환불·이용권 복원이 일어난 경우에만 "환불 완료" 이메일로 보낸다.</p>
 
 <h2>7. 무결성·멱등 규칙</h2>
 <p>요구사항 R-23(같은 작업을 여러 번 실행해도 중복이 생기지 않음)을 DB 제약으로 보장하는 목록이다.</p>
@@ -1086,6 +1090,7 @@
 <h2>11. 변경 이력</h2>
 <table class="log">
   <tr><th>버전</th><th>일자</th><th>내용</th></tr>
+  <tr><td>v1.2</td><td>2026-10-21</td><td>구현 반영 — 알림 유형(6.5)을 실제 코드 20종으로 갱신하고 이메일 대상 표시. 테이블·컬럼은 변경 없음(마이그레이션과 44개 표·컬럼 수 일치 확인). 재시도 설정은 retry_max_attempts 하나로 통일</td></tr>
   <tr><td>v1.1</td><td>2026-10-19</td><td>가상데이터 적재 반영 — 표시 이름을 성 포함 전체 이름으로 변경·MBTI 오타 보정 규칙 추가(9.1), 회차에 11/5 추가·ETC 지역 행 추가, 10/22 시연 매칭 풀(재신청 8명 + 원본 2명) 구성(10장)</td></tr>
   <tr><td>v1.0</td><td>2026-10-19</td><td>최초 작성 — 테이블 44개(필수 40, 추가 4)·컬럼 379개, 영역별 ERD 3장과 eXERD 전체 ERD(03-1), 코드·무결성·권한 규칙, 가상데이터 정제·적재 규칙(원본에 없는 항목 채우기 포함), 시연 데이터, DDL 초안(Supabase·eXERD용). 기능 86건 모두 테이블에 연결(4장 관련 기능)</td></tr>
 </table>
