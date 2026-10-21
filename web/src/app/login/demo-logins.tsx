@@ -16,18 +16,18 @@ export function DemoLogins({ kinds }: { kinds: DemoKind[] }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(demoLogin, {});
   if (!kinds.length) return null;
   return (
-    <div className="mt-8 border-t border-line pt-5">
-      <p className="text-[13px] font-semibold text-ink/80">테스트 계정으로 바로 둘러보기</p>
+    <div className="mt-7 border-t border-cream/10 pt-5">
+      <p className="text-[13px] font-semibold text-cream/80">테스트 계정으로 바로 둘러보기</p>
       <form action={action} className="mt-3 grid grid-cols-2 gap-2">
         {kinds.map((k, i) => (
           <button key={k} name="kind" value={k} disabled={pending}
-            className={`flex flex-col items-start rounded-xl border px-3 py-2.5 text-left transition hover:border-ink/30 disabled:opacity-50 ${k === "admin" ? "border-ink/20 bg-sand/60" : "border-line bg-white"} ${i === kinds.length - 1 && kinds.length % 2 === 1 ? "col-span-2" : ""}`}>
+            className={`flex flex-col items-start rounded-xl border px-3 py-2.5 text-left transition hover:border-gold/50 disabled:opacity-50 ${k === "admin" ? "border-gold/30 bg-gold/10" : "border-cream/12 bg-cream/[0.04]"} ${i === kinds.length - 1 && kinds.length % 2 === 1 ? "col-span-2" : ""}`}>
             <span className="text-[13px] font-semibold">{LABEL[k][0]}</span>
-            <span className="mt-0.5 text-[11px] text-muted">{LABEL[k][1]}</span>
+            <span className="mt-0.5 text-[11px] text-cream/50">{LABEL[k][1]}</span>
           </button>
         ))}
       </form>
-      {state.error && <p role="alert" className="mt-2 text-[12px] text-ember">{state.error}</p>}
+      {state.error && <p role="alert" className="mt-2 text-[12px] text-[#f3c4ab]">{state.error}</p>}
     </div>
   );
 }
