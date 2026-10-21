@@ -26,11 +26,15 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-line bg-espresso px-5 py-3 md:hidden">
-          <Wordmark tone="light" size="sm" />
-          <form action={logout}><button className="text-[12px] text-cream/70">로그아웃</button></form>
+        {/* Narrow screens: the menu becomes a scrollable row under the header. */}
+        <header className="sticky top-0 z-20 bg-espresso md:hidden">
+          <div className="flex items-center justify-between px-5 py-3">
+            <Wordmark tone="light" size="sm" />
+            <form action={logout}><button className="text-[12px] text-cream/70">로그아웃</button></form>
+          </div>
+          <div className="overflow-x-auto px-3 pb-2"><AdminNav horizontal /></div>
         </header>
-        <div className="mx-auto w-full max-w-6xl px-6 py-8 lg:px-10">{children}</div>
+        <div className="admin-content mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10">{children}</div>
       </div>
     </div>
   );

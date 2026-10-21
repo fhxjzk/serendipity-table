@@ -58,3 +58,11 @@ button:not(:disabled):active { transform: scale(0.98); }
   main > div, main > section { animation: none; }
   button:not(:disabled):active { transform: none; }
 }
+
+/* Operator tables keep their shape on a narrow window: a sensible minimum width, words that never
+   break mid-syllable, and a horizontal scroll on the card instead of squeezed columns. */
+.admin-content table { min-width: 880px; }
+.admin-content th { white-space: nowrap; }
+.admin-content td { word-break: keep-all; }
+.admin-content td > span[class*="rounded-full"], .admin-content td span[class*="ring-inset"] { white-space: nowrap; }
+.admin-content section:has(> table), .admin-content div:has(> table) { overflow-x: auto; }

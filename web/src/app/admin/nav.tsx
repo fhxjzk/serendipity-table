@@ -18,17 +18,17 @@ const NAV = [
   { href: "/admin/reports", label: "신고·제재", icon: ShieldAlert },
 ];
 
-export function AdminNav() {
+export function AdminNav({ horizontal }: { horizontal?: boolean }) {
   const path = usePathname();
   return (
-    <nav className="flex flex-col gap-0.5">
+    <nav className={horizontal ? "flex w-max gap-1" : "flex flex-col gap-0.5"}>
       {NAV.map(({ href, label, icon: Icon }) => {
         const active = href === "/admin" ? path === "/admin" : path.startsWith(href);
         return (
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition ${active ? "bg-cream/10 font-semibold text-cream" : "text-cream/60 hover:bg-cream/5 hover:text-cream"}`}
+            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition ${horizontal ? "whitespace-nowrap" : ""} ${active ? "bg-cream/10 font-semibold text-cream" : "text-cream/60 hover:bg-cream/5 hover:text-cream"}`}
           >
             <Icon className="h-4 w-4" strokeWidth={1.75} />
             {label}
