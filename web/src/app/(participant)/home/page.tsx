@@ -339,8 +339,8 @@ function MyApplication({ app, venue }: { app: MyApp; venue: string | null }) {
             </div>
             <div className="min-w-0 flex-1">
               <Eyebrow tone="light">이번 식탁</Eyebrow>
-              <p className="mt-1 text-[16px] font-bold">{fmt(rounds[0].start_at, { month: "long", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</p>
-              <p className="mt-0.5 truncate text-[13px] text-cream/70">{venue ?? "식당 안내 예정"} · {regions.map((r) => REGION_LABEL[r] ?? r).join(" · ")}</p>
+              <p className="mt-1 truncate text-[17px] font-bold">{venue ?? "식당 안내 예정"}</p>
+              <p className="mt-0.5 truncate text-[13px] text-cream/70">저녁 {fmt(rounds[0].start_at, { hour: "2-digit", minute: "2-digit", hour12: false })} · {regions.map((r) => REGION_LABEL[r] ?? r).join(" · ")}</p>
             </div>
             {dday !== null && dday >= 0 && <span className="shrink-0 font-serif text-[26px] font-bold text-gold tabular">{dday === 0 ? "오늘" : `D-${dday}`}</span>}
           </div>
