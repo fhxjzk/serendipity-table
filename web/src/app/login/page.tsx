@@ -34,11 +34,11 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <Endorsement tone="light" />
       </header>
 
-      <div className="relative z-10 flex flex-1 flex-col lg:min-h-dvh lg:flex-row">
+      <div className="relative z-10 flex flex-1 flex-col lg:min-h-dvh lg:flex-row lg:items-stretch">
         {/* 소개 */}
-        <section className="-mt-36 px-6 lg:mt-0 lg:flex lg:flex-1 lg:flex-col lg:justify-end lg:px-14 lg:pb-14">
+        <section className="-mt-36 px-6 lg:mt-0 lg:flex lg:flex-1 lg:flex-col lg:justify-end lg:px-14 lg:pb-12">
           <Eyebrow tone="light">Every Thursday · 7 PM</Eyebrow>
-          <h1 className="mt-3 font-serif text-[32px] font-bold leading-[1.25] tracking-[-0.02em] lg:text-[48px]">
+          <h1 className="mt-3 font-serif text-[32px] font-bold leading-[1.25] tracking-[-0.02em] lg:text-[44px]">
             처음 보는 사람들과,<br />좋은 저녁 한 끼
           </h1>
           <p className="mt-4 max-w-md text-[15px] leading-relaxed text-cream/75">
@@ -52,18 +52,18 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         </section>
 
         {/* 로그인 */}
-        <section className="px-5 pb-12 pt-8 lg:flex lg:w-[500px] lg:shrink-0 lg:items-center lg:px-10 lg:py-24 xl:mr-[3vw]">
-          <div className="w-full rounded-3xl border border-cream/10 bg-espresso/70 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-8">
+        <section className="px-5 pb-12 pt-8 lg:flex lg:w-[480px] lg:shrink-0 lg:items-center lg:px-8 lg:pb-8 lg:pt-20 xl:mr-[3vw]">
+          <div className="w-full rounded-3xl border border-cream/10 bg-espresso/70 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-7">
             <h2 className="text-xl font-bold tracking-[-0.02em]">로그인</h2>
             <p className="mt-1.5 text-sm text-cream/60">신청 현황과 이번 주 식탁을 확인하세요.</p>
             {reason === "no-profile" && (
               <p role="alert" className="mt-5 rounded-lg bg-ember/25 px-3 py-2 text-[13px] text-[#f3c4ab]">이 계정은 아직 참가자 정보가 준비되지 않았어요. 테스트 계정으로 로그인해 주세요.</p>
             )}
-            <div className="mt-6">
+            <div className="mt-5">
               <LoginForm next={typeof next === "string" ? next : undefined} />
             </div>
             <DemoLogins kinds={await demoAccounts()} />
-            <p className="mt-5 text-xs leading-relaxed text-cream/45">
+            <p className="mt-4 text-[11px] leading-relaxed text-cream/45">
               해커톤 시연용 서비스예요. 위 버튼이나 안내받은 테스트 계정으로 로그인할 수 있어요.
             </p>
           </div>
