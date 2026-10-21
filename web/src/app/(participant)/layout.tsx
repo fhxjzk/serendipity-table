@@ -26,8 +26,8 @@ export default async function ParticipantLayout({ children }: LayoutProps<"/">) 
         </div>
         <div className="max-w-md">
           <Eyebrow tone="light">Every Thursday · 7 PM</Eyebrow>
-          <h2 className="mt-4 font-serif text-[42px] font-bold leading-[1.25] tracking-[-0.02em]">처음 보는 사람들과,<br />좋은 저녁 한 끼</h2>
-          <p className="mt-4 text-[15px] leading-relaxed text-cream/75">혼자 와도 괜찮아요. 취향이 맞는 4~6명이 한 식탁에 둘러앉아, 식사와 이야기를 나눠요.</p>
+          <h2 className="mt-4 font-serif text-[42px] font-bold leading-[1.25] tracking-[-0.02em]">이번 주 목요일,<br />우연이 차려 둔 자리</h2>
+          <p className="mt-4 text-[15px] leading-relaxed text-cream/75">자리 배정부터 식당 예약, 단체방 안내까지 우연한 식탁이 준비해 둘게요. 오셔서 즐기기만 하면 돼요.</p>
           {next && (
             <p className="mt-8 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-[13px] text-cream/90">
               <span className="h-1.5 w-1.5 rounded-full bg-gold" />다음 식탁 {fmt(next.start_at)} · {regions}개 지역에서 모집 중
