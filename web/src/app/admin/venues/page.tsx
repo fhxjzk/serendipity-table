@@ -1,9 +1,9 @@
 // S-23 식당·재고 관리 (F-59): partner venues, and how many tables each offers per round.
-import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { REGION_LABEL, todayKst } from "@/lib/format";
 import { AdminHeader, Badge, cardCls, thCls } from "../ui";
+import { RoundPicker } from "../round-picker";
 import { toggleVenue } from "./actions";
 import { SlotForm, VenueForm } from "./forms";
 
@@ -16,7 +16,7 @@ export default async function VenuesPage({ searchParams }: PageProps<"/admin/ven
   const [{ data: venues }, { data: prices }, { data: rounds }] = await Promise.all([
     db.from("venues").select("id, name, region_code, address, price_range, map_url, active").order("region_code").order("name"),
     db.from("code_values").select("code, label").eq("code_group", "PRICE_RANGE").order("sort_order"),
-    db.from("rounds").select("id, title, status").gte("event_date", todayKst()).neq("status", "CANCELED").order("event_date"),
+    db.from("rounds").select("id, title, status, event_date").gte("event_date", todayKst()).neq("status", "CANCELED").order("event_date"),
   ]);
   const roundId = (typeof sp.round === "string" && sp.round) || rounds?.[0]?.id || "";
   const { data: slots } = roundId
@@ -62,9 +62,7 @@ export default async function VenuesPage({ searchParams }: PageProps<"/admin/ven
       <section>
         <h2 className="text-[15px] font-bold">회차별 재고</h2>
         <div className="mt-3 flex flex-wrap gap-2">
-          {(rounds ?? []).map((r) => (
-            <Link key={r.id} href={`/admin/venues?round=${r.id}`} className={`rounded-full border px-3 py-1.5 text-[13px] ${r.id === roundId ? "border-ink bg-ink text-cream" : "border-line bg-white text-ink/80 hover:bg-paper"}`}>{r.title}</Link>
-          ))}
+          {roundId && <RoundPicker rounds={rounds ?? []} current={roundId} basePath="/admin/venues" />}
         </div>
         <div className={`${cardCls} mt-3`}>
           <table className="w-full text-[13px] tabular">

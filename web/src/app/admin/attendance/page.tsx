@@ -4,6 +4,7 @@ import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatKst } from "@/lib/format";
 import { AdminHeader, Badge, Empty, cardCls, thCls } from "../ui";
+import { RoundPicker } from "../round-picker";
 
 const STATE: Record<string, { label: string; tone: "green" | "blue" | "amber" | "red" | "gray" }> = {
   ATTENDED: { label: "체크인", tone: "green" },
@@ -20,7 +21,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/admin
   await requireProfile("OPERATOR");
   const db = createAdminClient();
   const sp = await searchParams;
-  const { data: rounds } = await db.from("rounds").select("id, title, status, event_date").in("status", ["MATCHED", "DONE"]).order("event_date", { ascending: false }).limit(8);
+  const { data: rounds } = await db.from("rounds").select("id, title, status, event_date").in("status", ["MATCHED", "DONE"]).order("event_date", { ascending: false });
   const roundId = (typeof sp.round === "string" && sp.round) || rounds?.[0]?.id || "";
 
   const { data: choices } = roundId ? await db.from("application_choices").select("application_id").eq("round_id", roundId) : { data: [] };
@@ -47,9 +48,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/admin
     <main className="flex flex-col gap-6">
       <AdminHeader crumb="참석" title="참석·취소·노쇼 현황">회차별로 체크인, 사전 취소, 늦은·당일 취소, 노쇼 후보와 확정을 확인하고 이름을 누르면 그 사람의 이력을 볼 수 있어요.</AdminHeader>
       <div className="flex flex-wrap gap-2">
-        {(rounds ?? []).map((r) => (
-          <Link key={r.id} href={`/admin/attendance?round=${r.id}`} className={`rounded-full border px-3 py-1.5 text-[13px] ${r.id === roundId ? "border-ink bg-ink text-cream" : "border-line bg-white text-ink/80 hover:bg-paper"}`}>{r.title}</Link>
-        ))}
+        {roundId && <RoundPicker rounds={rounds ?? []} current={roundId} basePath="/admin/attendance" />}
       </div>
       <div className="grid gap-3 sm:grid-cols-4 xl:grid-cols-7">
         {order.map((k) => (

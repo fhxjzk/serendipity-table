@@ -1,10 +1,10 @@
 // S-27 테이블·식당·단체방 조회 (F-64, F-04, F-69, F-75): members, venue, food conditions, chat room,
 // what was sent to whom, satisfaction, and every status change of the table's people.
-import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { REGION_LABEL, ageOf, formatKst } from "@/lib/format";
 import { AdminHeader, Badge, Empty, cardCls } from "../ui";
+import { RoundPicker } from "../round-picker";
 
 type Profile = { name: string; birth_year: number; gender: string; mbti: string; job: string };
 type Venue = { name: string; address: string };
@@ -25,7 +25,7 @@ export default async function TablesPage({ searchParams }: PageProps<"/admin/tab
   await requireProfile("OPERATOR");
   const db = createAdminClient();
   const sp = await searchParams;
-  const { data: rounds } = await db.from("rounds").select("id, title, status").in("status", ["MATCHED", "DONE"]).order("event_date", { ascending: false }).limit(8);
+  const { data: rounds } = await db.from("rounds").select("id, title, status, event_date").in("status", ["MATCHED", "DONE"]).order("event_date", { ascending: false });
   const roundId = (typeof sp.round === "string" && sp.round) || rounds?.[0]?.id || "";
 
   const { data } = roundId
@@ -50,9 +50,7 @@ export default async function TablesPage({ searchParams }: PageProps<"/admin/tab
         테이블마다 구성원, 식당·예약명, 식사 조건, 단체방, 안내 발송 현황, 만족도, 상태 변경 이력을 한 번에 확인해요.
       </AdminHeader>
       <div className="flex flex-wrap items-center gap-2">
-        {(rounds ?? []).map((r) => (
-          <Link key={r.id} href={`/admin/tables?round=${r.id}`} className={`rounded-full border px-3 py-1.5 text-[13px] ${r.id === roundId ? "border-ink bg-ink text-cream" : "border-line bg-white text-ink/80 hover:bg-paper"}`}>{r.title}</Link>
-        ))}
+        {roundId && <RoundPicker rounds={rounds ?? []} current={roundId} basePath="/admin/tables" />}
         {roundId && <a href={`/admin/export/tables?round=${roundId}`} className="ml-auto text-[13px] text-ink/70 underline">이 회차 테이블 CSV 내려받기</a>}
       </div>
       {tables.length > 0 && (
