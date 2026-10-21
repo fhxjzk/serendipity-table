@@ -12,6 +12,7 @@
     "test": "vitest run",
     "match": "tsx --env-file=.env.local scripts/match.mts",
     "seed:history": "tsx --env-file=.env.local scripts/seed-history.mts",
+    "seed:rooms": "tsx --env-file=.env.local scripts/history-rooms.mts",
     "demo:account": "tsx --env-file=.env.local scripts/demo-account.mts",
     "demo:mate": "tsx --env-file=.env.local scripts/table-mate-account.mts"
   },

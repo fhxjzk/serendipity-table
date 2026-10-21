@@ -22,7 +22,8 @@ export default async function AttendancePage({ searchParams }: PageProps<"/admin
   const db = createAdminClient();
   const sp = await searchParams;
   const { data: rounds } = await db.from("rounds").select("id, title, status, event_date").in("status", ["MATCHED", "DONE"]).order("event_date", { ascending: false });
-  const roundId = (typeof sp.round === "string" && sp.round) || rounds?.[0]?.id || "";
+  // Only a round from the list counts; anything else (an old or mistyped link) falls back to the latest.
+  const roundId = (rounds ?? []).find((r) => r.id === sp.round)?.id ?? rounds?.[0]?.id ?? "";
 
   const { data: choices } = roundId ? await db.from("application_choices").select("application_id").eq("round_id", roundId) : { data: [] };
   const ids = [...new Set((choices ?? []).map((c) => c.application_id))];

@@ -26,7 +26,8 @@ export default async function TablesPage({ searchParams }: PageProps<"/admin/tab
   const db = createAdminClient();
   const sp = await searchParams;
   const { data: rounds } = await db.from("rounds").select("id, title, status, event_date").in("status", ["MATCHED", "DONE"]).order("event_date", { ascending: false });
-  const roundId = (typeof sp.round === "string" && sp.round) || rounds?.[0]?.id || "";
+  // Only a round from the list counts; anything else (an old or mistyped link) falls back to the latest.
+  const roundId = (rounds ?? []).find((r) => r.id === sp.round)?.id ?? rounds?.[0]?.id ?? "";
 
   const { data } = roundId
     ? await db.from("dining_tables")

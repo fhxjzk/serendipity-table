@@ -35,7 +35,7 @@ export default async function ApplicantsPage({ searchParams }: PageProps<"/admin
   const { data: rounds } = await db.from("rounds").select("id, title, event_date, status").gte("event_date", todayKst()).order("event_date");
   // "all" = every round (used by the dashboard's to-do links); no choice = the nearest round.
   const allRounds = pick("round") === "all";
-  const roundId = allRounds ? "" : pick("round") || rounds?.[0]?.id || "";
+  const roundId = allRounds ? "" : (rounds ?? []).find((r) => r.id === pick("round"))?.id ?? rounds?.[0]?.id ?? "";
   const region = pick("region");
   const match = pick("match");
   const q = pick("q").trim();

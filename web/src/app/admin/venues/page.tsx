@@ -18,7 +18,8 @@ export default async function VenuesPage({ searchParams }: PageProps<"/admin/ven
     db.from("code_values").select("code, label").eq("code_group", "PRICE_RANGE").order("sort_order"),
     db.from("rounds").select("id, title, status, event_date").gte("event_date", todayKst()).neq("status", "CANCELED").order("event_date"),
   ]);
-  const roundId = (typeof sp.round === "string" && sp.round) || rounds?.[0]?.id || "";
+  // Only a round from the list counts; anything else (an old or mistyped link) falls back to the latest.
+  const roundId = (rounds ?? []).find((r) => r.id === sp.round)?.id ?? rounds?.[0]?.id ?? "";
   const { data: slots } = roundId
     ? await db.from("venue_availability").select("id, venue_id, table_slots, max_seats, booked_slots").eq("round_id", roundId)
     : { data: [] };
