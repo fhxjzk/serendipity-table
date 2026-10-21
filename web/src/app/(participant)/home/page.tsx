@@ -75,10 +75,11 @@ export default async function HomePage() {
 
   return (
     <main className="flex min-h-dvh flex-1 flex-col bg-paper bg-[radial-gradient(120%_40%_at_50%_0%,rgba(184,149,95,0.18),transparent_70%)]">
-      <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/90 backdrop-blur lg:border-cream/10 lg:bg-espresso/95">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-5">
-          <Wordmark size="sm" />
-          <Link href="/notifications" aria-label={unread ? `알림 ${unread}개 읽지 않음` : "알림"} className="relative rounded-full p-2 text-ink/70 hover:bg-sand">
+          <span className="lg:hidden"><Wordmark size="sm" /></span>
+          <span className="hidden lg:inline-flex"><Wordmark tone="light" size="sm" /></span>
+          <Link href="/notifications" aria-label={unread ? `알림 ${unread}개 읽지 않음` : "알림"} className="relative rounded-full p-2 text-ink/70 hover:bg-sand lg:text-cream/80 lg:hover:bg-cream/10">
             <Bell className="h-5 w-5" strokeWidth={1.75} />
             {!!unread && (
               <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-ember px-1 text-[10px] font-semibold leading-none text-white tabular">

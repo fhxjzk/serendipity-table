@@ -4,11 +4,11 @@ import { ChevronLeft } from "lucide-react";
 
 export function PageHeader({ title, back = "/home", step }: { title: string; back?: string; step?: string }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/90 backdrop-blur">
+    <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/90 backdrop-blur lg:border-cream/10 lg:bg-espresso/95 lg:text-cream">
       <div className="mx-auto flex h-14 max-w-md items-center gap-2 px-3">
-        <Link href={back} aria-label="뒤로" className="rounded-full p-2 text-ink/70 hover:bg-sand"><ChevronLeft className="h-5 w-5" /></Link>
+        <Link href={back} aria-label="뒤로" className="rounded-full p-2 text-ink/70 hover:bg-sand lg:text-cream/70 lg:hover:bg-cream/10"><ChevronLeft className="h-5 w-5" /></Link>
         <h1 className="text-[16px] font-bold tracking-[-0.02em]">{title}</h1>
-        {step && <span className="ml-auto pr-2 text-[12px] font-medium text-muted tabular">{step}</span>}
+        {step && <span className="ml-auto pr-2 text-[12px] font-medium text-muted tabular lg:text-cream/50">{step}</span>}
       </div>
     </header>
   );
