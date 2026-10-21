@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#18120e"/>
+  <g transform="translate(150 175) scale(0.55)">
+  <defs><clipPath id="cl"><circle cx="208" cy="256" r="120"/></clipPath></defs>
+  
+  <g transform="translate(256 256) scale(1) translate(-256 -256)">
+    <circle cx="304" cy="256" r="120" fill="#c4693d" clip-path="url(#cl)"/>
+    <circle cx="208" cy="256" r="120" fill="none" stroke="#f6f1ea" stroke-width="22"/>
+    <circle cx="304" cy="256" r="120" fill="none" stroke="#c9a46a" stroke-width="22"/>
+  </g></g>
+  <text x="460" y="318" font-family="Batang, serif" font-weight="700" font-size="104" fill="#f6f1ea" letter-spacing="-2">우연한 식탁</text>
+  <text x="464" y="388" font-family="Segoe UI, Arial, sans-serif" font-size="26" letter-spacing="9" fill="#c9a46a">SERENDIPITY TABLE</text>
+  <text x="464" y="452" font-family="Malgun Gothic" font-size="28" fill="#f6f1ea" fill-opacity=".6">매주 목요일 저녁, 처음 보는 사람들과 좋은 저녁 한 끼</text>
+</svg>
