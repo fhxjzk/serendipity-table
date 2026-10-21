@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { CalendarDays, MapPin, Users } from "lucide-react";
-import { Endorsement, Eyebrow, Wordmark } from "@/components/brand";
+import { Endorsement, Wordmark } from "@/components/brand";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LoginForm } from "./login-form";
 import { DemoLogins } from "./demo-logins";
@@ -21,28 +21,17 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <main className="flex min-h-dvh flex-1 flex-col bg-espresso text-cream lg:flex-row">
-      {/* 사진 + 소개 */}
-      {/* 사진 원본이 1280×395라, PC에서는 늘리지 않고 원래 비율의 액자로 둔다. */}
-      <section className="relative flex flex-col lg:min-h-dvh lg:w-[55%] lg:px-12 lg:py-10">
-        <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-6 py-5 lg:static lg:p-0">
-          <Wordmark tone="light" size="sm" />
-          <Endorsement tone="light" />
-        </header>
-        <div className="relative h-[42vh] min-h-[280px] lg:mt-auto lg:aspect-[1280/395] lg:h-auto lg:min-h-0 lg:max-w-[760px] lg:overflow-hidden lg:rounded-2xl lg:ring-1 lg:ring-cream/10">
-          <Image src="/images/hero-toast.jpg" alt="촛불 아래 잔을 부딪히는 사람들" fill priority sizes="(min-width: 1024px) 760px, 100vw" className="object-cover object-[20%_center] lg:object-center" />
-          <div className="absolute inset-0 bg-gradient-to-b from-espresso/30 via-espresso/40 to-espresso lg:from-transparent lg:via-transparent lg:to-espresso/50" />
-        </div>
-        <div className="relative -mt-24 px-6 pb-8 lg:mb-auto lg:mt-10 lg:max-w-xl lg:px-0 lg:pb-0">
-          <Eyebrow tone="light">Every Thursday · 7 PM</Eyebrow>
-          <h1 className="mt-3 font-serif text-[32px] font-bold leading-[1.25] tracking-[-0.02em] lg:text-[44px]">
-            처음 보는 사람들과,
-            <br />
-            좋은 저녁 한 끼
-          </h1>
-          <p className="mt-4 text-[15px] leading-relaxed text-cream/70">
-            매주 목요일 저녁, 취향이 맞는 4~6명이 한 테이블에 앉아요. 자리 배정과 식당 예약, 단체방 안내는 우연한 식탁이 맡아요.
-          </p>
-          <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-cream/80">
+      {/* 사진 + 소개: the photo already carries the name and headline, so only the facts sit on top. */}
+      <section className="relative lg:sticky lg:top-0 lg:h-dvh lg:w-[55%]">
+        <h1 className="sr-only">우연한 식탁 — 처음 보는 사람들과, 좋은 저녁 한 끼</h1>
+        <div className="relative aspect-[2000/1493] w-full lg:aspect-auto lg:h-full">
+          <Image src="/images/login-hero.webp" alt="한 식탁에 둘러앉아 웃으며 식사하는 사람들" fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover lg:object-[30%_center]" />
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-espresso via-espresso/60 to-transparent" />
+          <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-6 py-5 lg:px-10 lg:py-8">
+            <Wordmark tone="light" size="sm" />
+            <Endorsement tone="light" />
+          </header>
+          <dl className="absolute inset-x-0 bottom-0 flex flex-wrap gap-x-6 gap-y-2 px-6 pb-5 text-[13px] text-cream/85 lg:px-10 lg:pb-10">
             <div className="flex items-center gap-1.5"><Users className="h-4 w-4 text-gold" strokeWidth={1.75} /><dt className="sr-only">신청자</dt><dd className="tabular">{stats.people.toLocaleString()}명이 함께했어요</dd></div>
             <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-gold" strokeWidth={1.75} /><dt className="sr-only">지역</dt><dd>서울 {stats.regions}개 지역</dd></div>
             <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-gold" strokeWidth={1.75} /><dt className="sr-only">일정</dt><dd>매주 목요일 19시</dd></div>

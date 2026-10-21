@@ -129,7 +129,7 @@ export default async function HomePage() {
           {/* 다음 모집 회차 */}
           <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(42,33,27,0.04),0_8px_24px_rgba(42,33,27,0.06)]">
             <div className="relative h-36">
-              <Image src="/images/hero-toast.jpg" alt="" fill sizes="448px" className="object-cover" />
+              <Image src="/images/table-square.webp" alt="" fill sizes="448px" className="object-cover object-[center_88%]" />
               <div className="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent" />
               <div className="absolute bottom-4 left-5 right-5 text-cream">
                 <Eyebrow tone="light">다음 우연한 식탁</Eyebrow>
@@ -172,7 +172,7 @@ export default async function HomePage() {
           {/* 다음 모집 회차 */}
           <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(42,33,27,0.04),0_8px_24px_rgba(42,33,27,0.06)]">
             <div className="relative h-36">
-              <Image src="/images/hero-toast.jpg" alt="" fill sizes="448px" className="object-cover" />
+              <Image src="/images/table-square.webp" alt="" fill sizes="448px" className="object-cover object-[center_88%]" />
               <div className="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent" />
               <div className="absolute bottom-4 left-5 right-5 text-cream">
                 <Eyebrow tone="light">다음 우연한 식탁</Eyebrow>
