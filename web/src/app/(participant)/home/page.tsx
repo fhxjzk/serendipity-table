@@ -74,7 +74,7 @@ export default async function HomePage() {
   const daysLeft = nextRound ? Math.max(0, Math.round((Date.parse(kstDay(nextRound.apply_deadline_at)) - Date.parse(kstDay(nowIso))) / 86400000)) : 0;
 
   return (
-    <main className="flex min-h-dvh flex-1 flex-col bg-paper">
+    <main className="flex min-h-dvh flex-1 flex-col bg-paper bg-[radial-gradient(120%_40%_at_50%_0%,rgba(184,149,95,0.18),transparent_70%)]">
       <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-5">
           <Wordmark size="sm" />
@@ -129,7 +129,7 @@ export default async function HomePage() {
           {/* 다음 모집 회차 */}
           <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(42,33,27,0.04),0_8px_24px_rgba(42,33,27,0.06)]">
             <div className="relative h-36">
-              <Image src="/images/table-square.webp" alt="" fill sizes="448px" className="object-cover object-[center_88%]" />
+              <Image src="/images/candle-table.webp" alt="" fill sizes="448px" className="object-cover object-[70%_center]" />
               <div className="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent" />
               <div className="absolute bottom-4 left-5 right-5 text-cream">
                 <Eyebrow tone="light">다음 우연한 식탁</Eyebrow>
@@ -172,7 +172,7 @@ export default async function HomePage() {
           {/* 다음 모집 회차 */}
           <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(42,33,27,0.04),0_8px_24px_rgba(42,33,27,0.06)]">
             <div className="relative h-36">
-              <Image src="/images/table-square.webp" alt="" fill sizes="448px" className="object-cover object-[center_88%]" />
+              <Image src="/images/candle-table.webp" alt="" fill sizes="448px" className="object-cover object-[70%_center]" />
               <div className="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent" />
               <div className="absolute bottom-4 left-5 right-5 text-cream">
                 <Eyebrow tone="light">다음 우연한 식탁</Eyebrow>
