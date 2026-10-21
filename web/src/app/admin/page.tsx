@@ -68,7 +68,7 @@ export default async function AdminPage() {
     { icon: TriangleAlert, label: "처리할 예외", value: `${openExc?.length ?? 0}건`, note: "매칭 실패·식당 부족 등" },
   ];
   const todo: [string, number, string][] = [
-    ["선택 대기 참가자", waiting ?? 0, "/admin/applicants"],
+    ["선택 대기 참가자", waiting ?? 0, "/admin/applicants?round=all&match=NEEDS_CHOICE"],
     ["식당 부족", excBy("VENUE_SHORTAGE"), "/admin/exceptions"],
     ["조건 충돌·전원 실패", excBy("CONDITION_CONFLICT", "MATCH_FAILED_ALL"), "/admin/exceptions"],
     ["발송·환불 실패", excBy("DELIVERY_FAILED", "REFUND_FAILED"), "/admin/exceptions"],
