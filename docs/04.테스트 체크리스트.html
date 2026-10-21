@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>04. 테스트 체크리스트</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root {
+    --ink: #1f2328; --weak: #59636e; --line: #d0d7de; --soft: #f6f8fa;
+    --brand: #6b4423; --brand-soft: #f5efe6; --ok: #1a7f37; --warn: #9a6700;
+  }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; color: var(--ink); background: #fff;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    font-size: 10pt; line-height: 1.55; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 19pt; margin: 0 0 4px; color: var(--brand); }
+  .subtitle { color: var(--weak); margin: 0 0 18px; }
+  h2 { font-size: 13pt; margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--brand); page-break-after: avoid; }
+  h3 { font-size: 11pt; margin: 16px 0 6px; page-break-after: avoid; }
+  h4 { font-size: 10pt; margin: 14px 0 4px; page-break-after: avoid; }
+  .actor { font-weight: 400; font-size: 8.5pt; color: var(--weak); border: 1px solid var(--line); border-radius: 9px; padding: 0 6px; margin-left: 4px; }
+  p { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: var(--soft); font-weight: 700; }
+  td.id, th.id { white-space: nowrap; width: 1%; }
+  td.nm { font-weight: 600; width: 17%; }
+  td.ref { color: var(--weak); font-size: 8.5pt; width: 1%; }
+  td.refw { color: var(--weak); font-size: 9pt; }
+  .ft td, .ft th { font-size: 9pt; }
+  .ft th, .trace th, .trace td.ref { white-space: nowrap; }
+  .nb { white-space: nowrap; }
+  .cr td:nth-child(4) { white-space: nowrap; }
+  .tr td:first-child { white-space: nowrap; }
+  .shr td:nth-child(-n+2), .shr th:nth-child(-n+2) { white-space: nowrap; }
+  .ft td.ref { white-space: nowrap; }
+  .meta th { width: 14%; white-space: nowrap; }
+  .kv td:first-child, .kv th:first-child { white-space: nowrap; }
+  .note { color: var(--weak); font-size: 9pt; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 9px; font-size: 8.5pt; font-weight: 700; }
+  .must { background: #dafbe1; color: var(--ok); }
+  .opt { background: #fff8c5; color: var(--warn); }
+  ol, ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 2px 0; }
+  code { font-family: Consolas, monospace; font-size: 8.5pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px 0; align-items: center; margin: 8px 0; }
+  .chip { background: var(--brand-soft); border: 1px solid #e5d8c6; border-radius: 14px; padding: 2px 10px; font-size: 9pt; font-weight: 600; }
+  .arrow { color: var(--weak); padding: 0 5px; }
+  figure.flow { margin: 12px 0 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; page-break-inside: avoid; }
+  figcaption { margin-bottom: 2px; }
+  .n-term { fill: #f5efe6; stroke: #6b4423; stroke-width: 1.2; }
+  .n-proc { fill: #ffffff; stroke: #8c959f; stroke-width: 1; }
+  .n-dec { fill: #fff8c5; stroke: #9a6700; stroke-width: 1; }
+  .tx { font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; font-size: 12px; fill: #1f2328; }
+  .br { font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; font-size: 11px; fill: #9a6700; font-weight: 700; }
+  .ln { stroke: #59636e; stroke-width: 1.2; fill: none; }
+  .log td:nth-child(-n+2), .log th:nth-child(-n+2) { white-space: nowrap; }
+  .tcs td:nth-child(3), .tcs td:nth-child(4) { font-size: 8.8pt; }
+  .tcs td:nth-child(5) { white-space: nowrap; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>04. 테스트 체크리스트</h1>
+<p class="subtitle">우연한 식탁 MVP — 요구사항·기능별로 무엇을 어떻게 확인했고 결과가 어땠는지 정리한 검증 기록</p>
+
+<table class="meta">
+  <tr><th>문서 버전</th><td>v1.0</td><th>작성일</th><td>2026-10-21</td></tr>
+  <tr><th>작성자</th><td>정승환</td><th>상태</th><td>제출본</td></tr>
+  <tr><th>관련 워크</th><td colspan="3">A6. 통합·제출 › 누적 테스트 케이스 15건 이상 정리</td></tr>
+  <tr><th>기준 문서</th><td colspan="3">01. 요구 분석서 v1.1 (R-01~R-49) · 02. 기능 명세서 v1.1 (F-01~F-86) · 기능 구현 점검표 (필수 77/77)</td></tr>
+  <tr><th>대상</th><td colspan="3">배포본 https://serendipity-table-zeta.vercel.app (Vercel 서울 icn1 + Supabase 서울) · 로컬 Supabase(Docker)</td></tr>
+</table>
+
+<h2>1. 테스트 방법</h2>
+<table class="kv">
+  <tr><th>구분</th><th>방법</th></tr>
+  <tr><td>단위 테스트</td><td>Vitest 19건 — 매칭 엔진(필수 조건·점수·재배치·분리·대기 처리)과 큐레이션·식사 조건 문구 생성. <code>npm test</code></td></tr>
+  <tr><td>DB 함수 검증</td><td>로컬 Postgres에서 트랜잭션 안에 상황을 만들고 함수 결과를 확인한 뒤 <code>rollback</code> (발송 재시도, 식당 재배정, 템플릿, 권한 검사)</td></tr>
+  <tr><td>화면 시나리오</td><td>테스트 계정으로 데모 12단계를 휴대폰 폭(375px)·데스크톱 폭에서 직접 진행 (리허설 2회, 발견 문제는 수정 후 재확인)</td></tr>
+  <tr><td>배포 확인</td><td>배포 후 공개 화면·스케줄러 응답·DB 상태를 확인. 운영 사이트에서 실제 결제·발송이 일어나는 동작은 테스트 계정으로만 확인</td></tr>
+</table>
+<p class="note">결과 표기: <span class="tag must">통과</span> 기대 결과대로 동작 · <span class="tag opt">부분</span> 일부만 확인(사유를 비고에 적음)</p>
+
+<h2>2. 테스트 케이스</h2>
+<table class="ft tcs">
+  <tr><th class="id">번호</th><th>시나리오</th><th>절차</th><th>기대 결과</th><th>결과</th><th class="id">관련</th></tr>
+
+  <tr><td class="id">TC-01</td><td class="nm">역할별 로그인</td><td>운영자·참가자 계정으로 각각 로그인, 시연 바로 로그인 버튼 6개 사용</td><td>운영자는 <code>/admin</code>, 참가자는 <code>/home</code>으로 이동. 참가자가 <code>/admin</code> 접근 시 홈으로 돌려보냄</td><td><span class="tag must">통과</span></td><td class="ref">F-01, F-57</td></tr>
+  <tr><td class="id">TC-02</td><td class="nm">비로그인·남의 신청 접근 차단</td><td>로그아웃 상태로 <code>/home</code> 접근, 다른 사람 신청 ID로 <code>/applications/[id]/table</code> 접근</td><td>로그인 화면으로 이동 / "찾는 화면이 없어요". DB 함수도 <code>profile_id</code> 일치 시에만 처리</td><td><span class="tag must">통과</span></td><td class="ref">F-57, 8장</td></tr>
+  <tr><td class="id">TC-03</td><td class="nm">프로필·알림 설정 저장</td><td>잘못된 전화번호·이메일 입력 후 저장, 이메일 5종 중 일부 끄기</td><td>입력칸 옆에 오류 표시, 정상 값은 저장되고 다시 열면 채워져 있음</td><td><span class="tag must">통과</span></td><td class="ref">F-02~F-06</td></tr>
+  <tr><td class="id">TC-04</td><td class="nm">추천 일정으로 신청</td><td>새로 신청할 참가자 › 참가 이력 › 추천 일정으로 신청</td><td>지난 참석 지역 기준 회차·지역이 미리 선택됨. 진행 중 신청이 있으면 중복 신청 차단</td><td><span class="tag must">통과</span></td><td class="ref">F-07~F-09, F-52</td></tr>
+  <tr><td class="id">TC-05</td><td class="nm">모의 결제</td><td>결제 화면에서 1회권 결제, 결제 버튼 연속 클릭</td><td>결제 완료로 바뀌고 "결제가 끝났어요" 알림. 두 번 눌러도 한 번만 결제</td><td><span class="tag must">통과</span></td><td class="ref">F-10~F-13</td></tr>
+  <tr><td class="id">TC-06</td><td class="nm">필수 조건을 지키는 매칭</td><td>단위 테스트 + 150명 무작위 풀 실행</td><td>모든 테이블 4~6명, 나이 차이 8살 이내, 차단·신고 관계 동석 없음, 한 사람이 두 테이블에 앉지 않음</td><td><span class="tag must">통과</span></td><td class="ref">F-23~F-27</td></tr>
+  <tr><td class="id">TC-07</td><td class="nm">재배치·실패 사유</td><td>운영자 › 11/5 진행 단계 › 시연 참가자 13명 만들기 → 즉시 실행</td><td>테이블 2개, 다른 선택 지역 빈자리로 재배치 2명, 나이 차이로 실패 1명. 실행 기록에 이유가 한국어로 남음</td><td><span class="tag must">통과</span></td><td class="ref">F-28, F-30, F-31, F-63</td></tr>
+  <tr><td class="id">TC-08</td><td class="nm">중복 실행 방지</td><td>매칭된 회차에서 즉시 실행을 다시 누름, 스케줄러와 동시에 실행</td><td>"기존 결과를 유지했어요". 작업 키로 한 번만 실행</td><td><span class="tag must">통과</span></td><td class="ref">F-22, F-32</td></tr>
+  <tr><td class="id">TC-09</td><td class="nm">실패 후 선택</td><td>매칭 실패 참가자로 일정 이동·이용권 보관·환불을 각각 선택 → 운영자가 되돌리기</td><td>선택대로 처리되고 환불 시 "환불이 끝났어요" 알림·보상 쿠폰. 되돌리면 실패 상태로 복구</td><td><span class="tag must">통과</span></td><td class="ref">F-18~F-21, F-34</td></tr>
+  <tr><td class="id">TC-10</td><td class="nm">확정 후 자동 안내</td><td>매칭 실행 직후 확정된 참가자 화면과 단체방 확인</td><td>식당·주소·예약명 자동 배정, 단체방 생성, 확정 안내·큐레이션·식사 조건(이름 없이)·취소 정책 게시</td><td><span class="tag must">통과</span></td><td class="ref">F-35~F-38</td></tr>
+  <tr><td class="id">TC-11</td><td class="nm">식당 재고 부족 → 자동 재배정</td><td>DB: 테이블의 식당을 비우고 재고 예외를 만든 뒤 재배정 함수 실행 (rollback)</td><td>남은 재고로 식당 배정, 단체방·참가자에게 안내, 예외는 "자동 재시도로 배정"으로 해결</td><td><span class="tag must">통과</span></td><td class="ref">F-35, F-45, R-24</td></tr>
+  <tr><td class="id">TC-12</td><td class="nm">실시간 단체방</td><td>확정된 참가자(일반 창)·같은 식탁 참가자(시크릿 창)로 단체방 입장 후 메시지 전송</td><td>새로고침 없이 상대 화면에 이름과 함께 표시. 연결이 끊기면 30초마다 다시 불러옴</td><td><span class="tag must">통과</span></td><td class="ref">F-37, F-42</td></tr>
+  <tr><td class="id">TC-13</td><td class="nm">리마인드·대화 주제</td><td>운영자 › 10/22 진행 단계 › 리마인드 → 행사 시작</td><td>단체방·알림함에 전날 리마인드, 관심사 기반 대화 주제 3개와 아이스브레이킹 게시. 다시 눌러도 중복 게시 없음</td><td><span class="tag must">통과</span></td><td class="ref">F-39, F-43, F-44</td></tr>
+  <tr><td class="id">TC-14</td><td class="nm">체크인·노쇼 후보</td><td>시연 계정 직접 체크인, 가상 참가자 체크인 채우기 → 행사 종료</td><td>체크인하지 않은 사람만 노쇼 후보, 참석자에게 피드백 요청 알림</td><td><span class="tag must">통과</span></td><td class="ref">F-46, F-53</td></tr>
+  <tr><td class="id">TC-15</td><td class="nm">피드백 → 다음 매칭 반영</td><td>만족도·사람별 선호(다시 만나고 싶음·불편함) 제출, 단위 테스트</td><td>불편함·신고는 이후 동석 금지, 다시 만나고 싶은 사람은 "이미 만난 사람" 감점에서 제외</td><td><span class="tag must">통과</span></td><td class="ref">F-47~F-49, F-24</td></tr>
+  <tr><td class="id">TC-16</td><td class="nm">노쇼 이의 제기</td><td>노쇼 후보 알림에서 이의 제기 → 운영자 예외 처리함에서 참석 인정</td><td>예외 처리함에 올라오고, 참석 인정 시 노쇼 기록 삭제·본인 알림</td><td><span class="tag must">통과</span></td><td class="ref">F-54~F-56, F-66</td></tr>
+  <tr><td class="id">TC-17</td><td class="nm">취소·당일 불참</td><td>행사 3일 전 취소, 당일 불참 알림</td><td>2일 전 이전은 전액 환불(이용권 복원), 당일은 환불 없이 불참으로 기록되고 노쇼가 되지 않음</td><td><span class="tag must">통과</span></td><td class="ref">F-15, F-16, F-12</td></tr>
+  <tr><td class="id">TC-18</td><td class="nm">확정 후 인원 감소</td><td>4명 테이블에서 행사 전날 1명 취소 / 당일 1명 불참</td><td>전날: 남은 인원을 같은 날 다른 식탁으로 재배치(안 되면 전액 환불). 당일 3명: 그대로 진행·쿠폰</td><td><span class="tag must">통과</span></td><td class="ref">F-33, F-34</td></tr>
+  <tr><td class="id">TC-19</td><td class="nm">이메일 발송</td><td>참가자 알림 이메일을 실제 주소로 설정 후 결제 완료 알림 생성 → 스케줄러 실행</td><td>Gmail로 "[우연한 식탁] 결제가 끝났어요" 수신. 일괄 생성 테스트 참가자에게는 보내지 않음</td><td><span class="tag must">통과</span></td><td class="ref">F-41</td></tr>
+  <tr><td class="id">TC-20</td><td class="nm">웹 푸시</td><td>알림함에서 웹 푸시 켜기 → 테스트 알림</td><td>구독이 저장되고 발송 대기열에 푸시가 쌓여 전송됨. 아이폰 미설치 시 홈 화면 추가 안내</td><td><span class="tag opt">부분</span></td><td class="ref">F-40</td></tr>
+  <tr><td class="id">TC-21</td><td class="nm">발송 실패 재시도</td><td>DB: 발송을 3번 실패 처리한 뒤 성공 처리 (rollback)</td><td>1·2분 간격 재시도 → 3번째 실패에 예외 처리함 이동 → 이후 성공하면 예외 자동 해결</td><td><span class="tag must">통과</span></td><td class="ref">F-45, F-71</td></tr>
+  <tr><td class="id">TC-22</td><td class="nm">메시지 템플릿</td><td>운영자 › 자동 안내·발송 › "대체 일정 안내" 문구 수정</td><td>다음 발송부터 새 문구와 변수 치환 적용, 변경 이력에 이전·이후 문구 기록</td><td><span class="tag must">통과</span></td><td class="ref">F-70, F-57</td></tr>
+  <tr><td class="id">TC-23</td><td class="nm">운영 대시보드·할 일</td><td>대시보드 "선택 대기 참가자" 클릭</td><td>전체 회차에서 선택을 기다리는 사람만 한 사람당 한 줄로 표시. 핵심 지표 13종 표시</td><td><span class="tag must">통과</span></td><td class="ref">F-60, F-65, F-72</td></tr>
+  <tr><td class="id">TC-24</td><td class="nm">운영자 조회 화면</td><td>테이블 조회·참석 현황에서 회차 선택기로 이전 회차 이동, CSV 내려받기</td><td>모든 회차 선택 가능, 참가자 대화는 내용·개수 모두 비공개(운영 안내 수만 표시), CSV는 엑셀에서 한글 정상</td><td><span class="tag must">통과</span></td><td class="ref">F-64, F-67, F-73</td></tr>
+  <tr><td class="id">TC-25</td><td class="nm">FAQ·문의 자동 답변</td><td>"환불은 언제까지 되나요?" 문의 등록, 답할 수 없는 문의 등록</td><td>내 신청 상태에 맞춘 자동 답변 / 운영자 예외 처리함으로 넘어가 답변 시 본인 알림</td><td><span class="tag must">통과</span></td><td class="ref">F-85</td></tr>
+  <tr><td class="id">TC-26</td><td class="nm">시연 상태 고정</td><td>자동 진행을 멈춘 회차에서 예정 시각이 지난 뒤 스케줄러 실행</td><td>리마인드·시작·종료·매칭이 자동으로 진행되지 않고, 진행 단계 버튼으로만 진행</td><td><span class="tag must">통과</span></td><td class="ref">F-76</td></tr>
+  <tr><td class="id">TC-27</td><td class="nm">좁은 화면·오류 화면</td><td>운영자 화면을 700px로 줄임, 없는 주소 접속</td><td>표는 한 줄 유지·가로 스크롤, 상단 가로 메뉴 표시 / "찾는 화면이 없어요" 한국어 화면</td><td><span class="tag must">통과</span></td><td class="ref">참가자 경험</td></tr>
+  <tr><td class="id">TC-28</td><td class="nm">응답 속도</td><td>배포본에서 로그인 화면·스케줄러 1회 응답 시간 측정 (서버 지역 이전 전후)</td><td>로그인 약 1.0초 → 0.3~0.6초, 스케줄러 3.5~5.5초 → 0.7~1.2초</td><td><span class="tag must">통과</span></td><td class="ref">비기능</td></tr>
+</table>
+
+<h2>3. 결과 요약</h2>
+<table class="kv">
+  <tr><th>항목</th><th>결과</th></tr>
+  <tr><td>테스트 케이스</td><td>28건 — 통과 27건, 부분 1건(TC-20)</td></tr>
+  <tr><td>단위 테스트</td><td>Vitest 19건 모두 통과 · 린트 오류 0건</td></tr>
+  <tr><td>기능 구현</td><td>필수 기능 77건 모두 구현, 추가 기능 9건 중 4건 구현·1건 부분 (기능 구현 점검표)</td></tr>
+  <tr><td>부분 항목 사유</td><td>TC-20 웹 푸시: 구독 저장·발송 경로·서비스 워커는 확인했으나, 앱 안 브라우저가 알림 권한을 막아 실제 기기 도착은 확인하지 못했다. PC Chrome 또는 홈 화면에 추가한 아이폰에서 확인 필요</td></tr>
+</table>
+
+<h2>4. 리허설에서 찾아 고친 문제</h2>
+<table class="ft log">
+  <tr><th>발견</th><th>문제</th><th>조치</th></tr>
+  <tr><td>리허설 1</td><td>신청부터 시연할 계정이 없음</td><td>지난 참석 이력만 있는 "새로 신청할 참가자" 계정 추가</td></tr>
+  <tr><td>리허설 1</td><td>재배치 장면이 데이터에 없음 · 엔진이 재배치를 기록하지 않음</td><td>시연 참가자 13명 생성 버튼 추가, 한 지역 선택자 우선 배치 후 빈자리 재배치로 엔진 수정</td></tr>
+  <tr><td>리허설 1</td><td>되돌리기가 실패자의 이동·환불 선택을 원복하지 못함</td><td>되돌리기가 이동·보관·환불까지 원복하도록 확장</td></tr>
+  <tr><td>리허설 1</td><td>행사 종료 시 로그인하지 않는 시드 참가자가 모두 노쇼 후보</td><td>가상 참가자 체크인·피드백 채우기 버튼 추가</td></tr>
+  <tr><td>리허설 2</td><td>매칭 실패인데 홈에 "참석 예정" 표시</td><td>확정 전에는 "확정 후", 실패 시 "해당 없음"으로 표시</td></tr>
+  <tr><td>사용자 테스트</td><td>과거 회차 테이블에 단체방이 없음 · 운영자 표가 좁은 창에서 깨짐 · 대시보드 할 일 링크가 회차를 다시 고르게 함</td><td>과거 단체방 기록 생성, 표 최소 폭·가로 스크롤, 전체 회차·선택 대기 필터로 바로 연결</td></tr>
+  <tr><td>재검토</td><td>시간이 지나면 시연 상태가 스케줄러에 의해 바뀜</td><td>자동 진행을 멈춘 회차는 모든 예약 단계를 건너뛰도록 변경</td></tr>
+</table>
+
+</main>
+</body>
+</html>

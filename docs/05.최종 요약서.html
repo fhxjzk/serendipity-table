@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05. 최종 요약서</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root {
+    --ink: #1f2328; --weak: #59636e; --line: #d0d7de; --soft: #f6f8fa;
+    --brand: #6b4423; --brand-soft: #f5efe6; --ok: #1a7f37; --warn: #9a6700;
+  }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; color: var(--ink); background: #fff;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    font-size: 10pt; line-height: 1.55; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 19pt; margin: 0 0 4px; color: var(--brand); }
+  .subtitle { color: var(--weak); margin: 0 0 18px; }
+  h2 { font-size: 13pt; margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--brand); page-break-after: avoid; }
+  h3 { font-size: 11pt; margin: 16px 0 6px; page-break-after: avoid; }
+  h4 { font-size: 10pt; margin: 14px 0 4px; page-break-after: avoid; }
+  .actor { font-weight: 400; font-size: 8.5pt; color: var(--weak); border: 1px solid var(--line); border-radius: 9px; padding: 0 6px; margin-left: 4px; }
+  p { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: var(--soft); font-weight: 700; }
+  td.id, th.id { white-space: nowrap; width: 1%; }
+  td.nm { font-weight: 600; width: 17%; }
+  td.ref { color: var(--weak); font-size: 8.5pt; width: 1%; }
+  td.refw { color: var(--weak); font-size: 9pt; }
+  .ft td, .ft th { font-size: 9pt; }
+  .ft th, .trace th, .trace td.ref { white-space: nowrap; }
+  .nb { white-space: nowrap; }
+  .cr td:nth-child(4) { white-space: nowrap; }
+  .tr td:first-child { white-space: nowrap; }
+  .shr td:nth-child(-n+2), .shr th:nth-child(-n+2) { white-space: nowrap; }
+  .ft td.ref { white-space: nowrap; }
+  .meta th { width: 14%; white-space: nowrap; }
+  .kv td:first-child, .kv th:first-child { white-space: nowrap; }
+  .note { color: var(--weak); font-size: 9pt; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 9px; font-size: 8.5pt; font-weight: 700; }
+  .must { background: #dafbe1; color: var(--ok); }
+  .opt { background: #fff8c5; color: var(--warn); }
+  ol, ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 2px 0; }
+  code { font-family: Consolas, monospace; font-size: 8.5pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px 0; align-items: center; margin: 8px 0; }
+  .chip { background: var(--brand-soft); border: 1px solid #e5d8c6; border-radius: 14px; padding: 2px 10px; font-size: 9pt; font-weight: 600; }
+  .arrow { color: var(--weak); padding: 0 5px; }
+  figure.flow { margin: 12px 0 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; page-break-inside: avoid; }
+  figcaption { margin-bottom: 2px; }
+  .n-term { fill: #f5efe6; stroke: #6b4423; stroke-width: 1.2; }
+  .n-proc { fill: #ffffff; stroke: #8c959f; stroke-width: 1; }
+  .n-dec { fill: #fff8c5; stroke: #9a6700; stroke-width: 1; }
+  .tx { font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; font-size: 12px; fill: #1f2328; }
+  .br { font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; font-size: 11px; fill: #9a6700; font-weight: 700; }
+  .ln { stroke: #59636e; stroke-width: 1.2; fill: none; }
+  .log td:nth-child(-n+2), .log th:nth-child(-n+2) { white-space: nowrap; }
+  .tcs td:nth-child(3), .tcs td:nth-child(4) { font-size: 8.8pt; }
+  .tcs td:nth-child(5) { white-space: nowrap; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>05. 최종 요약서</h1>
+<p class="subtitle">우연한 식탁 MVP — 무엇을 만들었고, 어떻게 동작하며, 무엇을 해결했고, 결과가 어떤지 한 번에 정리한 문서</p>
+
+<table class="meta">
+  <tr><th>문서 버전</th><td>v1.0</td><th>작성일</th><td>2026-10-21</td></tr>
+  <tr><th>작성자</th><td>정승환</td><th>상태</th><td>제출본</td></tr>
+  <tr><th>관련 워크</th><td colspan="3">A6. 통합·제출 › 최종 요약서 작성(개요·아키텍처·트러블슈팅·성과)</td></tr>
+  <tr><th>배포 주소</th><td colspan="3">https://serendipity-table-zeta.vercel.app (참가자 화면 + <code>/admin</code> 운영자 어드민)</td></tr>
+  <tr><th>저장소</th><td colspan="3">github.com/fhxjzk/serendipity-table (docs · db · web)</td></tr>
+</table>
+
+<h2>1. 개요</h2>
+<table class="kv">
+  <tr><th>항목</th><th>내용</th></tr>
+  <tr><td>배경</td><td>와썹하우스의 소셜 다이닝 "우연한 식탁"은 매주 목요일 처음 보는 4~6명이 함께 저녁을 먹는다. 지금은 신청 폼·입금 확인·조 편성·식당 예약·단체방 초대·리마인드를 운영자가 손으로 한다.</td></tr>
+  <tr><td>목표</td><td>신청부터 피드백까지를 자동화하고, <b>운영자는 자동으로 해결되지 않은 예외만</b> 처리하게 한다.</td></tr>
+  <tr><td>범위</td><td>참가자 모바일 웹(PWA) + 운영자 웹 어드민. 결제·환불은 모의 처리, 문자·알림톡은 제외(사업자 인증 채널 필요).</td></tr>
+  <tr><td>결과</td><td>필수 기능 77건 모두 구현, 데모 12단계가 배포본에서 끊김 없이 동작. 테스트 케이스 28건(통과 27·부분 1), 단위 테스트 19건 통과.</td></tr>
+</table>
+
+<h3>한눈에 보는 흐름</h3>
+<div class="chips">
+  <span class="chip">신청·결제</span><span class="arrow">→</span>
+  <span class="chip">마감 시각 자동 매칭</span><span class="arrow">→</span>
+  <span class="chip">재배치·확정 / 실패 안내</span><span class="arrow">→</span>
+  <span class="chip">식당 배정·단체방·알림</span><span class="arrow">→</span>
+  <span class="chip">전날 리마인드·대화 주제</span><span class="arrow">→</span>
+  <span class="chip">체크인·노쇼</span><span class="arrow">→</span>
+  <span class="chip">피드백 → 다음 매칭 반영</span>
+</div>
+
+<h2>2. 주요 기능</h2>
+<table class="ft">
+  <tr><th>영역</th><th>구현 내용</th><th class="id">기능</th></tr>
+  <tr><td class="nm">참가자 신청</td><td>프로필·매칭 선호·식사 조건, 날짜·지역 복수 선택, 이용권 모의 결제(쿠폰 자동 적용), 결제 기한 자동 만료, 지난 이력 기반 다음 일정 추천</td><td class="ref">F-01~F-14, F-52</td></tr>
+  <tr><td class="nm">자동 매칭</td><td>마감 시각에 스케줄러가 실행. 필수 조건(4~6명, 나이 차이 8살, 차단·신고 관계) 위반 없이 선호 점수로 묶고, 남는 사람은 다른 선택 지역 빈자리로 재배치·병합. 실패자는 사유와 함께 일정 이동·보관·환불 선택 + 보상 쿠폰</td><td class="ref">F-22~F-34</td></tr>
+  <tr><td class="nm">모임 안내</td><td>확정 즉시 식당 자동 배정(재고 부족 시 매분 재시도), 테이블 단체방(실시간), 확정 안내·큐레이션·익명 식사 조건, 전날 리마인드, 시작 시각 대화 주제. 앱 내 알림 + 웹 푸시 + 이메일, 실패 시 재시도</td><td class="ref">F-35~F-45</td></tr>
+  <tr><td class="nm">피드백·노쇼</td><td>체크인, 만족도·사람별 선호·신고, 노쇼 후보 → 동석자 피드백으로 보정 → 이의 제기 → 확정·차등 패널티. 피드백은 다음 매칭의 관계 이력으로 반영</td><td class="ref">F-46~F-56</td></tr>
+  <tr><td class="nm">취소·인원 감소</td><td>2일 전까지 전액 환불, 당일은 불참 알림. 확정 후 4명 미만이 되면 같은 날 다른 식탁으로 재배치, 당일 3명은 진행·쿠폰, 2명 이하는 취소·전액 환불</td><td class="ref">F-15, F-16, F-33</td></tr>
+  <tr><td class="nm">운영자 어드민</td><td>대시보드(핵심 지표 13종·할 일), 회차·식당 재고, 신청자·결제·참석 조회, 매칭 미리보기·모니터·진행 단계, 테이블 조회, 예외 처리함, 신고·제재, 메시지 템플릿·발송 이력, CSV</td><td class="ref">F-57~F-77</td></tr>
+</table>
+
+<h2>3. 아키텍처</h2>
+<figure class="flow">
+  <figcaption class="note">그림 1. 시스템 구성 — 화면은 Vercel(서울)에서 만들고, 상태는 모두 Supabase(서울)의 DB 함수로 바꾼다</figcaption>
+  <svg viewBox="0 0 760 300" width="100%" role="img" aria-label="시스템 구성도">
+    <rect class="n-term" x="20" y="30" width="150" height="54" rx="8"/><text class="tx" x="95" y="53" text-anchor="middle">참가자 모바일 웹</text><text class="tx" x="95" y="71" text-anchor="middle">(PWA · 웹 푸시)</text>
+    <rect class="n-term" x="20" y="200" width="150" height="54" rx="8"/><text class="tx" x="95" y="223" text-anchor="middle">운영자 어드민</text><text class="tx" x="95" y="241" text-anchor="middle">(/admin)</text>
+    <rect class="n-proc" x="240" y="60" width="200" height="170" rx="8"/>
+    <text class="tx" x="340" y="84" text-anchor="middle" font-weight="700">Vercel · 서울(icn1)</text>
+    <text class="tx" x="340" y="110" text-anchor="middle">Next.js 16 App Router</text>
+    <text class="tx" x="340" y="132" text-anchor="middle">Server Actions (권한 확인)</text>
+    <text class="tx" x="340" y="154" text-anchor="middle">매칭 엔진 (순수 함수)</text>
+    <text class="tx" x="340" y="176" text-anchor="middle">/api/jobs/tick (스케줄러)</text>
+    <text class="tx" x="340" y="198" text-anchor="middle">발송기 (푸시·이메일·재시도)</text>
+    <rect class="n-proc" x="520" y="40" width="220" height="210" rx="8"/>
+    <text class="tx" x="630" y="64" text-anchor="middle" font-weight="700">Supabase · 서울</text>
+    <text class="tx" x="630" y="90" text-anchor="middle">Postgres + RLS</text>
+    <text class="tx" x="630" y="112" text-anchor="middle">상태 변경 = DB 함수</text>
+    <text class="tx" x="630" y="134" text-anchor="middle">(security definer, 멱등 키)</text>
+    <text class="tx" x="630" y="160" text-anchor="middle">Auth (테스트 계정)</text>
+    <text class="tx" x="630" y="182" text-anchor="middle">Realtime (단체방)</text>
+    <text class="tx" x="630" y="204" text-anchor="middle">pg_cron (1분마다 tick 호출)</text>
+    <text class="tx" x="630" y="226" text-anchor="middle">트리거 → 발송 대기열</text>
+    <rect class="n-dec" x="240" y="262" width="200" height="30" rx="6"/><text class="tx" x="340" y="282" text-anchor="middle">웹 푸시 서비스 · Gmail SMTP</text>
+    <path class="ln" d="M170 57 L240 110"/><path class="ln" d="M170 227 L240 180"/>
+    <path class="ln" d="M440 120 L520 120"/><path class="ln" d="M520 204 L440 176"/>
+    <path class="ln" d="M340 230 L340 262"/>
+    <path class="ln" d="M170 50 C 350 10, 520 20, 580 40"/>
+    <text class="br" x="355" y="22" text-anchor="middle">단체방 실시간 구독</text>
+    <text class="br" x="480" y="112" text-anchor="middle">RPC</text>
+    <text class="br" x="480" y="205" text-anchor="middle">tick</text>
+  </svg>
+</figure>
+
+<table class="kv">
+  <tr><th>설계 원칙</th><th>내용</th></tr>
+  <tr><td>상태는 DB 함수로만 바꾼다</td><td>신청·결제·매칭 적용·환불·체크인 등 모든 상태 변경은 <code>security definer</code> 함수 하나가 한 트랜잭션으로 처리하고 상태 변경 이력을 남긴다. 함수는 일반 사용자 권한에서 실행을 막고, 서버가 로그인·본인 확인 후 호출한다.</td></tr>
+  <tr><td>두 번 실행돼도 안전하게</td><td>스케줄러 작업은 <code>job_runs</code>의 작업 키로, 알림·메시지는 <code>dedupe_key</code>로 한 번만 만든다. 스케줄러와 운영자 즉시 실행이 겹쳐도 결과가 같다.</td></tr>
+  <tr><td>매칭 엔진은 순수 함수</td><td>후보·관계·설정을 받아 테이블·실패·이벤트를 돌려주는 함수라 단위 테스트와 저장 없는 미리보기가 가능하다. 적용은 DB 함수가 한 번에 한다.</td></tr>
+  <tr><td>알림은 원장 + 대기열</td><td>모든 알림은 <code>notifications</code>에 쌓이고, 트리거가 참가자 설정에 따라 웹 푸시·이메일 발송 행을 만든다. 발송기는 1·2분 간격으로 재시도하고 3회 실패하면 예외 처리함으로 넘긴다.</td></tr>
+  <tr><td>개인정보 최소 노출</td><td>같은 테이블에는 이름·연령대·MBTI·관심사·한 줄 소개만, 식사 조건은 이름 없이 인원수로만 공유한다. 운영자도 참가자끼리의 대화 내용·개수는 볼 수 없다.</td></tr>
+</table>
+
+<h2>4. 매칭 알고리즘</h2>
+<ol>
+  <li><b>대상 선별</b> — 해당 회차에 결제를 마친 활성 신청. 참가 제한자·결제 기한 초과자는 제외.</li>
+  <li><b>필수 조건</b> — 지역별로, 나이 차이 8살 이내의 묶음을 만들 수 없는 사람은 먼저 제외(완화하지 않음). 차단·신고·불편함 관계는 같은 테이블 금지.</li>
+  <li><b>테이블 구성</b> — 한 지역만 고른 사람으로 먼저 4~6명 테이블을 만들고, 배치가 가장 어려운 사람부터 선호 점수(성비 30·MBTI 25·관심사 20·원하는 성향 15·새로운 사람 10)가 높아지는 사람을 채운다.</li>
+  <li><b>재배치·병합</b> — 남은 사람은 자신이 고른 다른 지역의 빈자리로 옮기고(재배치 기록), 그래도 남으면 남은 사람끼리 새 테이블을 만든다.</li>
+  <li><b>두 계획 비교</b> — "한 지역 선택자 우선" 계획과 "전원 동시" 계획을 모두 계산해 더 많이 앉히는 쪽을 고른다. 같으면 1인당 점수가 3점 이상 높을 때만 바꾼다.</li>
+  <li><b>확정·실패</b> — 최소 점수 60 이상이면 자동 확정. 실패자는 사유(인원 부족·나이·관계·점수)와 함께 다른 날짜 대기 또는 대체 일정·보관·환불을 안내한다.</li>
+</ol>
+<p class="note">피드백 반영: 함께 앉았던 사람은 "새로운 사람" 점수에서 감점되지만, 다시 만나고 싶다고 고른 사람은 감점하지 않는다. 불편함·신고는 이후 동석을 막는다.</p>
+
+<h2>5. 트러블슈팅</h2>
+<table class="ft log">
+  <tr><th>문제</th><th>원인</th><th>해결</th></tr>
+  <tr><td>재배치가 한 번도 기록되지 않음</td><td>모든 사람을 첫 단계에서 한꺼번에 배치해, 여러 지역을 고른 사람이 "옮겨 간" 기록이 생기지 않았다.</td><td>한 지역 선택자로 먼저 테이블을 만들고 여러 지역 선택자를 빈자리로 재배치. 두 계획 중 더 많이 앉히는 쪽을 고르게 해 무작위 신청자 40세트 비교에서 배정 성공률이 45.4% → 47.6%로 올랐다.</td></tr>
+  <tr><td>단체방 메시지 순서가 뒤섞임</td><td>한 트랜잭션에서 넣은 메시지가 모두 같은 <code>now()</code> 시각을 가져 정렬이 무작위가 됐다.</td><td>메시지 시각 기본값을 <code>clock_timestamp()</code>로 바꿔 넣은 순서대로 정렬.</td></tr>
+  <tr><td>시연을 반복하면 실패 시연이 사라짐</td><td>되돌리기가 매칭 결과만 지우고, 실패자가 고른 일정 이동·보관·환불은 남겨 두었다.</td><td>되돌리기가 이동한 신청 삭제, 이용권 장부 원복, 환불 취소까지 하도록 확장.</td></tr>
+  <tr><td>데모 데이터 삭제가 막힘</td><td>발송 이력이 알림·메시지를 외래키로 참조해 되돌리기에서 삭제가 거부됐다.</td><td>발송 이력의 외래키를 <code>on delete cascade</code>로 변경.</td></tr>
+  <tr><td>화면이 느림 (화면당 1~3초)</td><td>DB는 서울인데 Vercel 함수가 기본값인 미국 동부(iad1)에서 실행돼, 화면당 5~15번의 쿼리가 매번 태평양을 왕복했다.</td><td><code>vercel.json</code>에서 함수 지역을 서울(icn1)로 고정하고, 화면 이동 시 바로 뜨는 로딩 화면 추가. 스케줄러 1회 3.5~5.5초 → 0.7~1.2초.</td></tr>
+  <tr><td>시간이 지나면 시연 장면이 바뀜</td><td>스케줄러가 예정 시각마다 리마인드·시작·종료·매칭을 실행해, 심사 시점에는 확정·실패 장면이 지나가 버린다.</td><td>"자동 진행 멈춤" 회차는 모든 예약 단계를 건너뛰고, 운영자 진행 단계 버튼으로만 움직이게 함.</td></tr>
+  <tr><td>과거 회차에 단체방이 없음</td><td>과거 22개 회차 이력을 시드로 바로 넣으면서 확정 단계(식당·단체방·안내)를 거치지 않았다.</td><td>과거 테이블마다 실제 흐름과 같은 시각의 안내·리마인드·대화 주제·참석자 대화를 채우는 <code>seed:rooms</code> 추가.</td></tr>
+  <tr><td>웹 푸시가 아이폰에서 안 옴</td><td>iOS는 홈 화면에 설치한 웹앱에서만 푸시를 받는다.</td><td>PWA 매니페스트·서비스 워커를 넣고, 미설치 아이폰에는 "홈 화면에 추가" 안내를 띄움.</td></tr>
+</table>
+
+<h2>6. 성과</h2>
+<table class="kv">
+  <tr><th>지표</th><th>결과</th></tr>
+  <tr><td>기능 구현</td><td>필수 77/77, 추가 9건 중 4건(+부분 1) — 요구 R → 기능 F → 화면 S → 데이터 T 추적표 유지</td></tr>
+  <tr><td>자동화 범위</td><td>신청 마감 후 매칭·재배치·확정·식당 배정·단체방·안내·리마인드·대화 주제·행사 종료·노쇼 확정·피드백 리마인드·발송 재시도가 사람 손 없이 진행. 운영자 할 일은 예외 처리함·선택 대기·신고로 모임</td></tr>
+  <tr><td>매칭 결과 (시연 회차)</td><td>10/22: 후보 10명 → 테이블 2개·배정 8명(80%), 테이블 점수 80.0·82.5 · 시연 참가자 13명: 테이블 2개·재배치 2명·나이 실패 1명(92.3%)</td></tr>
+  <tr><td>데이터</td><td>가상 신청자 294명 정제·적재, 과거 22개 회차·36개 테이블 이력, DB 테이블 44개·마이그레이션 16개</td></tr>
+  <tr><td>품질</td><td>테스트 케이스 28건(통과 27·부분 1), 단위 테스트 19건, 린트 오류 0건, 리허설 2회에서 발견한 문제 모두 수정</td></tr>
+  <tr><td>성능</td><td>서울 지역 배포 후 로그인 화면 0.3~0.6초, 스케줄러 1회 0.7~1.2초</td></tr>
+  <tr><td>기록</td><td>Blaybus 워크스페이스 아젠다 A1~A6, 워크·태스크로 작업 단위 기록 · GitHub 커밋 이력</td></tr>
+</table>
+
+<h2>7. 한계와 다음 단계</h2>
+<ul>
+  <li><b>실결제</b> — 지금은 모의 결제·환불. PG(토스페이먼츠 등) 연동 시 결제 함수의 상태 전이는 그대로 쓰고 승인·환불 호출만 붙이면 된다.</li>
+  <li><b>메시지 채널</b> — 카카오 알림톡·문자는 사업자 인증이 필요해 제외했다. 발송기가 채널별로 분리돼 있어 채널 추가가 쉽다.</li>
+  <li><b>이메일 발신 주소</b> — 무료 범위에서 Gmail SMTP를 썼다. 도메인을 확보하면 발송 모듈 한 곳만 바꿔 서비스 도메인 주소로 보낼 수 있다.</li>
+  <li><b>회원가입</b> — 해커톤 범위에 맞춰 테스트 계정 로그인만 제공한다.</li>
+  <li><b>매칭 고도화</b> — 지금은 탐욕 배치 + 두 계획 비교. 신청자가 많아지면 지역 간 교환 탐색이나 최적화 기법으로 성공률을 더 올릴 수 있다.</li>
+  <li><b>웹 푸시 실기기 검증</b> — 발송 경로까지 확인했고 실제 기기 수신은 추가 확인이 필요하다.</li>
+</ul>
+
+<h2>8. 산출물</h2>
+<table class="ft">
+  <tr><th class="id">번호</th><th>문서</th><th>내용</th></tr>
+  <tr><td class="id">01</td><td class="nm">프로젝트 주제 및 요구 분석서</td><td>요구사항 R-01~R-49 (필수·추가), 범위·제약</td></tr>
+  <tr><td class="id">ADR</td><td class="nm">기술 스택·아키텍처 결정 기록</td><td>Next.js + Supabase + Vercel 선택 이유와 대안</td></tr>
+  <tr><td class="id">02</td><td class="nm">기능 명세서</td><td>기능 F-01~F-86, 화면 27개, 순서도 9개</td></tr>
+  <tr><td class="id">03 · 03-1</td><td class="nm">데이터 정의서 · 전체 ERD</td><td>테이블 44개 정의, 영역별·전체 ERD</td></tr>
+  <tr><td class="id">A2-1 · A2-2</td><td class="nm">가상데이터 정제 결과서 · 테스트 계정 확인서</td><td>294명 정제 규칙과 결과, 계정 인증 확인</td></tr>
+  <tr><td class="id">04</td><td class="nm">테스트 체크리스트</td><td>테스트 케이스 28건과 결과, 리허설 수정 기록</td></tr>
+  <tr><td class="id">05</td><td class="nm">최종 요약서</td><td>본 문서</td></tr>
+  <tr><td class="id">-</td><td class="nm">README · 기능 구현 점검표</td><td>실행·배포 방법, 시연 순서, 기능별 구현 여부</td></tr>
+</table>
+
+</main>
+</body>
+</html>
