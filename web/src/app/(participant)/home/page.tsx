@@ -75,7 +75,7 @@ export default async function HomePage() {
 
   return (
     <main className="flex min-h-dvh flex-1 flex-col bg-paper bg-[radial-gradient(120%_40%_at_50%_0%,rgba(184,149,95,0.18),transparent_70%)]">
-      <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/90 backdrop-blur lg:border-cream/10 lg:bg-espresso/95">
+      <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/90 backdrop-blur lg:border-cream/10 lg:bg-espresso lg:backdrop-blur-none">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-5">
           <span className="lg:hidden"><Wordmark size="sm" /></span>
           <span className="hidden lg:inline-flex"><Wordmark tone="light" size="sm" /></span>
@@ -331,7 +331,12 @@ function MyApplication({ app, venue }: { app: MyApp; venue: string | null }) {
         // A reservation ticket: dark stub with the table, a perforated edge, then the details.
         <div className="relative bg-espresso px-5 py-4 text-cream">
           <div className="flex items-center gap-4">
-            <TableSeats seats={4} size={64} tone="dark" label="확정된 식탁" />
+            {/* Calendar stub: month, a large serif day and the weekday, like the stub of a reservation ticket. */}
+            <div className="flex w-14 shrink-0 flex-col items-center rounded-xl border border-gold/35 bg-cream/[0.04] py-1.5 text-center">
+              <span className="text-[10px] font-medium tracking-[0.08em] text-gold">{fmt(rounds[0].start_at, { month: "long" })}</span>
+              <span className="font-serif text-[26px] font-bold leading-none text-cream tabular">{fmt(rounds[0].start_at, { day: "numeric" }).replace("일", "")}</span>
+              <span className="text-[10px] text-cream/60">{fmt(rounds[0].start_at, { weekday: "short" })}요일</span>
+            </div>
             <div className="min-w-0 flex-1">
               <Eyebrow tone="light">이번 식탁</Eyebrow>
               <p className="mt-1 text-[16px] font-bold">{fmt(rounds[0].start_at, { month: "long", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</p>

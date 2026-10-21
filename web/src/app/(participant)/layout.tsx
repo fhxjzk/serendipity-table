@@ -37,7 +37,7 @@ export default async function ParticipantLayout({ children }: LayoutProps<"/">) 
         <p className="text-[11px] text-cream/40">휴대폰에 맞춰 만든 화면이에요. 홈 화면에 추가하면 앱처럼 쓸 수 있어요.</p>
       </aside>
       {/* On PC the app is a card floating on the photo; overflow-clip keeps the rounded corners without breaking sticky headers. */}
-      <div className="relative flex min-h-dvh flex-1 flex-col bg-paper lg:my-6 lg:min-h-[calc(100dvh-3rem)] lg:w-[460px] lg:flex-none lg:overflow-clip lg:rounded-[28px] lg:shadow-[0_30px_80px_rgba(0,0,0,0.6)] lg:ring-1 lg:ring-cream/10 lg:mr-[5vw] xl:mr-[9vw]">
+      <div className="relative flex min-h-dvh flex-1 flex-col bg-paper lg:my-6 lg:bg-espresso lg:min-h-[calc(100dvh-3rem)] lg:w-[460px] lg:flex-none lg:overflow-clip lg:rounded-[28px] lg:shadow-[0_30px_80px_rgba(0,0,0,0.6)] lg:ring-1 lg:ring-cream/10 lg:mr-[5vw] xl:mr-[9vw]">
         {children}
       </div>
     </div>
