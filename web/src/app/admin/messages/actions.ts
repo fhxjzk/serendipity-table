@@ -38,8 +38,8 @@ export async function retryDelivery(formData: FormData) {
   revalidatePath("/admin/messages");
 }
 
-// Sends whatever is due without waiting for the next scheduler minute.
-export async function sendNow(_prev: ActionState): Promise<ActionState> {
+// Sends whatever is due without waiting for the next scheduler minute (the form state is not needed).
+export async function sendNow(): Promise<ActionState> {
   await requireProfile("OPERATOR");
   const r = await sendDueDeliveries(createAdminClient());
   revalidatePath("/admin/messages");
