@@ -12,3 +12,6 @@ db/drivers/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Submission sheet with test-account passwords (never committed)
+제출용 계정 목록.txt
