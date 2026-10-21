@@ -16,7 +16,7 @@ async function loadStats() {
 }
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  const { next } = await searchParams;
+  const { next, reason } = await searchParams;
   const stats = await loadStats();
 
   return (
@@ -55,6 +55,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <div className="w-full max-w-sm">
           <h2 className="text-xl font-bold tracking-[-0.02em]">로그인</h2>
           <p className="mt-1.5 text-sm text-muted">신청 현황과 이번 주 식탁을 확인하세요.</p>
+          {reason === "no-profile" && (
+            <p role="alert" className="mt-5 rounded-lg bg-ember/10 px-3 py-2 text-[13px] text-ember">이 계정은 아직 참가자 정보가 준비되지 않았어요. 테스트 계정으로 로그인해 주세요.</p>
+          )}
           <div className="mt-7">
             <LoginForm next={typeof next === "string" ? next : undefined} />
           </div>

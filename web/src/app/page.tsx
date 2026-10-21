@@ -8,5 +8,5 @@ export default async function Root() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-  redirect(profile?.role === "OPERATOR" ? "/admin" : profile ? "/home" : "/signup");
+  redirect(profile?.role === "OPERATOR" ? "/admin" : profile ? "/home" : "/login?reason=no-profile");
 }

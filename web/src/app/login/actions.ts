@@ -17,7 +17,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
   const next = String(formData.get("next") ?? "");
   if (next.startsWith("/") && !next.startsWith("//")) redirect(next);
-  redirect(profile?.role === "OPERATOR" ? "/admin" : profile ? "/home" : "/signup");
+  redirect(profile?.role === "OPERATOR" ? "/admin" : profile ? "/home" : "/login?reason=no-profile");
 }
 
 export async function logout() {

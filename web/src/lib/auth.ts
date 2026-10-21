@@ -13,7 +13,7 @@ export async function requireProfile(role?: Role) {
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-  if (!profile) redirect("/signup");
+  if (!profile) redirect("/login?reason=no-profile");
   if (role && profile.role !== role) redirect(profile.role === "OPERATOR" ? "/admin" : "/home");
   return { supabase, user, profile };
 }

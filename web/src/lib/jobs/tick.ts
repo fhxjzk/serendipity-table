@@ -49,8 +49,10 @@ export async function runDueJobs(db: SupabaseClient) {
     { prefix: "end", type: "EVENT_END", column: "end_at", fn: "end_round_event" },
   ] as const;
   for (const step of steps) {
-    const { data: rounds } = await db.from("rounds").select("id").eq("status", "MATCHED").lte(step.column, nowIso);
+    const { data: rounds } = await db.from("rounds").select("id, setting_overrides").eq("status", "MATCHED").lte(step.column, nowIso);
     for (const round of rounds ?? []) {
+      // A paused round (demo, or an operator holding it) moves only when someone presses the step button.
+      if (round.setting_overrides?.auto_match === false) continue;
       const jobKey = `${step.prefix}:${round.id}`;
       const claim = await db.from("job_runs").insert({ job_key: jobKey, job_type: step.type, round_id: round.id, trigger: "SCHEDULER" });
       if (claim.error) continue;

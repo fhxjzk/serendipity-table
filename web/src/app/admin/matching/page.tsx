@@ -53,7 +53,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/admin/m
         <p className="text-[12px] font-medium text-muted">운영 · 자동 매칭</p>
         <h1 className="mt-1 text-2xl font-bold tracking-[-0.02em]">매칭 모니터</h1>
         <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-muted">
-          회차의 자동 매칭 실행 시각이 지나면 1분 안에 자동으로 매칭돼요. 시연할 때는 즉시 실행으로 바로 돌리고, 되돌리기로 처음 상태로 돌아갈 수 있어요.
+          회차의 자동 매칭 시각이 지나면 1분 안에 자동으로 매칭되고, 리마인드·행사 시작·종료도 정해진 시각에 진행돼요. 자동 진행을 멈춘 회차는 아래 진행 단계 버튼으로만 움직여요.
         </p>
       </div>
 
@@ -86,7 +86,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/admin/m
                       <input type="hidden" name="roundId" value={r.id} />
                       <input type="hidden" name="on" value={paused ? "true" : "false"} />
                       <button className={`text-xs ${paused ? "text-amber-700" : "text-ink/60"} underline`}>
-                        {paused ? "자동 실행 멈춤 · 다시 켜기" : "자동 실행 켜짐 · 멈추기"}
+                        {paused ? "자동 진행 멈춤 · 다시 켜기" : "자동 진행 켜짐 · 멈추기"}
                       </button>
                     </form>
                   </td>
