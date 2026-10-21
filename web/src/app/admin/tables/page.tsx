@@ -9,7 +9,7 @@ import { RoundPicker } from "../round-picker";
 type Profile = { name: string; birth_year: number; gender: string; mbti: string; job: string };
 type Venue = { name: string; address: string };
 type Member = { application_id: string; left_at: string | null; left_reason: string | null; profiles: Profile | Profile[] | null };
-type Room = { id: string; chat_messages: { count: number }[] };
+type Room = { id: string };
 type TableRow = {
   id: string; region_code: string; status: string; score: number | null; reservation_name: string | null; curation: string | null; food_summary: string | null;
   venues: Venue | Venue[] | null; table_members: Member[]; chat_rooms: Room | Room[] | null;
@@ -31,7 +31,7 @@ export default async function TablesPage({ searchParams }: PageProps<"/admin/tab
 
   const { data } = roundId
     ? await db.from("dining_tables")
-      .select("id, region_code, status, score, reservation_name, curation, food_summary, venues(name, address), table_members(application_id, left_at, left_reason, profiles(name, birth_year, gender, mbti, job)), chat_rooms(id, chat_messages(count))")
+      .select("id, region_code, status, score, reservation_name, curation, food_summary, venues(name, address), table_members(application_id, left_at, left_reason, profiles(name, birth_year, gender, mbti, job)), chat_rooms(id)")
       .eq("round_id", roundId).order("status").order("score", { ascending: false })
     : { data: [] };
   const tables = (data ?? []) as unknown as TableRow[];
@@ -43,6 +43,10 @@ export default async function TablesPage({ searchParams }: PageProps<"/admin/tab
         db.from("status_history").select("application_id, field, from_value, to_value, actor_type, reason, created_at").in("application_id", appIds).order("created_at"),
       ])
     : [{ data: [] }, { data: [] }, { data: [] }];
+  // Only what the service posted is counted; participants' own conversation stays private, count included.
+  const roomIds = tables.map((t) => one(t.chat_rooms)?.id).filter(Boolean) as string[];
+  const { data: notices } = roomIds.length ? await db.from("chat_messages").select("room_id").in("room_id", roomIds).is("sender_id", null) : { data: [] };
+  const noticeCount = (roomId?: string) => (notices ?? []).filter((m) => m.room_id === roomId).length;
   const avg = (xs: number[]) => (xs.length ? (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(1) : "-");
 
   return (
@@ -88,7 +92,7 @@ export default async function TablesPage({ searchParams }: PageProps<"/admin/tab
                 {left.length > 0 && <p className="mt-1 text-[12px] text-muted">빠진 사람: {left.map((m) => `${one(m.profiles)?.name}(${m.left_reason === "CANCELED" ? "취소" : m.left_reason === "REALLOCATED" ? "다른 식탁으로" : "테이블 취소"})`).join(", ")}</p>}
                 {t.food_summary && <p className="mt-3 whitespace-pre-line rounded-lg border border-line px-3 py-2 text-[12px] leading-relaxed">{t.food_summary}</p>}
                 <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
-                  <span className="rounded bg-sand/60 px-2 py-0.5">단체방 {room ? `메시지 ${room.chat_messages?.[0]?.count ?? 0}개` : "없음"}</span>
+                  <span className="rounded bg-sand/60 px-2 py-0.5">{room && noticeCount(room.id) ? `운영 안내 ${noticeCount(room.id)}개 발송 완료` : "운영 안내 발송 전"}</span>
                   {SENT.map(([k, label]) => {
                     const rows = (sent ?? []).filter((s) => ids.some((a) => s.dedupe_key === k + a));
                     if (!rows.length) return null;
