@@ -20,7 +20,7 @@ const STEPS = [
   { icon: WalletCards, title: "신청·결제", body: "날짜와 지역을 고르고 이용권으로 결제해요." },
   { icon: CalendarCheck, title: "자동 매칭", body: "행사 3일 전 18시, 취향이 맞는 4~6명으로 묶어요." },
   { icon: MessageCircle, title: "확정 안내", body: "식당·시간을 알려 드리고 단체방이 열려요." },
-  { icon: UtensilsCrossed, title: "목요일 저녁", body: "처음 보는 사람들과 좋은 저녁 한 끼." },
+  { icon: UtensilsCrossed, title: "함께하는 저녁", body: "처음 보는 사람들과 좋은 저녁 한 끼." },
 ];
 
 export default async function HomePage() {

@@ -25,8 +25,8 @@ export default async function ParticipantLayout({ children }: LayoutProps<"/">) 
           <Endorsement tone="light" />
         </div>
         <div className="max-w-md">
-          <Eyebrow tone="light">Every Thursday · 7 PM</Eyebrow>
-          <h2 className="mt-4 font-serif text-[42px] font-bold leading-[1.25] tracking-[-0.02em]">이번 주 목요일,<br />우연이 차려 둔 자리</h2>
+          <Eyebrow tone="light">Serendipity Table</Eyebrow>
+          <h2 className="mt-4 font-serif text-[42px] font-bold leading-[1.25] tracking-[-0.02em]">낯선 이름이,<br />반가운 얼굴이 되는 저녁</h2>
           <p className="mt-4 text-[15px] leading-relaxed text-cream/75">자리 배정부터 식당 예약, 단체방 안내까지 우연한 식탁이 준비해 둘게요. 오셔서 즐기기만 하면 돼요.</p>
           {next && (
             <p className="mt-8 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-[13px] text-cream/90">

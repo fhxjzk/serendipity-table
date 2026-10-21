@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   // Absolute base for the link-preview image (opengraph-image.png) when the address is shared.
   metadataBase: new URL(process.env.SITE_URL?.startsWith("https://") ? process.env.SITE_URL : "https://serendipity-table-zeta.vercel.app"),
   title: "우연한 식탁",
-  openGraph: { title: "우연한 식탁", description: "매주 목요일 저녁, 처음 보는 사람들과 좋은 저녁 한 끼", locale: "ko_KR", type: "website" },
-  description: "매주 목요일 저녁, 처음 보는 사람들과 좋은 저녁 한 끼",
+  openGraph: { title: "우연한 식탁", description: "취향이 맞는 4~6명이 한 식탁에 둘러앉는 저녁 — 처음 보는 사람들과 좋은 저녁 한 끼", locale: "ko_KR", type: "website" },
+  description: "취향이 맞는 4~6명이 한 식탁에 둘러앉는 저녁 — 처음 보는 사람들과 좋은 저녁 한 끼",
   // Home-screen install (F-40): iPhone needs the app installed before it can receive web push.
   appleWebApp: { capable: true, title: "우연한 식탁", statusBarStyle: "default" },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },

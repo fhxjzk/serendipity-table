@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "우연한 식탁",
     short_name: "우연한 식탁",
-    description: "매주 목요일 저녁, 처음 보는 사람들과 좋은 저녁 한 끼",
+    description: "처음 보는 사람들과 좋은 저녁 한 끼",
     start_url: "/home",
     scope: "/",
     display: "standalone",

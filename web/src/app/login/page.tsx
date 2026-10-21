@@ -8,11 +8,13 @@ import { demoAccounts } from "./actions";
 
 async function loadStats() {
   const db = createAdminClient();
-  const [{ count: people }, { data: regions }] = await Promise.all([
+  const [{ count: people }, { data: regions }, { data: next }] = await Promise.all([
     db.from("profiles").select("id", { count: "exact", head: true }).eq("role", "PARTICIPANT"),
     db.from("code_values").select("code").eq("code_group", "REGION").neq("code", "ETC"),
+    db.from("rounds").select("start_at").eq("status", "OPEN").gt("apply_deadline_at", new Date().toISOString()).order("event_date").limit(1).maybeSingle(),
   ]);
-  return { people: people ?? 0, regions: regions?.length ?? 0 };
+  const nextAt = next ? new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(next.start_at)) : null;
+  return { people: people ?? 0, regions: regions?.length ?? 0, nextAt };
 }
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
@@ -37,17 +39,17 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <div className="relative z-10 flex flex-1 flex-col lg:min-h-dvh lg:flex-row lg:items-stretch">
         {/* 소개 */}
         <section className="-mt-36 px-6 lg:mt-0 lg:flex lg:flex-1 lg:flex-col lg:justify-end lg:px-14 lg:pb-12">
-          <Eyebrow tone="light">Every Thursday · 7 PM</Eyebrow>
+          <Eyebrow tone="light">Serendipity Table</Eyebrow>
           <h1 className="mt-3 font-serif text-[32px] font-bold leading-[1.25] tracking-[-0.02em] lg:text-[44px]">
             처음 보는 사람들과,<br />좋은 저녁 한 끼
           </h1>
           <p className="mt-4 max-w-md text-[15px] leading-relaxed text-cream/75">
-            매주 목요일 저녁, 취향이 맞는 4~6명이 한 식탁에 앉아요. 자리 배정과 식당 예약, 단체방 안내는 우연한 식탁이 맡아요.
+            취향이 맞는 4~6명이 한 식탁에 둘러앉아요. 자리 배정과 식당 예약, 단체방 안내는 우연한 식탁이 맡아요.
           </p>
           <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-cream/85">
             <div className="flex items-center gap-1.5"><Users className="h-4 w-4 text-gold" strokeWidth={1.75} /><dt className="sr-only">신청자</dt><dd className="tabular">{stats.people.toLocaleString()}명이 함께했어요</dd></div>
             <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-gold" strokeWidth={1.75} /><dt className="sr-only">지역</dt><dd>서울 {stats.regions}개 지역</dd></div>
-            <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-gold" strokeWidth={1.75} /><dt className="sr-only">일정</dt><dd>매주 목요일 19시</dd></div>
+            <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-gold" strokeWidth={1.75} /><dt className="sr-only">다음 식탁</dt><dd>{stats.nextAt ? `다음 식탁 ${stats.nextAt}` : "다음 식탁 준비 중"}</dd></div>
           </dl>
         </section>
 
