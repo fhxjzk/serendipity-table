@@ -28,10 +28,12 @@ export async function logout() {
 
 // 시연용 바로 로그인: the test accounts sign in from the server, so judges never type a password.
 // Shown only where the SEED_* logins are configured (local and the hackathon deployment).
+// In the order of the participant journey: apply, wait, confirmed or failed, then the operator.
 const DEMO = {
+  new: ["SEED_NEW_EMAIL", "SEED_NEW_PASSWORD"],
+  waiting: ["SEED_PARTICIPANT_EMAIL", "SEED_PARTICIPANT_PASSWORD"],
   table: ["SEED_TABLE_EMAIL", "SEED_TABLE_PASSWORD"],
   fail: ["SEED_FAIL_EMAIL", "SEED_FAIL_PASSWORD"],
-  new: ["SEED_NEW_EMAIL", "SEED_NEW_PASSWORD"],
   admin: ["SEED_OPERATOR_EMAIL", "SEED_OPERATOR_PASSWORD"],
 } as const;
 export type DemoKind = keyof typeof DEMO;
